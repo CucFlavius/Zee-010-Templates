@@ -1,0 +1,50 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// Header for the map object. 64 bytes.
+
+typedef struct {
+    //ubyte length <hidden = true>;
+    ushort disable_vert_portal_atten : 1 <name = "Disable Vert Portal Atten", comment = "Do not attenuate vertices based on distance to portal">;
+    ushort use_unified_render_path : 1 <name = "Use Unified Render Path", comment = "In 3.3.5a this flag switches between classic render path (MOHD color is baked into MOCV values,all three batch types have their own rendering logic) and unified (MOHD color is added to lighting at runtime, int. and ext. batches share the same rendering logic). ">;
+    ushort use_liquid_type_dbc_id : 1 <name = "Use Liquid Type DBC ID", comment = "use real liquid type ID from DBCs instead of local one. See MLIQ for further reference.">;
+    ushort do_not_fix_vertex_color_alpha : 1 <name = "Do Not Fix Vertex Color Alpha", comment = "In 3.3.5.a (and probably before) it prevents CMapObjGroup::FixColorVertexAlpha function to be executed. Alternatively, for the wotlk version of it, the function can be called with MOCV.a being set to 64, whjch will produce the same effect for easier implementation.For wotlk+ rendering, it alters the behavior of the said function instead. See [[2]] for more details. ">;
+    ushort lod : 1 <name = "LoD", comment = "≥ Legion (20740)" >;
+    ushort default_max_lod : 1 <name = "Default Max LoD", comment = "≥ Legion (21796)ᵘ. Usually maxLodLevel = -1 but with this flag, numLod. Entries at this level are defaulted">;
+    ushort unk0 : 1;
+    ushort unk1 : 1;
+    ushort unk2 : 1;
+    ushort unk3 : 1;
+    ushort unk4 : 1;
+    ushort unk5 : 1;
+    ushort unk6 : 1;
+    ushort unk7 : 1;
+    ushort unk8 : 1;
+    ushort unk9 : 1;
+} MOHD_FLAGS <name = "HeaderFlags", size = 2>;
+
+struct MOHD
+{
+    CHUNK hdr;
+
+	uint32 nTextures;		    // Number of textures used
+	uint32 nGroups;		        // Number of groups
+	uint32 nPortals;		    // Number of portals
+	uint32 nLights;		        // Number of lights
+                                // Blizzard seems to add one to the MOLT entry count when there are MOLP chunks in the groups (and maybe for MOLS too?)
+	uint32 nDoodadNames;		// Number of doodad names
+	uint32 nDoodadDefs;		    // Number of doodad definitions
+	uint32 nDoodadSets;		    // Number of doodad sets
+	ARGB32 ambColor;              // Color settings for base (ambient) color. See the flag at /*03Ch*/.   // ARGB
+	uint32 wmoID;               // < uint32_t, &WMOAreaTableRec::m_WMOID> ID located in DBC, mainly for environment sound and music
+	BOUNDINGBOX boundingBox;    // In the alpha, this bounding box was computed upon loading
+    MOHD_FLAGS flags;
+    uint16 numLoD;              // ≥ Legion (21108) includes base lod (→ numLod = 3 means '.wmo', 'lod0.wmo' and 'lod1.wmo')
+};

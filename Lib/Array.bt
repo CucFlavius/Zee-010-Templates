@@ -1,0 +1,27 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+struct M3ARRAY
+{
+    uint32 elements;
+    uint32 unused;
+    uint64 offset; // pointer to T, relative to begin of m2 data block (i.e. MD21 chunk content or begin of file)
+};
+
+struct M3DOUBLEARRAY
+{
+    uint32 elements;
+    uint32 unused;
+    uint64 offsetA;
+    uint64 offsetB;
+};

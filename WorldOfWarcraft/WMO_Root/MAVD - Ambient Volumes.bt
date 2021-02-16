@@ -1,0 +1,30 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// This section only applies to versions ≥ Battle (8.3.0.32044). Could have been added earlierᵘ.
+
+struct AmbientVolume
+{
+    VECTOR3 pos;
+    float start;
+    float end;
+    BGRA32 color1;      // overrides MOHD.ambColor
+    BGRA32 color2;
+    BGRA32 color3;
+    uint32 flags;       // &1: use color2 and color3
+    uint16 doodadSetID;
+    char _0x26[10];
+};
+
+struct MAVD
+{
+    CHUNK hdr;
+    AmbientVolume ambientVolume[hdr.size / sizeof(AmbientVolume)];
+};

@@ -1,0 +1,20 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// Convex Volume Planes. Contains blocks of floating-point numbers. 0x10 bytes (4 floats) per entry.
+
+struct MCVP
+{
+    CHUNK hdr;
+    PLANE convexVolumePlanes[hdr.size/16]; // normal points out
+};
+
+// These are used to define the volume of when you are inside this WMO. Important for transports. 
+// If a point is behind all planes (i.e. point-plane distance is negative for all planes), it is inside.

@@ -1,0 +1,29 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: NewWorld_PAK.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reversing the file format of the pak archives
+//  Category: Data storage
+//------------------------------------------------
+
+struct PK
+{
+    ushort magic;
+    ushort version;
+    uint unkSize;
+    byte skip[unkSize];
+    uint dataSize;
+    uint unk1;
+    
+    uint pathSize;
+    char materialPath[pathSize];
+    byte data[dataSize];
+};
+
+
+while( ! FEof() )
+{
+    PK file;
+}

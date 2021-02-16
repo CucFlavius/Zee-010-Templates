@@ -1,0 +1,64 @@
+//--------------------------------------
+//--- 010 Editor v5.0 Binary Template
+//
+//      File: WorldOfWarcraft_WMO_root.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Wmo root file
+//  Category: RE
+//--------------------------------------
+
+/*
+The root file lists the following:
+• textures (BLP File references)
+• materials
+• models (MDX / M2 File references)
+• groups
+• visibility information
+• more data
+*/
+
+// In version 14, the version used in the alpha, the root WMO file has an additional container MOMO chunk, like the MOGP chunk, containing all group data.
+
+#include "Lib/Common.bt"
+#include "WorldOfWarcraft/WMO_Root.bt"
+
+struct WMO_ROOT
+{
+    while( ! FEof() )
+    {
+        if     ( match( "MVER" ) ) MVER  version;
+        else if( match( "MOHD" ) ) MOHD  header;
+        else if( match( "MOTX" ) ) MOTX  texture_file_names;
+        else if( match( "MOMT" ) ) MOMT  materials;
+        else if( match( "MOGN" ) ) MOGN  group_names;
+        else if( match( "MOGI" ) ) MOGI  group_info;
+        else if( match( "MOSB" ) ) MOSB  skybox_file_name;
+        else if( match( "MOSI" ) ) MOSI  skybox_file_ID;
+        else if( match( "MOPV" ) ) MOPV  portal_vertices;
+        else if( match( "MOPT" ) ) MOPT  portal_info;
+        else if( match( "MOPR" ) ) MOPR  portal_references;
+        else if( match( "MOVV" ) ) MOVV  visible_block_vertices;
+        else if( match( "MOVB" ) ) MOVB  visible_block_list;
+        else if( match( "MOLT" ) ) MOLT  lights;
+        else if( match( "MODS" ) ) MODS  doodad_sets;
+        else if( match( "MODN" ) ) MODN  doodad_file_names;
+        else if( match( "MODI" ) ) MODI  doodad_file_IDs;
+        else if( match( "MODD" ) ) MODD  doodad_info;
+        else if( match( "MFOG" ) ) MFOG  fogs;
+        else if( match( "MCVP" ) ) MCVP  convex_volume_planes;
+        else if( match( "GFID" ) ) GFID  group_file_IDs;
+        else if( match( "MDDI" ) ) MDDI  mddi_unknown;
+        else if( match( "MPVD" ) ) MPVD  particulate_volumes;
+        else if( match( "MAVG" ) ) MAVG  global_ambient_volumes;
+        else if( match( "MAVD" ) ) MAVD  ambient_volumes;
+        else if( match( "MBVD" ) ) MBVD  ambient_box_volumes;
+        else if( match( "MFED" ) ) MFED  fog_extra_data;
+        else if( match( "MGI2" ) ) MGI2  group_info_v2;
+        else if( match( "MNLD" ) ) MNLD  new_light_definitions;
+        else if( match( "MDDL" ) ) MDDL  detail_doodad_layers;
+        else SKIP_CHUNK unk; 
+    }
+};
+
+WMO_ROOT root;

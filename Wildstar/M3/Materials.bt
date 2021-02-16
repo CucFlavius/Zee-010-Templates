@@ -1,0 +1,53 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+struct MATERIALDESCRIPTION
+{
+    uint16 textureSelectorA;        // points to the texture containing the diffuse, etc
+                                    // The value 65535 indicates that no texture is set, it is also
+	                                // possible that this value is actually signed and <code>-1</code> is used to
+	                                // indicate that the value is not set
+    uint16 textureSelectorB;        // points to the texture containing the normals, etc
+    byte gap_004[20];
+    M3DOUBLEARRAY unk_offset_018;   // 4/4
+    M3DOUBLEARRAY unk_offset_030;   // 4/4
+    M3DOUBLEARRAY unk_offset_048;   // 4/4
+    M3DOUBLEARRAY unk_offset_060;   // 4/4
+    M3DOUBLEARRAY unk_offset_078;   // 4/4
+    M3DOUBLEARRAY unk_offset_090;   // 4/4
+    M3DOUBLEARRAY unk_offset_0A8;   // 4/4
+    M3DOUBLEARRAY unk_offset_0C0;   // 4/4
+    M3DOUBLEARRAY unk_offset_0D8;   // 4/4
+    M3DOUBLEARRAY unk_offset_0F0;   // 4/4
+    M3DOUBLEARRAY unk_offset_108;   // 4/12
+    byte gap_120[8];
+};
+
+struct MATERIAL (int index)
+{
+    byte gap_000[32];
+    M3ARRAY materialDescription;
+    
+    FSeek(headerSize + header.materials.offset + (header.materials.elements * 48) + materialDescription.offset);
+    MATERIALDESCRIPTION materialDescriptions[materialDescription.elements];
+    FSeek(headerSize + header.materials.offset + ((index + 1) * 48));
+};
+
+struct MATERIALS (HEADER &header)
+{
+    local int i;
+    for( i = 0; i < header.materials.elements; i++ )
+    {
+        MATERIAL material(i);
+    }
+};

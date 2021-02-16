@@ -1,0 +1,31 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+struct MODEL2DISPLAY (int index)
+{
+    uint16 modelMeshID;     // Is referenced by the Creature2Display.tbl in column modelMeshId00 - modelMeshId15.
+                            // The index of this struct references {@link StructMesh#meshGroupId}
+    uint16 default2Render;  // Default to display. 
+                            // In case no further information about which mesh groups to render is given, render each mesh groups with a value of 1
+                            // 0 - not default, 1 - default
+                            // Other values were not seen
+};
+
+struct MODEL2DISPLAYS (HEADER &header)
+{
+    local int i;
+    for( i = 0; i < header.model2Display.elements; i++ )
+    {
+        MODEL2DISPLAY model2Display(i);
+    }
+};

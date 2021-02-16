@@ -1,0 +1,69 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+#include "Lib/Common.bt"
+
+struct BoneData
+{
+    //unsigned byte A;
+    //unsigned byte B;
+    //unsigned byte C;
+    //unsigned byte D;
+    float val;
+    float value;
+};
+
+local int index = 0;
+struct Bone
+{
+    byte nameLength;
+    //VECTOR3 position;
+    //QUATERNION rotation;
+    //VECTOR3 scale;
+    //float unk;
+    //float unk2;
+    //BoneData data[6]<optimize=false>;
+
+///// this is no/////
+    //byte data [18];
+    //ubyte ind;
+    //Printf( "%d\n", data[1]);
+    //VECTOR3 position;
+    //QUATERNION rotation;
+    //VECTOR3 scale;
+    //byte data2 [48-12-16-12];
+    //byte data[11];
+
+    //byte similar1[5];
+
+    //Printf( "%d %d %d %d %d \n", similar1[0],similar1[1],similar1[2],similar1[3],similar1[4] );
+    //float unk0;
+    //byte similar2[4];
+    //byte data3[15];
+    //float unk1;
+    //byte similar3[5];
+    //byte data5[12];
+byte data[48];
+/////////////////////
+    //Printf( "%d P(%f, %f, %f) R(%f, %f, %f, %f)\n", index, position.x,position.y,position.z, rotation.x, rotation.y, rotation.z, rotation.w );
+    STRINGc boneName(nameLength);
+index++;
+    //Printf( "'%s' \n", boneName.s);
+};
+
+byte version;                                       // Probably version, always 46 ?
+STRINGc messiah(7);                                 // MESSIAH
+uint one;
+uint unk0;
+ushort zero0;
+ushort boneCount;
+Bone bones[boneCount]<optimize=false>;

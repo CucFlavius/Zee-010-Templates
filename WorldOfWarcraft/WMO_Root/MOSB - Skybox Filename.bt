@@ -1,0 +1,26 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// Skybox. Contains an zero-terminated filename for a skybox. (padded to 4 byte alignment if "empty"). 
+// If the first byte is 0, the skybox flag in all MOGI entries are cleared and there is no skybox.
+
+struct MOSB
+{
+    CHUNK hdr;
+    STRING skyboxFileName;
+    
+    local byte buffer = 0;
+    while (buffer == 0)
+    {
+        buffer = ReadByte();
+        FSkip(1);
+    }
+    FSkip(-1);
+};

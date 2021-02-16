@@ -1,0 +1,43 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: DiabloImmortal_ResourceRepository
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Generating a file/folder structure from the 
+//            resource.repository file of messiah engine games
+//  Category: File List
+//------------------------------------------------
+
+int one;
+ushort unk;
+FSkip(4);                                       // empty
+ushort sizeOfFileTypeStrings;
+char fileTypeStrings[sizeOfFileTypeStrings];    // split by ;
+ushort sizeOfFolderStrings;
+char folderPathStrings[sizeOfFolderStrings];    // split by ;
+
+struct HASH
+{
+    char fileHash[16];
+};
+
+struct FILE
+{
+    ushort unk1;                            // all posttible values : 3,4,5,6,8,10,12,13,14,15,22,24,26,28,29,42
+    ushort unk2;                            // 0 or 1, maybe compressed ? ~49k are 0, ~13k are 1
+    byte unk3;                              // always 0
+    char fileHash[16];                      // the reference to the actual data file name (which is a hash)
+    ushort fileNameSize;                    // size in bytes of the file name string
+    char fileName[fileNameSize];            // actual file name string
+    ushort folderIndex;                     // Index into folder strings, starts at 1 ?
+    ushort typeIndex;                       // Index into file type strings, starts at 1
+    ushort hashCount;                       // Number of hashes to read next
+    if (hashCount > 0)
+    {
+        HASH relatedFileHashes[hashCount];  // Can be 0 to Many hashes, possibly related file hashes
+    }
+    //Printf ("%u | %u | %s \n", 0, unk2, fileName);
+};
+
+FILE file[10000] <optimize=false>;          // read to end

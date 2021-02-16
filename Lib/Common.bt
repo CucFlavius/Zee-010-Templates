@@ -1,0 +1,28 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: Common.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: A library template containing common data types to different file formats
+//  Category: Library
+//------------------------------------------------
+
+#include "Lib/Vector.bt"
+#include "Lib/Color.bt"
+#include "Lib/Bounds.bt"
+#include "Lib/Animation.bt"
+#include "Lib/Matrix.bt"
+#include "Lib/Chunk.bt"
+#include "Lib/String.bt"
+#include "Lib/Array.bt"
+
+// skip bites of size
+typedef struct (int size) {
+    byte data[size];
+} SKIP;
+
+typedef struct {
+    VECTOR3 normal;
+    float distance;
+} PLANE;

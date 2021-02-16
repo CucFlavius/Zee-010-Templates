@@ -1,0 +1,65 @@
+//------------------------------------------------
+//      File: DiabloImmortal_Mesh
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the mesh file from Diablo Immortal (Messiah Engine)
+//  Category: Model
+//------------------------------------------------
+#include "Lib/Common.bt"
+
+struct BUF_DESCRIPTION
+{
+    ushort strSize;
+    STRINGc description(strSize);
+};
+
+struct SUBMESH_SECTION
+{
+    uint indexStart;                                // Starting vertex number.
+    uint indexCount;                                // Number of vertices.
+    uint vertexStart;                               // Starting triangle index
+    uint vertexCount;                               // Number of triangle indices.
+};
+
+struct SUBMESH_BOUNDS
+{
+    BOUNDINGBOX boundingBox;                        // Probably
+    BOUNDINGCAPSULE boundingCapsule;                // Probably
+};
+
+struct VERTEX0
+{
+    VECTOR3 position;
+    VECTOR4SMALL normal;                                 // Packed normal 
+    VECTOR2 uv;
+};
+
+struct VERTEX1
+{
+    VECTOR4H tangent;
+    VECTOR4H bitangent;
+};
+
+struct VERTEX2
+{
+    ubyte boneWeights[4];
+    ubyte boneIndices[4];
+};
+
+byte version;                                       // Probably version, always 46 ?
+STRINGc messiah(7);                                 // MESSIAH
+int unkown0;                                        // Always 8 ?
+uint dataSize;                                      // Data size after bounding box
+ushort unknown1;                                    // Always 0 ?
+ushort submeshCount;                                // Number of submeshes
+uint vertexCount;                                   // Number of vertices
+uint indexCount;                                    // Number of indices
+BUF_DESCRIPTION bDescriptions[4]<optimize=false>;   // Vertex buffer description strings
+BOUNDINGBOX boundingBox;                            // Bounding box
+BOUNDINGSPHERE_B boundingSphere;                    // Bounding sphere
+SUBMESH_SECTION submeshSections[submeshCount];      // Submesh index info
+ushort indices[indexCount];                         // Triangle indices
+VERTEX0 vertices[vertexCount];                      // Vertex buffer 0 - Position, Normal, UVs
+VERTEX1 tangents[vertexCount];                      // Vertex Buffer 1 - Tangent Bitangent
+VERTEX2 boneWeights[vertexCount];                   // Vertex Buffer 2 - Bone weights and indices
+SUBMESH_BOUNDS submeshBounds[submeshCount];         // Per submesh bounds

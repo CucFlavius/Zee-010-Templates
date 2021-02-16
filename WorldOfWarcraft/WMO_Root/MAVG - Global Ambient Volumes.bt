@@ -1,0 +1,49 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+// This section only applies to versions ≥ Battle (8.3.0.32044). Could have been added earlierᵘ.
+// Same structure as MAVD, except pos/start/end are 0 values because this is a global ambient, but they are still written in the file
+
+struct GlobalAmbientVolume
+{
+    VECTOR3 pos;
+    float start;
+    float end;
+    BGRA32 color1;
+    BGRA32 color2;
+    BGRA32 color3;
+    uint32 flags;    // &1: use color1 and color3
+    uint16 doodadSetID;
+    char _0x26[10];
+};
+
+struct MAVG
+{
+    CHUNK hdr;
+    GlobalAmbientVolume globalAmbientVolume[hdr.size / sizeof(GlobalAmbientVolume)];
+};
+
+// WMO base ambient color is now determined from the following:ᵘ
+
+//  if MAVG exists 
+//      use the entry with matching doodadSetID else MAVG[0]
+//      if (entry.flags & 1) then 
+//          use entry.color3 and entry.color1 (secondary ambient color?)ᵘ
+//      else 
+//          entry.color1
+//  else if MAVD exists
+//      use MAVD[0]
+//      if (entry.flags & 1) then
+//          use entry.color3 and entry.color1
+//      else entry.color1
+//  else use MOHD.ambColor

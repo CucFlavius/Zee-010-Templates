@@ -1,0 +1,62 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct Something0
+{
+    int zero1;
+    int unk2;
+    byte shaderUUID[16];
+};
+
+typedef struct
+{
+    STRINGd name;
+    int unk1;
+
+    Something0 stuff[unk1] <optimize = false>;
+}ShaderSection <name = SectionName>;
+
+
+struct ShaderReference
+{
+    STRINGd name;
+
+    int sectionCount;
+    ShaderSection section[sectionCount]<optimize = false>;
+};
+
+struct ShaderNames
+{
+    int nameCount;
+    STRINGd shaderNames[nameCount] <optimize = false>;
+};
+
+struct ShaderReferences
+{
+    int referenceCount;
+    ShaderReference reference[referenceCount] <optimize = false>;
+};
+
+string SectionName(ShaderSection &section)
+{
+    if (Strlen(section.name.s) > 0)
+        return "Section : " + section.name.s;
+    else
+        return "";
+}
+
+
+ShaderNames shaderNames;
+ShaderReferences shaderRef;

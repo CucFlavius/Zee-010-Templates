@@ -1,0 +1,26 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// This section only applies to versions ≥ SL (9.0.1.33978).
+
+struct GroupInfoV2
+{
+    char _0x0[4];
+    uint32 lodIndex; // groupInfoList[i].flags & SMOGroup::LOD
+};
+
+struct MGI2
+{
+    CHUNK hdr;
+    GroupInfoV2 groupInfoV2[hdr.size / sizeof(GroupInfoV2)];
+};
+
+// Used to explicitly control what groups use what level lodᵘ. If present, overrides the previous lod loading implementation.
+// Requires exact same count as MOGI. Or replacement of it? Probably replacmeent.

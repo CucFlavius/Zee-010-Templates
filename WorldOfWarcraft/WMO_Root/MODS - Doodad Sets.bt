@@ -1,0 +1,34 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// This chunk defines doodad sets.
+// Doodads in WoW are M2 model files. There are 32 bytes per doodad set, and nSets entries. 
+// Doodad sets specify several versions of "interior decoration" for a WMO. 
+// Like, a small house might have tables and a bed laid out neatly in one set, and have a horrible mess of abandoned broken things in another set called "Set_Abandoned01".
+
+// Sets are exclusive except for the very first one, "Set_$DefaultGlobal" which is additive and is always displayed. 
+// The client determines that set by index, not name though. 
+// Up to 8 doodad sets can be enabled at the same time, e.g. via destructible buildings or garrisons.
+
+// The doodad set number for every WMO instance is specified in the ADT files, or via DBC or via game object fields, depending on how it is spawned.
+
+struct DoodadSet
+{
+    char name[20];          // set name, informational
+    uint32 startIndex;      // index of first doodad instance in this set, into #MODD_chunk directly.
+    uint32 count;           // number of doodad instances in this set
+    char pad[4];
+};
+
+struct MODS
+{
+    CHUNK hdr;
+    DoodadSet doodadSets[ hdr.size / sizeof(DoodadSet) ];
+};

@@ -1,0 +1,31 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+// This section only applies to versions ≥ Legion.
+
+// required when WMO is load from fileID (e.g. game objects)
+
+
+struct GFID
+{
+    CHUNK hdr;
+    uint32 fileID[hdr.size / 4];
+};
+
+/*
+struct {
+    uint32 id[MOHD.nGroups];
+} groupFileDataIDs[ !MOHD.Flag_Lod ? 1
+                  : MOHD.numLod ? MOHD.numLod : 3   // fallback for missing numLod: assume numLod=2+1base
+                  ];
+*/

@@ -1,0 +1,35 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: Wildstar_M3.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: 
+//  Category: Wildstar File Format
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+#include "Wildstar/M3.bt"
+
+// M3 files are a model format which means they contain geometry, animation, textures and various other informations required to display a model.
+// Unlike the I3 models the M3 ones store dynamic models with animations.
+// The I3 ones are used for static geometry like in World of Warcraft the WMO models.
+// Altought it is tempting, M3 is not a next version of World of Warcrafts M2. 
+// While there are certain similarities (which are normal, as both describe basically the same) consider this as a completely new format.
+
+HEADER header;
+
+FSeek(headerSize + header.bones.offset); 
+BONES bones(header);
+
+FSeek(headerSize + header.textures.offset);
+TEXTURES textures(header);
+
+FSeek(headerSize + header.materials.offset);
+MATERIALS materials(header);
+
+FSeek(headerSize + header.model2Display.offset);
+MODEL2DISPLAYS model2Displays(header);
+
+FSeek(headerSize + header.geometry.offset);
+GEOMETRIES geometries(header);

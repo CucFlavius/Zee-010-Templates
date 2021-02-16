@@ -1,0 +1,44 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+int unk;
+
+byte nameLength;
+char name[nameLength];
+byte skipPosition0;
+
+byte idLength;
+char id[idLength];
+
+byte unk;
+byte unk;
+byte unk;
+
+byte pathLength;
+char path[pathLength];
+
+byte unk;
+
+byte localeLength;
+char locale[localeLength];
+
+byte skipPosition1;
+byte unk;
+
+FSeek(FTell() + skipPosition1);
+
+byte unk1[2];
+byte unk2[5];
+
+byte acctLength;
+char acct[acctLength];

@@ -1,0 +1,47 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// This section only applies to versions < Battle (8.1.0.28186). MOTX has been replaced with file data ids in MOMT.
+
+// List of textures (BLP Files) used in this map object. There are nTextures entries in this chunk.
+// A block of zero-padded, zero-terminated strings, that are complete filenames with paths. 
+// There will be further material information for each texture in the next chunk. 
+// The gaps between the filenames are padded with extra zeroes, but the material chunk does have some positional information for these strings.
+
+// The beginning of a string is always aligned to a 4 byte address. (0, 4, 8, C).
+// The end of the string is Zero terminated and filled with zeros until the next alignment.
+// Sometimes there also empty alignments for no (it seems like no) real reason.
+
+// Starting with 8.1, MOTX is no longer used. The texture references in MOMT are file data ids directly.
+// As of that version, there is a fallback mode though and some files still use MOTX for sake of avoiding re-export. 
+// To check if texture references in MOMT are file data ids, simply check if MOTX exist in file
+
+struct MOTX
+{
+    CHUNK hdr;
+    local long startPos = FTell();
+    local long currentPos = FTell();
+    local byte buffer = 0;
+
+    while (currentPos < startPos + hdr.size)
+    {
+        STRING s;
+        
+        buffer = 0;
+        while (buffer == 0)
+        {
+            buffer = ReadByte();
+            FSkip(1);
+        }
+        FSkip(-1);
+
+        currentPos = FTell();
+    }
+};

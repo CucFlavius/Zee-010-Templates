@@ -1,0 +1,56 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+struct BGR
+{
+    float b;
+    float g;
+    float r;
+};
+
+struct RGBA
+{
+    float r;
+    float g;
+    float b;
+    float a;
+};
+
+struct BGRA
+{
+  float b;
+  float g;
+  float r;
+  float a;
+};
+
+struct BGRA32
+{
+  unsigned byte b;
+  unsigned byte g;
+  unsigned byte r;
+  unsigned byte a;
+};
+
+struct ARGB32
+{
+    unsigned byte a;
+    unsigned byte r;
+    unsigned byte g;
+    unsigned byte b;
+};
+
+struct RGBA32
+{
+    unsigned byte r;
+    unsigned byte g;
+    unsigned byte b;
+    unsigned byte a;
+};

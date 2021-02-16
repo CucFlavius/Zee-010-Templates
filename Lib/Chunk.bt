@@ -1,0 +1,74 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// Read chunk ID
+typedef struct {
+    char id[4] <fgcolor=cWhite, bgcolor=cBlack>;
+} CHUNKID <name = ChunkName>;
+
+// Helper function for displaying the string instead of the variable name
+string ChunkName(CHUNKID &str)
+{
+    if (Strlen(str.id) > 0)
+        return str.id;
+    else
+        return "";
+}
+
+
+// Used in diablo 3 //
+typedef struct {
+    long number;
+    long offset;
+    long size;
+} OFFSET;
+
+struct CHUNK
+{
+    char fourcc[4] <fgcolor=cWhite, bgcolor=cBlack>;
+    uint32 size <fgcolor=cWhite, bgcolor=cDkGray>;
+};
+
+//----------------------------------------------------------------------//
+//      Match Chunk                                                     //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    local int pos = FTell();
+    char Magic[4];
+    FSeek(pos);
+    uint32 MagicUInt;
+    uint32 Size;
+    Printf("%c%c%c%c = 0x%04X,\n", Magic[0], Magic[1], Magic[2], Magic[3], MagicUInt);
+} _chunk;
+
+struct SKIP_CHUNK
+{
+    _chunk hdr;
+    //Printf(hdr.Size);
+    uchar bytes[ hdr.Size ];
+};
+
+int match(char m[])
+{
+    local char s[] = ReadString( FTell());
+    if( m[0] == s[3] && m[1] == s[2] && m[2] == s[1] && m[3] == s[0] ) 
+        return 1;
+    return 0;
+}
+
+//----------------------------------------------------------------------//
+//      Skip Chunk                                                      //
+//----------------------------------------------------------------------//
+typedef struct {
+    char ID[4];
+    int ChunkSize;
+    FSeek(FTell() + ChunkSize);
+} SKIPCHUNK;

@@ -1,0 +1,25 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// Map Object Portal References from groups. Mostly twice the number of portals. Actual count defined by sum (MOGP.portals_used).
+
+struct PortalReference
+{
+    uint16 portalIndex;     // into MOPT
+    uint16 groupIndex;      // the other one
+    int16 side;             // -1 or 1 // positive or negative.
+    uint16 filler;          // 0s
+};
+
+struct MOPR
+{
+    CHUNK hdr;
+    PortalReference portalReferences[ hdr.size / sizeof(PortalReference) ];
+};

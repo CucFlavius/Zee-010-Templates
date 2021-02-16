@@ -1,0 +1,70 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// Information for doodad instances. 40 bytes per doodad instance, nDoodads entries.
+// -- There are not nDoodads entries here! Divide the chunk length by 40 to get the correct amount.
+
+// While WMOs and models (M2s) in a map tile are rotated along the axes, doodads within a WMO are oriented using quaternions! Hooray for consistency!
+
+// I had to do some tinkering and mirroring to orient the doodads correctly using the quaternion, see model.cpp in the WoWmapview source code for the exact transform matrix.
+// It's probably because I'm using another coordinate system, as a lot of other coordinates in WMOs and models also have to be read as (X,Z,-Y) to work in my system. 
+// But then again, the ADT files have the "correct" order of coordinates. Weird.
+
+struct DoodadDef
+{
+    uint32 nameIndex : 24;          // reference offset into MODN, or MODI, depending on version and presence.
+    uint32 flag_AcceptProjTex : 1;
+    uint32 flag_0x2 : 1;            // MapStaticEntity::field_34 |= 1 (if set, MapStaticEntity::AdjustLighting is _not_ called)
+    uint32 flag_0x4 : 1;
+    uint32 flag_0x8 : 1;
+    uint32 : 4;                     // unused as of 7.0.1.20994
+    VECTOR3 position;               // (X,Z,-Y)
+    QUATERNION orientation;        // (X, Y, Z, W)
+    float scale;                      // scale factor
+    BGRA32 color;                 // (B,G,R,A) overrides pc_sunColor
+                                                               // when A is != 0xff, A is a MOLT index and that's used instead the RGB given here, taking distance and intensity into account
+};
+
+struct MODD
+{
+    CHUNK hdr;
+    DoodadDef doodadInstances[ hdr.size / sizeof(DoodadDef) ];
+};
+
+// It looks like in order to get correct picture the color from SMODoodadDef should be applied only to opaque submeshes of M2. Deamon (talk)
+
+// How to compute a matrix to map WMO's M2 to world coordinates
+// The coordinate system here is WMO's local coordinate system. 
+// It's Z-up already, that differs it from Y-up in MODF(ADT), MODF(WDT) and MDDF chunks.
+// To compute the whole placement matrix for doodad you would need take positionMatrix of WMO from MODF(ADT) or MODF(WDT) and multiply it by positionMatrix calculated here.
+
+// Example implementation in js with gl-matrix library:
+/*
+ function createPlacementMatrix(modd, wmoPlacementMatrix){
+     var placementMatrix = mat4.create();
+     mat4.identity(placementMatrix);
+     mat4.multiply(placementMatrix, placementMatrix, wmoPlacementMatrix);
+ 
+     mat4.translate(placementMatrix, placementMatrix, [modd.pos[0],modd.pos[1], modd.pos[2]]);
+ 
+     var orientMatrix = mat4.create();
+     mat4.fromQuat(orientMatrix,
+         [modd.rotation[0], //imag.x
+         modd.rotation[1],  //imag.y,
+         modd.rotation[2],  //imag.z,
+         modd.rotation[3]   //real
+         ]
+     );
+     mat4.multiply(placementMatrix, placementMatrix, orientMatrix);
+ 
+     mat4.scale(placementMatrix, placementMatrix, [modd.scale, modd.scale, modd.scale]);
+     return placementMatrix;
+ }
+*/

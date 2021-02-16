@@ -1,0 +1,29 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// Matrix 3x4 = 3 by 4 floats
+typedef struct{
+    float row[3];
+} MATRIX3x4[4];
+
+// Read a matrix 3x4
+typedef struct{
+    MATRIX3x4 matrix;
+} READMATRIX3x4;
+
+// Matrix 4x4 = 4 by 4 floats
+typedef struct{
+    float row[4];
+} MATRIXROW4[4];
+
+// Read a matrix 4x4
+typedef struct{
+    MATRIXROW4 row;
+} MATRIX4x4;

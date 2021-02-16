@@ -1,0 +1,26 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+// This section only applies to versions ≥ SL (9.0.1.33978).
+
+struct FogExtraData
+{
+    uint16 unk0;
+    char unk1[14];
+};
+
+struct MFED
+{
+    CHUNK hdr;
+    FogExtraData fogExtraData[hdr.size / sizeof(FogExtraData)];
+};

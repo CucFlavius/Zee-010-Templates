@@ -1,0 +1,171 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+typedef struct {
+    uint16 name : 1 <name = "0x0001", comment = "(value 1 or 2)">;
+    uint16 name : 1 <name = "0x0002", comment = "(value 3)">;
+    uint16 name : 1 <name = "0x0004", comment = "(value 3)">;
+    uint16 name : 1 <name = "0x0008", comment = "(value 3)">;
+    uint16 name : 1 <name = "0x0010", comment = "(value 4), 4 small numbers, ascending, 0 seems to indicate 'not used'. Bone">;
+    uint16 name : 1 <name = "0x0020", comment = "(value 4), 4 bytes, sums always up to 255. Bone weights">;
+    uint16 name : 1 <name = "0x0040", comment = "(value 4)">;
+    uint16 name : 1 <name = "0x0080", comment = "(value 4)">;
+    uint16 name : 1 <name = "0x0100", comment = "(value 5), uv map 1">;
+    uint16 name : 1 <name = "0x0200", comment = "(value 5), uv map 2">;
+    uint16 name : 1 <name = "0x0400", comment = "(value 6)">;
+} VERTEXBLOCKFLAGS <name = "VertexBlockFlags", size = 2>;
+
+enum<byte> VERTEXBLOCKFIELDTYPE {
+    VBFT_Null = 0,          // null
+    LocationXYZ32Bit = 1,   // Location (xyz), stored as 3 x 32bit float
+    LocationXYZ16Bit = 2,   // Location (xyz), stored as 3 x 16bit int 
+    unk16Bit = 3,           // 16bit, ??
+    BoneMapWeight = 4,      // Bone map/weight (and some more bone stuff???). Upto 4 bones, stored as 4 x 8bit int
+    UVMap = 5,              // UV map, stored as 2 x 16bit float
+    unk8Bit = 6,            // 8bit, ??
+};
+
+enum<byte> BODYPART {
+    BODY_None = 0,
+    BODY_LeftAnkle = 1,
+    BODY_RightAnkle = 2,
+    BODY_LeftUpperArm = 3,
+    BODY_RightUpperArm = 4,
+    BODY_LeftLowerLeg = 5,
+    BODY_RightLowerLeg = 6,
+    BODY_LeftKneeBelow = 7,
+    BODY_RightKneeBelow = 8,
+    BODY_LowerChestAndBack = 9,
+    BODY_ShouldersAndBack = 10,
+    BODY_LeftEar = 11,
+    BODY_RightEar = 12,
+    BODY_LeftElbow = 13,
+    BODY_RightElbow = 14,
+    BODY_FaceElement = 15,          // Used for eyes, faces, piercings and sometimes for other facial elements 
+    BODY_LeftFingers = 16,
+    BODY_RightFingers = 17,
+    BODY_LeftHeel = 18,
+    BODY_RightHeel = 19,
+    BODY_LeftLowerArm = 20,
+    BODY_RightLowerArm = 21,
+    BODY_LeftPalm = 22,
+    BODY_RightPalm = 23,
+    BODY_LeftKnee = 24,
+    BODY_RightKnee = 25,
+    BODY_Neck = 26,
+    BODY_Pelvis = 27,
+    BODY_LeftArmTriceps = 29,
+    BODY_RightArmTriceps = 30,
+    BODY_LeftThigh = 33,
+    BODY_RightThigh = 34,
+    BODY_LeftToes = 35,
+    BODY_RightToes = 36,
+    BODY_MidRiff = 37,
+    BODY_LeftWrist = 38,
+    BODY_RightWrist = 39,
+    BODY_Head = 81,
+    BODY_LeftThighOrKneeFur = 82,    // This seems exclusive to chua 
+    BODY_RightThighOrKneeFur = 83,   // Can be seen on male granok and human, kind of placeholder for the face, but inside of the head 
+    BODY_InnerHead = 84,
+    BODY_Chest = 85,
+    BODY_Tail = 88,
+    BODY_UpperBust = 91,             // May be female specific
+    BODY_NeckStart = 92,
+    BODY_Horns = 96
+};
+
+struct MESH (int index)
+{
+    uint32 startIndex;      // This value is an index and defines at which position of {@link StructGeometry#indexData} the indices start, which define this mesh. 
+                            // The number of indices which belong to this mesh is given by {@link #indexCount}
+    uint32 startVertex;     // This value is an index and defines at which position of {@link StructGeometry#vertexBlockData} the vertices start, which define this mesh.
+                            // The number of vertices which belong to this mesh is given by {@link #vertexCount}
+                            // The index is defined on a per vertex basis, the number of bytes which belongs to a vertex is defined by {@link StructGeometry#vertexBlockSizeInBytes}
+    uint32 indexCount;
+    uint32 vertexCount;
+    byte gap_010[6];
+    byte materialSelector;  // {@link StructMaterial material} index, linked under {@link StructM3Header header}
+    byte gap_017[7];
+    byte meshGroupId;       // Defines the group this mesh belongs to. For models without groups, this seems to be -1
+    byte unk_01F;           // Seems for most cases 0, if <code>meshGroupId</code> -1, then this is also -1.
+    byte gap_020[2];
+    BODYPART meshAnatomyId; // Seems only be used for playable race models.
+                            // It seems that the used <code>IDs</code> are identical across all checked occurrences.
+                            // The <code>IDs</code> is assigned to meshes, which describe a specific area of a model, for example: left hand, right hand, neck, etc. 
+                            // It is reasonable to assume that this <code>ID</code> is used to blend out meshes if, for example, the model wears gear. This still needs to be checked.
+                            // The information may be part of a item model or may be found in a .tbl defining said item.
+    byte gap_023[29];
+    float gap_040[4];
+    float gap_050[4];
+    byte gap_060[16];
+};
+
+struct MESHES (int elements)
+{
+    for( i = 0; i < elements; i++ )
+    {
+        MESH mesh(i);
+    }
+};
+
+struct GEOMETRY (int index)
+{
+    byte gap_000[8];                                // For all 34712 scanned m3, the first value is 80, the other seven are 0. 
+                                                    // This is probably a 64 uint, maybe used as a signature to identify this packet.
+    M3ARRAY unk_offset_008;                         // 4 bytes // For all 34712 scanned m3 empty (2018.12.11)
+    uint32 vertexBlockCount;                        // Total number of vertices
+    uint16 vertexBlockSizeInBytes;                  // Size of a single vertex in bytes
+    VERTEXBLOCKFLAGS vertexBlockFlags;              // This flag indicates which fields are used. 
+                                                    // The position of the flag (starting at 0) is also the array-index for lookup in any vertex related array.
+    VERTEXBLOCKFIELDTYPE vertexBlockFieldType[11];  // This array seems to indicate which field holds which information
+    byte vertexBlockFieldPosition[11];              // Contains information from which byte to which byte certain informations can be found. 
+                                                    // Starting at i, a range ends at i+n with n>0 if [i+n] != 0
+    uint16 gap_036;
+    M3ARRAY vertexBlockData;                        // 1b
+    M3ARRAY unk_offset_048;                         // For all 34712 scanned m3 empty (2018.12.11)
+    M3ARRAY unk_offset_058;                         // For all 34712 scanned m3 empty (2018.12.11)
+    uint32 indexCount;
+    byte gap_06C[2];                                // Seems relevant to {@link #vertexBlockCount}. 
+                                                    // As soon {@link #vertexBlockCount} passes 65536 (max value for uint16), this entry changes from {2,1} to {4,2}
+                                                    // Opposite to {2,1}, {4,2} indices do not start at 0 for each submesh. 
+                                                    // The index can also be far greater than the number of available vertices.
+                                                    // Additional, if 4 bytes are read, the bytes which hold the actual index can be the first 2 LSB or MSB.
+    int16 padding_06E;
+    M3ARRAY indexData;                              // 1b
+    M3ARRAY meshes;                                 // 112b
+    uint32 nVertexBlocks2;                          // Mostly equal to {@link #vertexBlockCount}, probably part of a struct within this struct, so this value doesn't need to be passed around as a separate value.
+                                                    // Sometimes this value is smaller than the other
+    int32 gap_093;
+    M3ARRAY meshVertexBlockRange;                   // 4b This pointer directs to an array <b>A</b>, containing indices for the vertex block array. 
+                                                    // Start index and end index, for mesh <b>i</b> can be found at <b>A[i]</b> and <b>A[i+1]</b>
+                                                    // Prob. legacy stuff, because this information is also encoded in each mesh, or used as a lookup table so it's not necessary to follow the mesh pointer.
+    M3ARRAY unk_offset_0A8;                         // 2b Contains a huge amount of data, related to meshes, see unk_offset_0B8
+                                                    // Number of elements seems to be identical to (numberOfIndices/3)-1.
+                                                    // Maybe related to faces? Could be normalized face-normals (2 x Byte nx,ny)
+    M3ARRAY unk_offset_0B8;                         // 4b Maybe related to mesh, seems to contain |mesh|+1 elements
+                                                    // Related to unk_offset_0A8, it seems it contains ranges like submeshVertexBlockRange
+                                                    // goes from 0 to X to unk_offset_0A8.size - 1
+
+    FSeek(headerSize + header.geometry.offset + (header.geometry.elements * 200) + meshes.offset);
+    MESHES meshList(meshes.elements);
+    FSeek(headerSize + header.geometry.offset + ((index + 1) * 200));
+};
+
+struct GEOMETRIES (HEADER &header)
+{
+    local int i;
+    for( i = 0; i < header.geometry.elements; i++ )
+    {
+        GEOMETRY geometry(i);
+    }
+};

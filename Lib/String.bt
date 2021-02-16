@@ -1,0 +1,58 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+
+// Read null terminated string
+typedef struct {
+    string s;
+} STRING <name = StringName>;
+
+// Read a string of given size 
+typedef struct (int size) {
+    char s[size];
+} STRINGc <name = StringCName>;
+
+// Read a string size then string
+typedef struct
+{
+    ushort strSize;
+    char s[strSize];
+} STRINGd <name = StringDName>;
+
+typedef struct (int size) {
+    wchar_t path[size];
+} WSPATH;
+
+
+
+// Helper function for displaying the string instead of the variable name
+string StringName(STRING &str)
+{
+    if (Strlen(str.s) > 0)
+        return "String : " + str.s;
+    else
+        return "";
+}
+
+string StringCName(STRINGc &str)
+{
+    if (Strlen(str.s) > 0)
+        return "String : " + str.s;
+    else
+        return "";
+}
+
+string StringDName(STRINGd &str)
+{
+    if (Strlen(str.s) > 0)
+        return "String : " + str.s;
+    else
+        return "";
+}

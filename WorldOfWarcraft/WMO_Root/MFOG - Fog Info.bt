@@ -1,0 +1,54 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+// Fog information. Made up of blocks of 48 bytes.
+
+struct FOG
+{
+  /*000h*/  uint32 flag_infinite_radius : 1; // F_IEBLEND: Ignore radius in CWorldView::QueryCameraFog
+  /*000h*/  uint32 : 3;                      // unused as of 7.0.1.20994
+  /*000h*/  uint32 flag_0x10 : 1;
+  /*000h*/  uint32 : 27;                     // unused as of 7.0.1.20994
+  /*004h*/  VECTOR3 pos;
+  /*010h*/  float smaller_radius;              // start
+  /*014h*/  float larger_radius;               // end
+            enum EFogs 
+            {
+              FOG,
+              UWFOG,                           // uw = under water
+              NUM_FOGS,
+            };
+            struct Fog
+            {
+              float end;
+              float start_scalar;              // (0..1) -- minimum distance is end * start_scalar
+              BGRA32 color;                // The back buffer is also cleared to this colour
+  /*018h*/  } fogs[NUM_FOGS];
+};
+
+struct MFOG
+{
+    CHUNK hdr;
+    FOG fogs[ hdr.size / sizeof(FOG) ];
+};
+
+// Fog end: This is the distance at which all visibility ceases, and you see no objects or terrain except for the fog color.
+// Fog start: This is where the fog starts. Obtained by multiplying the fog end value by the fog start multiplier.
+// There should always be at least one fog entry in MFOG. 
+// The empty fog entry has both radiuses set to zero, 444.4445 for end, 0.25 for start_scalar, 222.2222 for underwater end, -0.5 for underwater start_scalar.
+// F_IEBLEND - InteriorExteriorBlend
+// These fog entries are used to reduce fog visibility based on the player's proximity i.e. the closer you are, the less on-screen fog. 
+// They are usually placed near exits to prevent fog showing in unintended places such as behind instance portals (e.g. Stockades fog showing on the Stormwind side of the portal). 
+// Whilst not being rendered they are still computed; the resulting blend percentage is applied as a multiplier (1.0 - ComputedBlendPercentage) to the scalar and colour calculations of the area fog.
+// This fog ignores all visibility checks (so that the multiplier is always applied) and is excluded from fog queries. 
+// Only one is used per mapObjGroup->fogList with the last taking precedence. (verified ≤ Wrath)

@@ -1,0 +1,31 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// Portal information. 20 bytes per portal, nPortals entries. There is a hardcoded maximum of 128 portals in a single WMO.
+
+struct PortalInfo
+{
+    uint16 startVertex;
+    uint16 count;
+    PLANE plane;
+};
+
+struct MOPT
+{
+    CHUNK hdr;
+    PortalInfo portals[ hdr.size / sizeof(PortalInfo) ];
+};
+
+// This structure describes one portal separating two WMO groups. 
+// A single portal is usually made up of four vertices in a quad (starting at startVertex and going to startVertex + count). 
+// However, portals support more complex shapes, and can fully encompass holes such as the archway leading into Ironforge and parts of the Caverns of Time.
+
+// It is likely that portals are drawn as GL_TRIANGLE_STRIP in WoW's occlusion pipeline, since some portals have a vertex count that is not evenly divisible by four. 
+// One example of this is portal #21 in CavernsOfTime.wmo from Build #5875 (WoW 1.12.1), which has 10 vertices.

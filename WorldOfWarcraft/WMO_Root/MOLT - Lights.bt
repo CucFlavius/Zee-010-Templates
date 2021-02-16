@@ -1,0 +1,59 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// Lighting information. 48 bytes per light, nLights entries
+
+enum <ubyte> LIGHTTYPE
+{
+    OmniLight,
+    SpotLight,
+    DirectLight,
+    AmbientLight,
+};
+
+struct LIGHT
+{
+    LIGHTTYPE lightType;
+    ubyte useAtten;
+    ubyte useUnknown1;
+    ubyte useUnknown2;
+    BGRA32 color;
+    VECTOR3 position;
+    float intensity;
+    float unknown1StartRadius;
+    float unknown1EndRadius;
+    float unknown2StartRadius;
+    float unknown2EndRadius;
+    float attenuationStart;
+    float attenuationEnd;
+};
+
+struct MOLT
+{
+    CHUNK hdr;
+    LIGHT lights[ hdr.size / sizeof(LIGHT) ];
+};
+
+// First 4 uint8_t are probably flags, mostly with the values (0,1,1,1).
+
+// I haven't quite figured out how WoW actually does lighting, as it seems much smoother than the regular vertex lighting in my screenshots. 
+// The light parameters might be range or attenuation information, or something else entirely. 
+// Some WMO groups reference a lot of lights at once.
+
+// The WoW client (at least on my system) uses only one light, which is always directional. 
+// Attenuation is always (0, 0.7, 0.03). So I suppose for models/doodads (both are M2 files anyway) it selects an appropriate light to turn on. 
+// Global light is handled similarly. Some WMO textures (BLP files) have specular maps in the alpha channel, the pixel shader renderpath uses these.
+// Still don't know how to determine direction/color for either the outdoor light or WMO local lights... :)
+
+// The entire MOLT and related chunks seem to be unused at least in 3.3.5a.
+// Changing light colors and other settings on original WMOs leads to no effect. 
+// Removing the light leads to no effect either. I assume that MOLT rendering is disabled somewhere in the WoW.exe, as it might use the same principle as the M2 light emitters which are not properly supported up to WoD. 
+// However, when you explore the WMOs in 3D editors you can clearly see that MOCV layer is different under those lamps. 
+// So, I assume they are used for baking MOCV colors and also written to the actual file in case the renderer will ever get updated, or just because you can easily import the WMO back and rebake the colors. --- Skarn (talk)

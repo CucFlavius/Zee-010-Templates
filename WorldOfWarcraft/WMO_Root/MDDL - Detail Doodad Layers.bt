@@ -1,0 +1,107 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// This section only applies to versions ≥ SL (9.0.1.33978).
+
+struct DetailDoodad {
+/*0x00*/ uint32 groundEffectDoodadRec; // foreign_keyⁱ<uint32_t, &GroundEffectDoodadRec::m_ID>
+/*0x04*/ unsigned byte weight;         // not required to accumulate to something specific.
+/*0x05*/
+};
+
+struct Layer {
+/*0x00*/ unsigned byte density;  // if density? < (v14 >> 20) - 24 * (v14 / 25165824), have no
+                                 // doodad on location, where v14 is a random number based on 
+                                 // a seed based on the vertex index
+
+/*0x01*/ unsigned byte detailDoodadsCount;
+/*0x02*/ DetailDoodad detailDoodads[detailDoodadsCount];
+/*0x??*/
+};
+
+struct GroupData {
+/*0x00*/ uint16 groupIndex;
+/*0x02*/ uint32 dataSize;
+/*0x06*/ char data[dataSize];     // interpreted when parsing groups as per parse_group_data() below
+/*0x??*/
+};
+
+struct MDDL
+{
+    CHUNK hdr;
+
+    /*0x00*/ float _0x0;                              // can apparently be overwritten by groups,
+                                                      // potentially inside MOBA's unknown reuse blob.
+                                                      // used in determining locs based on moba vertices.
+                                                      // minimum triangle area?
+    /*0x04*/ uint16 layerCount;
+    /*0x06*/ Layer detailDoodadLayers[layerCount];    // global
+    if (layerCount != 0)
+    {
+        local long startPos = FTell();
+        local long currentPos = FTell();
+    
+        while (currentPos < startPos + hdr.size)
+        {
+            GroupData groupData; // per WMO group
+            currentPos = FTell();
+        }
+    }
+};
+
+/*
+void parse_group_data() {
+restart_layer:
+  uint16_t layer_index = read_uint16_t();  // index into detailDoodadLayers
+  if (layer_index == 0xFFFF) {
+    return;
+  }
+
+restart_batch:
+  uint16_t batch_index = read_uint16_t();    // batch as in MOBA
+  if (batch_index == 0xFFFF) {
+    goto restart_layer;
+  }
+  else if (batch_index & 0x8000) {
+    // roll for locs of all loc_ranges of this batch
+    goto restart_batch;
+  }
+
+  int locrange_index = 0;                    // loc as in triangles that satisfy some criteria
+                                             // for all batches in batch order
+restart_locrange_index_part:
+  uint8_t locrange_index_part = read_uint8_t();
+  locrange_index += locrange_index_part & 0x7F;
+  if (locrange_index_part == 0xFF) {
+    goto restart_batch;
+  }
+  else if (locrange_index_part == 0x7F) {   // RLE for an integer?!
+    goto restart_locrange_index_part;
+  }
+  bool single_loc = locrange_index_part & 0x80;
+
+  int loc = 0;
+restart_loc_part:
+  uint8_t loc_part = read_uint8_t();
+  loc += loc_part;
+  if (loc_part == 0xFF) {
+    goto restart_locrange_index_part; /// not in front of that, i.e. resetting to 0?!
+  }
+  else if (loc_part == 0xFE) {   // RLE for an integer?!, yes different sentinel!
+    goto restart_loc_part;
+  }
+
+  // take loc range for loc_range_index
+  // if single_loc, roll once for locs[loc_range.begin + loc]
+  // else, roll for locs[loc_range.begin + 0...loc]
+
+  goto restart_batch;
+}
+*/

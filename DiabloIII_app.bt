@@ -1,0 +1,448 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category:
+//------------------------------------------------
+
+//------------------------------------------------//
+//      Header
+//------------------------------------------------//
+
+#include "Lib/Common.bt"
+
+long magic;                 // -559038737
+uint version;               // 247 (Diablo III), 260 (Diablo III - Reaper of Souls)
+uint unk0[2];               // empty
+uint index;                 // SNOIndex       
+uint unk1[2];               //
+uint dwFlags;               // flags
+uint unk2;                  //
+
+// Bones Chunk
+OFFSET bones;
+uint unk3[2];
+
+// Look Data
+uint unk4;
+STRING szLookName(64);
+float fAngles[4];
+float fAngularVelocity;
+float unk5;
+
+// ??
+int nBonePulseCount;
+uint unk6[2];
+uint uBonePulseListOffset;
+uint uBonePulseListSize;
+
+// Geo Set 0 Chunk
+OFFSET geoSet0;
+uint unk7[3];
+
+// Geo Set 1 Chunk
+OFFSET geoSet1;
+uint unk8[3];
+
+// Bounding Sphere
+SPHERE boundingSphere;
+
+// Collision Chunk
+OFFSET capsules;            
+uint unk9[3];
+
+// Hard Points Chunk
+OFFSET referencePoints;
+uint unk10[3];
+
+VECTOR3 unk11;
+uint unk12;
+
+// Octree
+uint maxNodes;
+uint maxLeaves;
+uint maxPrimitives;
+uint nodeCount;
+uint leafCount;
+uint primitiveCount;
+uint nodeChunkOffset;
+uint nodeChunkSize;
+uint unk13[2];
+uint leafChunkOffset;
+uint leafChunkSize;
+uint unk14[2];
+uint primitivesChunkOffset;
+uint primitivesChunkSize;
+uint unk15[2];
+
+//AABB Bounding Box
+BOUNDINGBOX boundingBox;
+
+// Loop Constraint Chunk
+OFFSET loopConstraintChunkOfs;
+uint unk16[3];
+
+uint ragdollDegrade;
+
+uint unk17[3];
+
+if (version == 247)
+{
+    // XObject
+    STRING xObjectName(256);
+    STRING xObjectPathName(256);
+    
+    // XMesh
+    STRING xMeshName(256);
+    STRING xMeshPathName(256);
+
+    uint unk18[4];
+}
+
+uint materialNameCount;         //The Material Names chunk is 64 byte strings
+uint materialReferenceCount;
+
+uint materialsOffset;
+uint materialsSize;
+
+uint unk19[2];
+
+uint materialNameOffset;
+uint materialNameSize;
+
+uint unk20[2];
+
+OFFSET staticLightChunk;
+
+uint unk21[4];
+
+uint times[5];
+
+uint unk22[8];
+
+
+//------------------------------------------------//
+//      Bones
+//------------------------------------------------//
+
+typedef struct {
+    QUATERNION rotation;
+    VECTOR3 position;
+    float scale;
+} BONETRANSFORM <optimize=true>;
+
+typedef struct {
+    STRING name(64);                    // bone name
+    long parentID;                      // bone parent id
+    BOUNDINGBOX boundingBox;            // bounding box
+    BOUNDINGSPHERE boundingSphere;      // spherical bounds for the bone
+    if (version == 247)
+        BONETRANSFORM boneTransforms[3];    // position rotation scale transforms
+    if (version == 260)
+        BONETRANSFORM boneTransforms[5];    // position rotation scale transforms
+    OFFSET collisionShapeChunk;
+    if (version == 260)
+        uint unk2;
+    OFFSET constraintsChunk;
+    if (version == 247)
+        uint unk3;
+    if (version == 260)
+        uint unk3[2];
+    int SNOParticleSystem;
+    if (version == 260)
+        uint unk4;
+} BONE <optimize=true>;
+
+if (bones.offset > 0)
+{
+    FSeek(bones.offset + 16);
+    BONE bone[bones.number];
+}
+
+//------------------------------------------------//
+//      Collision Shapes
+//------------------------------------------------//
+
+typedef struct (int count){
+    VECTOR3 vertex[count];
+} POLYTOPEVERTICES;
+
+typedef struct {
+    VECTOR3 v;
+    float f;
+} POLYTOPEPLANE;
+
+typedef struct (int count) {
+    POLYTOPEPLANE polytopePlane[count];
+} POLYTOPEPLANES;
+
+typedef struct (int count) {
+    float unk[count]<optimize=true>;
+} POLYTOPESUBEDGES;
+
+typedef struct {
+    float unk1;
+    int unk2;
+} POLYTOPEFACESUBEDGES;
+
+typedef struct {
+    uint32 unk0[8];
+	float unk1[3];
+	int nVerticies;
+	int nPlanes;
+	int nSubEdges;
+	float Unknown02[2];
+
+	uint32 vertexChunkOffset;
+	uint32 vertexChunkSize;
+
+	uint32 planeChunkOffset;
+	uint32 planeChunkSize;
+
+	uint32 subEdgesChunkOffset;
+	uint32 subEdgesChunkSize;
+
+	uint32 faceSubEdgesChunkOffset;
+	uint32 faceSubEdgesChunkSize;
+} POLYTOPE;
+
+typedef struct {
+	uint32 unk0[4];
+	float unk1[3];
+	uint32 polytopeChunkOffset;
+	uint32 polytopeChunkSize;
+	uint32 unk2;
+    if (version == 260)
+        uint unk3[2];
+	float unk4[7]; //2x vector3 + float?
+     if (version == 260)
+        uint unk5;
+} COLLISIONSHAPE <optimize=true>;
+
+local int c;
+for (c = 0; c < bones.number; c++)
+{
+    if (bone[c].collisionShapeChunk.offset > 0)
+    {
+        FSeek(bone[c].collisionShapeChunk.offset + 16);
+        COLLISIONSHAPE collisionShape;
+        if (collisionShape.polytopeChunkOffset > 0)
+        {
+            FSeek(collisionShape.polytopeChunkOffset + 16);
+            POLYTOPE polytope;
+
+            if (polytope.vertexChunkOffset > 0)
+            {
+                FSeek(polytope.vertexChunkOffset + 16);
+                POLYTOPEVERTICES vertices(polytope.nVerticies);
+            }
+            if (polytope.planeChunkOffset > 0)
+            {
+                FSeek(polytope.planeChunkOffset + 16);
+                POLYTOPEPLANES planes(polytope.nPlanes);
+            }
+            if (polytope.subEdgesChunkOffset > 0)
+            {
+                FSeek(polytope.subEdgesChunkOffset + 16);
+                POLYTOPESUBEDGES subedges(polytope.nSubEdges);
+            }
+            if (polytope.faceSubEdgesChunkOffset > 0)
+            {
+                FSeek(polytope.faceSubEdgesChunkOffset + 16);
+                POLYTOPEFACESUBEDGES faceSubedges;
+            }
+        }   
+    }
+}
+
+//------------------------------------------------//
+//      Constraint Parameters
+//------------------------------------------------//
+
+typedef struct {
+    STRING unk0(64);
+    uint unk1[4];
+    QUATERNION rotation0;
+    VECTOR3 position0;
+    VECTOR3 v300;
+    QUATERNION rotation1;
+    VECTOR3 position1;
+    QUATERNION rotation2;
+    VECTOR3 position2;
+    float unk2[7];
+    if (version == 260)
+        SKIP skip(16); // empty
+    unk3;
+    STRING unk4(64);
+    
+} CONSTRAINTPARAMETER <optimize=true>;
+
+local int p;
+for (p = 0; p < bones.number; p++)
+{
+    if (bone[p].constraintsChunk.offset > 0)
+    {
+        FSeek(bone[p].constraintsChunk.offset + 16);
+        CONSTRAINTPARAMETER constraints;
+    }
+}
+
+//------------------------------------------------//
+//      Reference Points
+//------------------------------------------------//
+
+typedef struct {
+    STRING name(64);
+    long parentID;
+    QUATERNION rotation;
+    VECTOR3 position;
+} REFERENCEPOINT <optimize=true>;
+
+if (referencePoints.offset > 0)
+{
+    FSeek(referencePoints.offset + 16);
+    REFERENCEPOINT referencePoint[referencePoints.number];
+}
+
+//------------------------------------------------//
+//      Geometry Data
+//------------------------------------------------//
+
+typedef struct {
+    VECTOR3 vertex;
+    VECTOR3SMALL normal;        // packed normals
+    int32 unk0[2];
+    VECTOR2SMALL uv;            // packed uv
+    int32 unk1[4];
+    byte unk2;                  // 0
+} VERTEX <optimize=true>;
+
+typedef struct (int count) {
+    VERTEX vertex[count];
+} VERTICES <optimize=true>;
+
+typedef struct {
+    long boneID1;
+    long boneWeight1;
+    long boneID2;
+    long boneWeight2;
+    long boneID3;
+    long boneWeight3; 
+} WEIGHT <optimize=true>;
+
+typedef struct (int count){
+    WEIGHT weight[count];
+} WEIGHTS <optimize=true>;
+
+typedef struct (int count) {
+    short index[count];
+} INDICES <optimize=true>;
+
+typedef struct {
+    long type;
+    OFFSET verticesOfs;
+    if (version == 260)
+        long unk0;
+    OFFSET vertexWeightsOfs;   // vertexWeights.number isn't that, always 0, use vertices.number
+    long unk1;
+    if (version == 260)
+        long unk2;
+    OFFSET indicesOfs;
+
+    OFFSET clothList;
+    uint unk3;
+    if (version == 260)
+        uint unk4[3];
+    int nSNOSurface;
+    int unk5;
+	float unk6;
+
+    STRING objectName(128);
+    STRING meshName(128);
+
+    BOUNDINGBOX boundingBox;
+	uint32 collisionShapeCount;
+	uint32 collisionShapeListOffset;
+	uint32 collisionShapeListSize;
+	uint32 unk7[2];    
+    
+    if (version == 260)
+        SKIP skip(8);       // empty
+
+    //local long endOfGeoset = FTell();
+    //FSeek(endOfGeoset);
+
+} GEOSET <optimize=true>;
+
+if (geoSet0.offset > 0)
+{
+    FSeek(geoSet0.offset + 16);
+    GEOSET geoset[geoSet0.number];
+}
+
+local int g;
+FSeek(geoset.verticesOfs.offset + 16);
+for (g = 0; g < geoSet0.number; g++)
+{
+    VERTICES vertices(geoset.verticesOfs.number);
+    FSeek(geoset.vertexWeightsOfs.offset + 16);
+    WEIGHTS weights(geoset.verticesOfs.number);
+    FSeek(geoset.indicesOfs.offset + 16);
+    INDICES indices(geoset.indicesOfs.number);
+}
+
+//------------------------------------------------//
+//      Materials
+//------------------------------------------------//
+
+typedef struct {
+    uint textureType;
+    if (version == 260)
+        uint unk0;
+    uint SNOIndex;
+    uint unk1[44];      // texture animation parameters
+} MATERIALTEXTURE;
+
+typedef struct {
+    uint unk0;
+    int nSNOCloth;
+    uint tagMapOffset;
+    uint tagMapSize;
+    uint unk1[2];
+    int nSNOShaderMap;
+    RGBA materialColor[4];
+    float unk2;
+    int unk3;
+    uint textureListOffset;
+    uint textureListSize;
+    int unk4[5];
+    int nSNOMaterial;
+    int unk5[29];
+} MATERIAL;
+
+typedef struct {
+    STRING materialName(128);
+    uint materialsOffset;
+    uint materialsSize;
+    uint unk0;               // padding
+    if (version == 260)
+        uint unk1;
+} MATERIALHEADER <optimize=true>;
+
+if (materialsOffset > 0)
+{
+    FSeek(materialsOffset + 16);
+    MATERIALHEADER materialHeader[materialReferenceCount];
+}
+
+local int m;
+for (m = 0; m < materialReferenceCount; m++)
+{
+    FSeek(materialHeader[m].materialsOffset + 16);
+    MATERIAL material;
+    FSeek(material.textureListOffset + 16);
+    MATERIALTEXTURE materialTexture;
+}

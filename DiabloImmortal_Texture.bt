@@ -1,0 +1,71 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: DiabloImmortal_Texture
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the texture file format from Diablo Immortal
+//  Category: Texture
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct Header   // 40 bytes
+{
+    short unk1;
+    short unk2;
+    byte unk3;
+    ubyte format;
+    byte unk4;      // also mip levels?
+    byte unk4b;
+    uint empty1;
+    short width;
+    short height;
+    byte empty2[16];
+    uint sizeOfFileTillEnd;     // Size of remaining file from before this uint (No idea what for)
+    ushort unk5;    // same as unk3 ?
+    ushort numberOfMipmapLevels;
+};
+
+struct NNNN
+{
+    CHUNKID nnnn;
+    if (textureDataSizeInBytes > 0)
+    {
+        byte data[textureDataSizeInBytes];
+    }
+    else
+    {
+        // Uncompressed
+        byte data[width * height * 4];
+    }
+};
+
+struct ZZZ4
+{
+    CHUNKID zzz4;
+    int uncompressedSize;
+    byte data[mipLevelSizeInBytes - 24];
+};
+
+struct MIP
+{
+    uint mipLevelSizeInBytes;
+    ushort width;
+    ushort height;
+    ushort unk1;
+    ushort unk2;
+    uint textureDataSizeInBytes;
+
+    if (match("NNNN")) NNNN textureData;
+    else if (match("4ZZZ")) ZZZ4 textureDataLZ4;
+};
+
+
+// Read //
+
+Header header;
+while(!FEof())
+{
+    MIP mip;
+}

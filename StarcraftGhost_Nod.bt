@@ -1,0 +1,85 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+typedef struct {
+    byte vertType;
+    byte undefined[3];
+    uint numVerts;
+} GROUP;
+
+// Header 92 bytes
+typedef struct {
+    uint version;
+    byte numShaders;        // Specifies the number of materials used by this model.
+    byte numBones;
+    byte numVertGroups;
+    byte numMeshGroups;
+    uint modelFlags;
+    BOUNDINGBOX bounds; // 24 bytes
+    GROUP aGroups[4]; // 32 bytes
+    uint numIndices;
+    int aLODStarts[4]; // 16 bytes
+    byte numLODs;
+    byte undefined[3];
+} HEADER;
+
+typedef struct (int count){
+    STRING materialName(32)[count];
+} MATERIAL_NAMES <optimize=false>;
+
+typedef struct {
+    VECTOR3 restTranslate;              // The centerpoint of the bone in the at-rest pose of the model 
+    READMATRIX3x4 restInverse;    // The inverse orientation of the bone in the at-rest pose
+    byte siblingID;
+    byte childID;
+    byte parentID;
+    byte tagID;
+} BONE;
+
+typedef struct {
+    uint aVerts;
+    uint pVertexBuffer;
+    uint pBumpBuffer;
+    uint vertType;
+    uint vertCount;
+    uint pVertColors;
+    uint pColorData;
+} VERTEXGROUP;
+
+typedef struct {
+    ushort stripCount;
+    ushort listCount;
+    ushort numVerts;
+} LOD;
+
+typedef struct {
+    uint materialID;
+    LOD aLOD[4];
+    ushort numVertices;
+    byte groupFlags;
+    byte numBlendShapes;
+    byte blendGroup;
+    byte aBones[20];
+    byte vertGroup;
+    byte undefined;
+    byte tMeshGroupFile;
+} MESHGROUP;    // 56
+
+
+//---------------------------------------------------------------------------//
+//          Main                                                             //
+//---------------------------------------------------------------------------//
+HEADER header;
+MATERIAL_NAMES materialNames(header.numShaders);
+BONE bones[header.numBones];
+VERTEXGROUP vertices[header.numVertGroups];
+MESHGROUP meshGroups[header.numMeshGroups];

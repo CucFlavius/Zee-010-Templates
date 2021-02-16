@@ -1,0 +1,15 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+struct MDDI
+{
+    CHUNK hdr;
+    float unk[hdr.size/4];        // something[nDoodads]
+};

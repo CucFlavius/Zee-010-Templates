@@ -1,0 +1,41 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+typedef struct {
+    VECTOR3 min;
+    VECTOR3 max;
+} BOUNDINGBOX;
+
+// Model bounds
+typedef struct {
+    BOUNDINGBOX extent;
+    float radius;
+} MODELBOUNDS;
+
+typedef struct {
+    float radius;
+    VECTOR3 position;
+} BOUNDINGSPHERE;
+
+typedef struct {
+    VECTOR3 position;
+    float radius;
+} BOUNDINGSPHERE_B;
+
+typedef struct {
+    VECTOR3 position1;
+    VECTOR3 position2;
+    float radius;
+} BOUNDINGCAPSULE;
+
+typedef struct {
+    VECTOR3 position;
+    float radius;
+} SPHERE;

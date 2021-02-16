@@ -1,0 +1,32 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// Portal vertices, one entry is a float[3], usually 4 * 3 * float per portal (actual number of vertices given in portal entry)
+
+struct MOPV
+{
+    CHUNK hdr;
+    VECTOR3 portalVertices[hdr.size / 12];
+};
+
+// Portals are polygon planes (usually quads, but they can have more complex shapes) that specify where separation points between groups in a WMO are - these are usually doors or entrances, but can be placed elsewhere.
+// Portals are used for occlusion culling, and is a known rendering technique used in many games (among them Unreal Tournament 2004 and Descent.
+// See Portal Rendering on Wikipedia and Antiportal on Wikipedia for more information.
+
+// Since when "playing" WoW, you're confined to the ground, checking for passing through these portals would be enough to toggle visibility for indoors or outdoors areas, however, when randomly flying around, this is not necessarily the case.
+
+// So.... What happens when you're flying around on a gryphon, and you fly into that arch-shaped portal into Ironforge? How is that portal calculated? 
+// It's all cool as long as you're inside "legal" areas, I suppose.
+
+// It's fun, you can actually map out the topology of the WMO using this and the MOPR chunk.
+// This could be used to speed up the rendering once/if I figure out how.
+
+// This image explains how portal equation in MOPT and relations in MOPR are connected: Portal explanation. Deamon (talk) 17:06, 23 February 2017 (CET)
+// https://wowdev.wiki/File:Portal_Explanation.png

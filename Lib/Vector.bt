@@ -1,0 +1,178 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+const float pi = 3.14159265359;
+
+// Vector 2 (two floats x,y)
+typedef struct {
+    float x;
+    float y;
+} VECTOR2;
+
+// Vector 2 (two shorts x,y)
+typedef struct {
+    short x;
+    short y;
+} VECTOR2SMALL;
+
+// Vector 3 (three floats x,y,z)
+typedef struct {
+    float x;
+    float y;
+    float z;
+} VECTOR3 <name = Vector3String>;
+
+// Vector 3 (three floats x,y,z)
+typedef struct {
+    float x;
+    float y;
+    float z;
+} VECTOR3ROT;
+
+// Vector 3 (three bytes x,y,z)
+typedef struct {
+    byte x;
+    byte y;
+    byte z;
+} VECTOR3SMALL;
+
+// Vector 4 (four floats x,y,z,w)
+typedef struct {
+    float x;
+    float y;
+    float z;
+    float w;
+} VECTOR4;
+
+typedef struct {
+    byte x;
+    byte y;
+    byte z;
+    byte w;
+} VECTOR4SMALL <name = Vector4SString>;
+
+// Vector 4 (four half floats x,y,z,w)
+typedef struct
+{
+    short x;
+    short y;
+    short z;
+    short w;
+
+    //hfloat x;
+    //hfloat y;
+    //hfloat z;
+    //hfloat w;
+} VECTOR4H <name = Vector4HString>;
+
+string Vector4HString(VECTOR4H &v)
+{
+    local string x;
+    SPrintf( x, "%f", v.x / 32767.0f );
+    local string y;
+    SPrintf( y, "%f", v.y / 32767.0f );
+    local string z;
+    SPrintf( z, "%f", v.z / 32767.0f );
+    local string w;
+    SPrintf( w, "%f", v.w / 32767.0f );
+    return "Vector4 (" + x + ", " + y + ", " + z + ", " + w + ")";
+}
+
+string Vector3String(VECTOR3 &v)
+{
+    local string x;
+    SPrintf( x, "%f", v.x );
+    local string y;
+    SPrintf( y, "%f", v.y );
+    local string z;
+    SPrintf( z, "%f", v.z );
+    return "Vector3 (" + x + ", " + y + ", " + z + ")";
+}
+
+string Vector4SString(VECTOR4SMALL &v)
+{
+    local string x;
+    SPrintf( x, "%f", v.x / 128.0f );
+    local string y;
+    SPrintf( y, "%f", v.y / 128.0f );
+    local string z;
+    SPrintf( z, "%f", v.z / 128.0f );
+    local string w;
+    SPrintf( w, "%f", v.w / 128.0f );
+    return "Vector4 (" + x + ", " + y + ", " + z + ", " + w + ")";
+}
+
+// HFloat to Float conversion //
+// uint result = MantissaTable[OffsetTable[half.Value >> 10] + (half.Value & 0x3ff)] + ExponentTable[half.Value >> 10];
+// return *(float*)&result;
+/*
+private static uint[] GenerateMantissaTable()
+{
+    uint[] mantissaTable = new uint[2048];
+    mantissaTable[0] = 0;
+    for (int i = 1; i < 1024; i++)
+    {
+        mantissaTable[i] = ConvertMantissa(i);
+    }
+    for (int i = 1024; i < 2048; i++)
+    {
+        mantissaTable[i] = (uint)(0x38000000 + ((i - 1024) << 13));
+    }
+
+    return mantissaTable;
+}
+private static uint[] GenerateExponentTable()
+{
+    uint[] exponentTable = new uint[64];
+    exponentTable[0] = 0;
+    for (int i = 1; i < 31; i++)
+    {
+        exponentTable[i] = (uint)(i << 23);
+    }
+    exponentTable[31] = 0x47800000;
+    exponentTable[32] = 0x80000000;
+    for (int i = 33; i < 63; i++)
+    {
+        exponentTable[i] = (uint)(0x80000000 + ((i - 32) << 23));
+    }
+    exponentTable[63] = 0xc7800000;
+
+    return exponentTable;
+}
+private static ushort[] GenerateOffsetTable()
+{
+    ushort[] offsetTable = new ushort[64];
+    offsetTable[0] = 0;
+    for (int i = 1; i < 32; i++)
+    {
+        offsetTable[i] = 1024;
+    }
+    offsetTable[32] = 0;
+    for (int i = 33; i < 64; i++)
+    {
+        offsetTable[i] = 1024;
+    }
+
+    return offsetTable;
+}
+*/
+
+// Quaternion (four floats x,y,z,w)
+typedef struct {
+    float x;
+    float y;
+    float z;
+    float w;
+} QUATERNION;
+
+string vector3RotConvert (float &val)
+{
+    return (string)(val * 180/pi);
+}

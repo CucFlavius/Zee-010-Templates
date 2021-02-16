@@ -1,0 +1,25 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// Chunk is since ≥ Battle (8.1.0.28294) optional
+
+// Visible block list
+
+struct VisibleBlock
+{
+    uint16 firstVertex;
+    uint16 count;
+};
+
+struct MOVB
+{
+    CHUNK hdr;
+    VisibleBlock visible_blocks[ hdr.size / sizeof(VisibleBlock) ];
+};

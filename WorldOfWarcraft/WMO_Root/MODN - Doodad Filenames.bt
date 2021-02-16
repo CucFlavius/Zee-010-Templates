@@ -1,0 +1,35 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// List of filenames for M2 (mdx) models that appear in this WMO.
+// A block of zero-padded, zero-terminated strings. There are nModels file names in this list. They have to be .MDX!
+
+struct MODN
+{
+    CHUNK hdr;
+    local long startPos = FTell();
+    local long currentPos = FTell();
+    local byte buffer = 0;
+
+    while (currentPos < startPos + hdr.size)
+    {
+        STRING s;
+        
+        buffer = 0;
+        while (buffer == 0)
+        {
+            buffer = ReadByte();
+            FSkip(1);
+        }
+        FSkip(-1);
+
+        currentPos = FTell();
+    }
+};

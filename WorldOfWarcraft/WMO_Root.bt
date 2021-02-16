@@ -1,0 +1,41 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+#include "WorldOfWarcraft/WMO_Root/MVER - Version.bt"
+#include "WorldOfWarcraft/WMO_Root/MOHD - Header.bt"
+#include "WorldOfWarcraft/WMO_Root/MOTX - Texture Filenames.bt"
+#include "WorldOfWarcraft/WMO_Root/MOMT - Materials.bt"
+#include "WorldOfWarcraft/WMO_Root/MOUV - UV Animation.bt"
+#include "WorldOfWarcraft/WMO_Root/MOGN - Group Names.bt"
+#include "WorldOfWarcraft/WMO_Root/MOGI - Group Info.bt"
+#include "WorldOfWarcraft/WMO_Root/MOSB - Skybox Filename.bt"
+#include "WorldOfWarcraft/WMO_Root/MOSI - Skybox FileID.bt"
+#include "WorldOfWarcraft/WMO_Root/MOPV - Portal Vertices.bt"
+#include "WorldOfWarcraft/WMO_Root/MOPT - Portal Information.bt"
+#include "WorldOfWarcraft/WMO_Root/MOPR - Portal References.bt"
+#include "WorldOfWarcraft/WMO_Root/MOVV - Visible Block Vertices.bt"
+#include "WorldOfWarcraft/WMO_Root/MOVB - Visible Block List.bt"
+#include "WorldOfWarcraft/WMO_Root/MOLT - Lights.bt"
+#include "WorldOfWarcraft/WMO_Root/MODS - Doodad Sets.bt"
+#include "WorldOfWarcraft/WMO_Root/MODN - Doodad Filenames.bt"
+#include "WorldOfWarcraft/WMO_Root/MODI - Doodad FileIDs.bt"
+#include "WorldOfWarcraft/WMO_Root/MODD - Doodad Info.bt"
+#include "WorldOfWarcraft/WMO_Root/MFOG - Fog Info.bt"
+#include "WorldOfWarcraft/WMO_Root/MCVP - Convex Volume Planes.bt"
+#include "WorldOfWarcraft/WMO_Root/GFID - Group FileIDs.bt"
+#include "WorldOfWarcraft/WMO_Root/MDDI - [Unknown].bt"
+#include "WorldOfWarcraft/WMO_Root/MPVD - Particulate Volumes.bt"
+#include "WorldOfWarcraft/WMO_Root/MAVG - Global Ambient Volumes.bt"
+#include "WorldOfWarcraft/WMO_Root/MAVD - Ambient Volumes.bt"
+#include "WorldOfWarcraft/WMO_Root/MBVD - Ambient Box Volumes.bt"
+#include "WorldOfWarcraft/WMO_Root/MFED - Fog Extra Data.bt"
+#include "WorldOfWarcraft/WMO_Root/MGI2 - Group Info V2.bt"
+#include "WorldOfWarcraft/WMO_Root/MNLD - New Light Definitions.bt"
+#include "WorldOfWarcraft/WMO_Root/MDDL - Detail Doodad Layers.bt"

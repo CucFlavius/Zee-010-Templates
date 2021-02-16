@@ -1,0 +1,35 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// List of group names for the groups in this map object.
+
+struct MOGN
+{
+    CHUNK hdr;
+    FSkip(2);
+
+    local long startPos = FTell();
+    local long currentPos = FTell();
+
+    while (currentPos < startPos + hdr.size - 2)
+    {
+        STRING s;
+        currentPos = FTell();
+    }
+};
+
+// A contiguous block of zero-terminated strings. 
+// The names are purely informational except for "antiportal". 
+// The names are referenced from MOGI and MOGP.
+
+// There are not always nGroups entries in this chunk as it contains extra empty strings and descriptive names.
+// There are also empty entries. The names are indeed referenced in MOGI, and both the name and a descriptive name are referenced in the group file header (2 firsts uint16 of MOGP).
+
+// Looks like ASCII but is not: BWL e.g. has ’, so probably UTF-8.

@@ -1,0 +1,41 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// Flags //
+typedef struct {
+    //ubyte length <hidden = true>;
+    uint name : 1 <name = "name", comment = "comment">;
+    uint name : 1 <name = "name", comment = "comment">;
+    uint name : 1 <name = "name", comment = "comment">;
+    uint name : 1 <name = "name", comment = "comment">;
+    uint name : 1 <name = "name", comment = "comment">;
+    uint name : 1 <name = "name", comment = "comment">;
+    uint name : 1 <name = "name", comment = "comment">;
+    uint name : 1 <name = "name", comment = "comment">;
+} MODEL_FLAGS <name = "ModelFlags", size = 4>;
+
+// Enum // 
+enum<uint> BLENDINGMODE {
+    // Src Color - Dest Color, Src Alpha - Dest Alpha
+    Blend_Opaque = 0,
+    Blend_AlphaKey = 1,
+    Blend_Alpha = 2,
+    Blend_Additive = 3,
+    Blend_Modulate = 4,
+    Blend_Modulate2x = 5,
+    Blend_ModulateAdditive = 6,
+    Blend_InvertedSourceAlphaAdditive = 7,
+    Blend_InvertedSourceAlphaOpaque = 8,
+    Blend_SourceAlphaOpaque = 9,
+    Blend_NoAlphaAdditive = 10,
+    Blend_ConstantAlpha = 11,
+    Blend_Screen = 12,
+    Blend_BlendAdditive = 13
+};

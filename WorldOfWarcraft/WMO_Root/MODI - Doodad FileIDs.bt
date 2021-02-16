@@ -1,0 +1,20 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+// This section only applies to versions ≥ Battle (8.1.0.27826). Replaces filenames in MODN.
+
+struct MODI
+{
+    CHUNK hdr;
+    uint32 doodadFileIDs[hdr.size / 4];
+};

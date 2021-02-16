@@ -1,0 +1,78 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+enum <UBYTE> Block_Max_Size{ bms64KB=4, bms256KB=5, bms1MB=6, bms4MB=7 };
+
+typedef struct  Header_Flags {
+        UBYTE PresetDictionary      : 1;      
+        UBYTE Reserved              : 1 <hidden=true>;
+        UBYTE ContentChecksum       : 1;
+        UBYTE ContentSize           : 1;
+        UBYTE BlockChecksum         : 1;
+        UBYTE BlockIndependence     : 1;
+        UBYTE Version               : 2;
+};
+
+typedef struct  Header_BlockDescriptor {
+        BitfieldDisablePadding();
+        UBYTE Reserved                          : 4 <hidden=true>;
+        Block_Max_Size BlockMaximumSize    : 3;
+        UBYTE Reserved                          : 1 <hidden=true>;
+};
+
+typedef struct Header {
+    SetBackColor(cLtGreen);
+    union {
+        UBYTE Value;
+        UBYTE Bin <format=binary>;
+        Header_Flags FlagData;
+    } Flags ;
+
+    union {
+        UBYTE Value;
+        UBYTE Bin <format=binary>;
+        Header_BlockDescriptor Descriptor;
+    } BlockDescriptor ;
+    
+    if (Flags.FlagData.ContentSize > 0)
+        UINT64 ContentSize;
+
+    if (Flags.FlagData.PresetDictionary > 0)
+        UINT32 DictionaryID;    
+    
+    UBYTE   HeaderChecksum;
+};
+
+
+//start parsing here
+
+//everything is in little endian
+LittleEndian();
+
+typedef struct (int compressedSize)
+{
+    CHUNKID zzz4;
+    uint uncompressedSize;
+    Header header;
+    byte data[compressedSize];
+    
+    if ( header.Flags.FlagData.ContentChecksum )
+    {
+      //UINT32 ContentChecksum <bgcolor=cLtGreen>;
+    }
+} ZZZ4;
+
+
+//ZZZ4 test(FileSize());

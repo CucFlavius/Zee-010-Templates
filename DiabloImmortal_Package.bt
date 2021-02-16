@@ -1,0 +1,27 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+#include "Lib/Common.bt"
+
+struct FILE
+{
+    uint strSize;
+    STRINGc UUID(strSize);
+    int fileSize;
+    char hash[32];
+    byte fileData[fileSize];
+};
+
+while(FTell() < FileSize())
+{
+    FILE file<optimize=false>;
+}

@@ -1,0 +1,40 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+struct TEXTURE (int index)
+{
+    byte unk_gap_000[2];    // -1, -1 -> not set? 
+                            // 1, 0 - > ?
+                            // 2, 0 -> ?
+                            // 5, 0 -> ?
+                            // 6, 0 -> ?
+    byte textureType;       // This may actually be a reference to assetTextureXY, found in model2display.tbl.
+                            // 0 - diffuse, 1 - normal, 2 - FX(?)
+    byte unk_003;
+    int32 unk_value_004;    // type?
+    byte unk_gap_008[8];    // some sort of hash
+    M3ARRAY texturePathArray;    // in characters, name is in wchar16 (2byte Unicode characters)
+
+    FSeek(headerSize + header.textures.offset + (header.textures.elements * 32) + texturePathArray.offset);
+    wchar_t texturePath[texturePathArray.elements];
+    FSeek(headerSize + header.textures.offset + ((index + 1)* 32));
+};
+
+struct TEXTURES (HEADER &header)
+{
+    local int i;
+    for( i = 0; i < header.textures.elements; i++ )
+    {
+        TEXTURE texture(i);
+    }
+};

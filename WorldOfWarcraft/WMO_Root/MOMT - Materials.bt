@@ -1,0 +1,261 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// Materials used in this map object, 64 bytes per texture (BLP file).
+
+enum<uint> SHADER
+{
+    Diffuse = 0,                    // Simple diffuse shading                               MapObjDiffuse_T1            MapObjDiffuse
+    Specular = 1,                   // Specularity shading                                  MapObjSpecular_T1           MapObjSpecular
+    Metal = 2,                      // Metallic shading                                     MapObjSpecular_T1           MapObjMetal
+    Env = 3,                        // Environment mapped shading                           MapObjDiffuse_T1_Refl       MapObjEnv
+    Opaque = 4,                     // Opaque shading                                       MapObjDiffuse_T1            MapObjOpaque
+    EnvMetal = 5,                   // Environment mapped metallic shading                  MapObjDiffuse_T1_Refl       MapObjEnvMetal
+    TwoLayerDiffuse = 6,            // Two-layer diffuse shading                            MapObjDiffuse_Comp          MapObjTwoLayerDiffuse
+    TwolayerEnvMetal = 7,           // Two-layer environment mapped metallic shading        MapObjDiffuse_T1            MapObjTwoLayerEnvMetal
+    TwoLayerTerrain = 8,            // Two-layer terrain shading                            MapObjDiffuse_Comp_Terrain  MapObjTwoLayerTerrain       automatically adds _s in the filename of the second texture
+    DiffuseEmissive = 9,            // Emissive diffuse shading                             MapObjDiffuse_Comp          MapObjDiffuseEmissive
+    WaterWindow = 10,               // Water window shading                                 FFXWaterWindow              FFXWaterWindow              It's FFX instead of normal material. SMOMaterial::SH_WATERWINDOW -- automatically generates MOTA
+    MaskedEnvMetal = 11,            // Masked environment mapped metallic shading           MapObjDiffuse_T1_Env_T2     MapObjMaskedEnvMetal
+    EnvMetalEmissive = 12,          // Environment mapped emissive metallic shading         MapObjDiffuse_T1_Env_T2     MapObjEnvMetalEmissive
+    TwoLayerDiffuseOpaque = 13,     // Two-layer diffuse opaque shading                     MapObjDiffuse_Comp          MapObjTwoLayerDiffuseOpaque
+    SubmarineWindow = 14,           //                                                      FFXSubmarineWindow          FFXSubmarineWindow          It's FFX instead of normal material. SMOMaterial::SH_SUBMARINEWINDOW -- automatically generates MOTA
+    TwoLayerDiffuseEmissive = 15,   // Two-layer diffuse emissive shading                   MapObjDiffuse_Comp          MapObjTwoLayerDiffuseEmissive
+    DiffuseTerrain = 16,            // Diffuse terrain shading                              MapObjDiffuse_T1            MapObjDiffuse               SMOMaterial::SH_DIFFUSE_TERRAIN -- "Blend Material": used for blending WMO with terrain (dynamic blend batches)
+    AdditiveMaskedEnvMetal = 17,    // Additive masked environment mapped metallic shading  MapObjDiffuse_T1_Env_T2     MapObjAdditiveMaskedEnvMetal
+    TwoLayerDiffuseMod2x = 18,      //                                                      MapObjDiffuse_CompAlpha     MapObjTwoLayerDiffuseMod2x
+    TwoLayerDiffuseMod2xNA = 19,    //                                                      MapObjDiffuse_Comp          MapObjTwoLayerDiffuseMod2xNA
+    TwoLayerDiffuseAlpha = 20,      //                                                      MapObjDiffuse_CompAlpha     MapObjTwoLayerDiffuseAlpha
+    Lod = 21,                       //                                                      MapObjDiffuse_T1            MapObjLod
+    Parallax = 22,                  //                                                      MapObjParallax              MapObjParallax              SMOMaterial::SH_PARALLAX_ICE
+};
+
+enum<uint> BLENDINGMODE {
+    // Src Color - Dest Color, Src Alpha - Dest Alpha
+    Blend_Opaque = 0,                       // GL_ONE - GL_ZERO, GL_ONE - GL_ZERO
+    Blend_AlphaKey = 1,                     // GL_ONE - GL_ZERO, GL_ONE - GL_ZERO
+    Blend_Alpha = 2,                        // GL_SRC_ALPHA - GL_ONE_MINUS_SRC_ALPHA, GL_ONE - GL_ONE_MINUS_SRC_ALPHA
+    Blend_Additive = 3,                     // GL_SRC_ALPHA - GL_ONE, GL_ZERO - GL_ONE
+    Blend_Modulate = 4,                     // GL_DST_COLOR - GL_ZERO, GL_DST_ALPHA - GL_ZERO
+    Blend_Modulate2x = 5,                   // GL_DST_COLOR - GL_SRC_COLOR, GL_DST_ALPHA - GL_SRC_ALPHA
+    Blend_ModulateAdditive = 6,             // GL_DST_COLOR - GL_ONE, GL_DST_ALPHA - GL_ONE
+    Blend_InvertedSourceAlphaAdditive = 7,  // GL_ONE_MINUS_SRC_ALPHA - GL_ONE, GL_ONE_MINUS_SRC_ALPHA - GL_ONE
+    Blend_InvertedSourceAlphaOpaque = 8,    // GL_ONE_MINUS_SRC_ALPHA - GL_ZERO, GL_ONE_MINUS_SRC_ALPHA - GL_ZERO
+    Blend_SourceAlphaOpaque = 9,            // GL_SRC_ALPHA - GL_ZERO, GL_SRC_ALPHA - GL_ZERO
+    Blend_NoAlphaAdditive = 10,             // GL_ONE - GL_ONE, GL_ZERO - GL_ONE
+    Blend_ConstantAlpha = 11,               // GL_CONSTANT_ALPHA - GL_ONE_MINUS_CONSTANT_ALPHA, GL_CONSTANT_ALPHA - GL_ONE_MINUS_CONSTANT_ALPHA
+                                            // GL_CONSTANT_COLOR = D3DBLEND_BLENDFACTOR; GL_ONE_MINUS_CONSTANT_COLOR = D3DBLEND_INVBLENDFACTOR; GL_CONSTANT_ALPHA = D3DBLEND_BLENDFACTOR; GL_ONE_MINUS_CONSTANT_ALPHA = D3DBLEND_INVBLENDFACTOR;
+    Blend_Screen = 12,                      // GL_ONE_MINUS_DST_COLOR - GL_ONE, GL_ONE - GL_ZERO
+    Blend_BlendAdditive = 13                // GL_ONE - GL_ONE_MINUS_SRC_ALPHA, GL_ONE - GL_ONE_MINUS_SRC_ALPHA
+};
+
+struct FLAGS {
+    uint F_UNLIT : 1 <name = "F_UNLIT", comment = "Disable lighting logic in shader (but can still use vertex colors)">;
+    uint F_UNFOGGED : 1 <name = "F_UNFOGGED", comment = "Disable fog shading (rarely used)">;
+    uint F_UNCULLED : 1 <name = "F_UNCULLED", comment = "Two-sided">;
+    uint F_EXTLIGHT : 1 <name = "F_EXTLIGHT", comment = "Darkened, the intern face of windows are flagged 0x08">;
+    uint F_SIDN : 1 <name = "F_SIDN", comment = "(bright at night, unshaded) (used on windows and lamps in Stormwind, for example) (see emissive color)">;
+    uint F_WINDOW : 1 <name = "F_WINDOW", comment =  "lighting related (flag checked in CMapObj::UpdateSceneMaterials)">;
+    uint F_CLAMP_S : 1 <name = "F_CLAMP_S", comment = "tex clamp S (force this material's textures to use clamp s addressing) //TextureWrappingClamp">;
+    uint F_CLAMP_T : 1 <name = "F_CLAMP_T", comment = "tex clamp T (force this material's textures to use clamp t addressing) //TextureWrappingRepeat">;
+    uint flag_0x100 : 1 <name = "flag_0x100", comment = "Unknown">;
+};
+
+struct MATERIAL
+{
+	FLAGS flags;		
+	SHADER shaderType;	        // Index into CMapObj::s_wmoShaderMetaData. See below (shader types).	
+	BLENDINGMODE blendMode;     // Blending: see https://wowdev.wiki/Rendering#EGxBlend
+	uint32 texture0;		    // offset into MOTX; ≥ Battle (8.1.0.27826) No longer references MOTX but is a filedata id directly.
+	BGRA32 sidnColor;           // emissive color; see below (emissive color) 
+	BGRA32 frameSidnColor;      // sidn emissive color; set at runtime; gets sidn-manipulated emissive color; see below (emissive color)
+	uint32 texture1;		    // Environment Texture; envNameIndex; offset into MOTX
+	BGRA32 diffColor;           // diffuse color; CWorldView::GatherMapObjDefGroupLiquids(): geomFactory->SetDiffuseColor((CImVectorⁱ*)(smo+7));
+                                // environment textures don't need flags
+    uint32 ground_type;         // foreign_keyⁱ< uint32_t, &TerrainTypeRec::m_ID > ground_type; // according to CMapObjDef::GetGroundType; Used for footstep print and sound
+    uint32 texture2;            // offset into MOTX
+    BGRA32 color_2;
+    FLAGS flags2;
+    byte runtimeData[16];
+};
+
+struct MOMT
+{
+    CHUNK hdr;
+    MATERIAL materials[ hdr.size / sizeof(MATERIAL) ];
+};
+
+// texture_1, 2 and 3 are start positions for texture filenames in the MOTX data block ; texture_1 for the first texture, texture_2 for the second (see shaders), etc. texture_1 defaults to "createcrappygreentexture.blp".
+// If a texture isn't used the its start position seems to point to a chains of 4 \0ᵘ
+
+
+// color_2 is diffuse color : CWorldView::GatherMapObjDefGroupLiquids(): geomFactory->SetDiffuseColor((CImVectorⁱ*)(smo+7));
+// The flags might used to tweak alpha testing values, I'm not sure about it, but some grates and flags in IF seem to require an alpha testing threshold of 0, at other places this is greater than 0.
+
+// Texture addressing //
+// By default, textures used by WMO materials are assigned an addressing mode of EGxTexWrapMode::GL_REPEAT (ie wrap mode).
+// SMOMaterial flags F_CLAMP_S and F_CLAMP_T can override this default to clamp mode for the S and T dimensions, respectively.
+
+// Emissive color //
+// The sidnColor CImVectorⁱ at offset 0x10 is used with the SIDN (self-illuminated day night) scalar from CDayNightObject to light exterior window glows (see flag 0x10 above).
+// The scalar is interpolated out of a static table in the client, based on the time of day.
+// The color value eventually is copied into offset 0x14 (frameSidnColor) after being manipulated by the SIDN scalar. This manipulation occurs in CMapObj::UpdateMaterials.
+
+// Shader types (12340) //
+// Wrath of the Lich King only uses shaders 0 to 6. See below for more info on those.
+
+// Shader types (15464) //
+/*
+ Depending on the shader, a different amount of textures is required. If there aren't enough filenames given, it defaults to Opaque (with one filename). More filenames than required are just ignored.
+ Data is from 15464.
+    ---------------------------------------------------------------------------
+    value	name	                textures    textures    texcoord    color
+                                    without     with        count       count
+                                    shader	  	shader
+    ---------------------------------------------------------------------------
+    0	    Diffuse	                1	        1	        1	        1
+    1	    Specular	            1	        1	        1	        1
+    2	    Metal	                1	        1	        1	        1
+    3	    Env	                    1	        2	        1	        1
+    4	    Opaque	                1	        1	        1	        1
+    5	    EnvMetal	            1	        2	        1	        1
+    6	    TwoLayerDiffuse	        1	        2	        2	        2
+    7	    TwoLayerEnvMetal	    1	        3	        2	        2
+    8	    TwoLayerTerrain	        1	        2	        1	        2	    automatically adds _s in the filename of the second texture
+    9	    DiffuseEmissive	        1	        2	        2	        2
+    10	    WaterWindow	            1	        1	        1	        1	    SMOMaterial::SH_WATERWINDOW -- Seems to be invalid. Does something with MOTA (tangents).
+    11	    MaskedEnvMetal	        1	        3	        2	        2
+    12	    EnvMetalEmissive	    1	        3	        2	        2
+    13	    TwoLayerDiffuseOpaque	1	        2	        2	        2
+    14	    TwoLayerDiffuseEmissive	1	        1	        1	        1	    SMOMaterial::SH_SUBMARINEWINDOW -- Seems to be invalid. Does something with MOTA (tangents).
+    15	    DiffuseTerrain	        1	        2	        2	        2
+    16	    Diffuse	                1	        1	        1	        1	    SMOMaterial::SH_DIFFUSE_TERRAIN -- "Blend Material": used for blending WMO with terrain (dynamic blend batches)
+    --------------------------------------------------------------------------
+Tex coord and color count decide vertex buffer format: EGxVertexBufferFormat_PNC2T2
+*/
+
+// Shader types (18179) //
+/*
+    ---------------------------------------------------------------------------
+    value - name                    #textures	#textures  	texcoord    color 
+                                    without     with        count       count
+                                    shader      shader
+    ---------------------------------------------------------------------------
+    0 - Diffuse	                    1	        1	        1	        1
+    1 - Specular	                1	        1	        1	        1
+    2 - Metal	                    1	        1	        1	        1
+    3 - Env	                        1	        2	        1	        1
+    4 - Opaque	                    1	        1	        1	        1
+    5 - EnvMetal	                1	        2	        1	        1
+    6 - TwoLayerDiffuse	            1	        2	        2	        2
+    7 - TwoLayerEnvMetal	        1	        3	        2	        2
+    8 - TwoLayerTerrain	            1	        2	        1	        2	    automatically adds _s in the filename of the second texture
+    9 - DiffuseEmissive	            1	        2	        2	        2
+    10 - waterWindow	            1	        1	        1	        1	    SMOMaterial::SH_WATERWINDOW -- automatically generates MOTA
+    11 - MaskedEnvMetal	            1	        3	        2	        2
+    12 - EnvMetalEmissive	        1	        3	        2	        2
+    13 - TwoLayerDiffuseOpaque	    1	        2	        2	        2
+    14 - submarineWindow	        1	        1	        1	        1	    SMOMaterial::SH_SUBMARINEWINDOW -- automatically generates MOTA
+    15 - TwoLayerDiffuseEmissive	1	        2	        2	        2
+    16 - DiffuseTerrain	            1	        1	        1	        1	    SMOMaterial::SH_DIFFUSE_TERRAIN -- "Blend Material": used for blending WMO with terrain (dynamic blend batches)
+    17 - AdditiveMaskedEnvMetal
+    ---------------------------------------------------------------------------
+*/
+
+// Shader types (26522) //
+/*
+---------------------------------------------------------------------------
+value - name	                vertex shader	            pixel shader
+---------------------------------------------------------------------------
+0 - Diffuse	                    MapObjDiffuse_T1	        MapObjDiffuse
+1 - Specular	                MapObjSpecular_T1	        MapObjSpecular
+2 - Metal	                    MapObjSpecular_T1	        MapObjMetal
+3 - Env	                        MapObjDiffuse_T1_Refl	    MapObjEnv
+4 - Opaque	                    MapObjDiffuse_T1	        MapObjOpaque
+5 - EnvMetal	                MapObjDiffuse_T1_Refl	    MapObjEnvMetal
+6 - TwoLayerDiffuse	            MapObjDiffuse_Comp	        MapObjTwoLayerDiffuse
+7 - TwoLayerEnvMetal	        MapObjDiffuse_T1	        MapObjTwoLayerEnvMetal
+8 - TwoLayerTerrain	            MapObjDiffuse_Comp_Terrain	MapObjTwoLayerTerrain	            automatically adds _s in the filename of the second texture
+9 - DiffuseEmissive	            MapObjDiffuse_Comp	        MapObjDiffuseEmissive
+10 - waterWindow	            FFXWaterWindow	            FFXWaterWindow	                    It's FFX instead of normal material. SMOMaterial::SH_WATERWINDOW -- automatically generates MOTA
+11 - MaskedEnvMetal	            MapObjDiffuse_T1_Env_T2	    MapObjMaskedEnvMetal
+12 - EnvMetalEmissive	        MapObjDiffuse_T1_Env_T2	    MapObjEnvMetalEmissive
+13 - TwoLayerDiffuseOpaque	    MapObjDiffuse_Comp	        MapObjTwoLayerDiffuseOpaque
+14 - submarineWindow	        FFXSubmarineWindow	        FFXSubmarineWindow	                It's FFX instead of normal material. SMOMaterial::SH_SUBMARINEWINDOW -- automatically generates MOTA
+15 - TwoLayerDiffuseEmissive	MapObjDiffuse_Comp	        MapObjTwoLayerDiffuseEmissive
+16 - DiffuseTerrain	            MapObjDiffuse_T1	        MapObjDiffuse	                    SMOMaterial::SH_DIFFUSE_TERRAIN -- "Blend Material": used for blending WMO with terrain (dynamic blend batches)
+17 - AdditiveMaskedEnvMetal	    MapObjDiffuse_T1_Env_T2	    MapObjAdditiveMaskedEnvMetal
+18 - TwoLayerDiffuseMod2x	    MapObjDiffuse_CompAlpha	    MapObjTwoLayerDiffuseMod2x
+19 - TwoLayerDiffuseMod2xNA	    MapObjDiffuse_Comp	        MapObjTwoLayerDiffuseMod2xNA
+20 - TwoLayerDiffuseAlpha	    MapObjDiffuse_CompAlpha	    MapObjTwoLayerDiffuseAlpha
+21 - Lod	                    MapObjDiffuse_T1	        MapObjLod
+22 - Parallax	                MapObjParallax	            MapObjParallax	                    SMOMaterial::SH_PARALLAX_ICE
+---------------------------------------------------------------------------
+*/
+
+// Create Material //
+/*
+void CMapObj::CreateMaterial (unsigned int materialId)
+{
+  assert (m_materialCount);
+  assert (m_materialTexturesList);
+  assert (materialId < m_materialCount);
+
+  if (++m_materialTexturesList[materialId].refcount <= 1)
+  {
+    SMOMaterial* material = &m_smoMaterials[materialId];
+
+    const char* texNames[3];
+    texNames[0] = &m_textureFilenamesRaw[material->firstTextureOffset];
+    texNames[1] = &m_textureFilenamesRaw[material->secondTextureOffset];
+    texNames[2] = &m_textureFilenamesRaw[material->thirdTextureOffset];
+    if ( *texNames[0] )
+      texNames[0] = "createcrappygreentexture.blp";
+
+    assert (material->shader < SMOMaterial::SH_COUNT);
+
+    int const textureCount
+      ( CShaderEffect::s_enableShaders
+      ? s_wmoShaderMetaData[material->shader].texturesWithShader
+      : s_wmoShaderMetaData[material->shader].texturesWithoutShader
+      );
+
+    int textures_set (0);
+
+    for (; textures_set < textureCount; ++textures_set)
+    {
+      if (!texNames[textures_set])
+      {
+        material->shader = MapObjOpaque;
+        textures_set = 1;
+        break;
+      }
+    }
+
+    for (; textures_set < 3; ++textures_set)
+    {
+      texNames[textures_set] = nullptr;
+    }
+
+    if (material->shader == MapObjTwoLayerTerrain && texNames[1])
+    {
+      texNames[1] = insert_specular_suffix (texNames[1]);
+    }
+
+    int flags (std::max (m_field_2C, 12));
+
+    const char* parent_name (m_field_9E8 & 1 ? m_filename : nullptr);
+
+    m_materialTexturesList[materialId]->textures[0] = texNames[0] ? CMap::CreateTexture (texNames[0], parent_name, flags) : nullptr;
+    m_materialTexturesList[materialId]->textures[1] = texNames[1] ? CMap::CreateTexture (texNames[1], parent_name, flags) : nullptr;
+    m_materialTexturesList[materialId]->textures[2] = texNames[2] ? CMap::CreateTexture (texNames[2], parent_name, flags) : nullptr;
+  }
+}
+*/

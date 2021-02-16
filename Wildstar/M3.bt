@@ -1,0 +1,19 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#include "Wildstar/M3/Header.bt"
+#include "Wildstar/M3/Bones.bt"
+#include "Wildstar/M3/Textures.bt"
+#include "Wildstar/M3/Materials.bt"
+#include "Wildstar/M3/Model2Displays.bt"
+#include "Wildstar/M3/Geometries.bt"

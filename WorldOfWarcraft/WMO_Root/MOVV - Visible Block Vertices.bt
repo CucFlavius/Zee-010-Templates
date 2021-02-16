@@ -1,0 +1,23 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+// Chunk is since ≥ Battle (8.1.0.28294) optional
+
+// Visible block vertices, 0xC byte per entry.
+// Just a list of vertices that corresponds to the visible block list.
+
+struct MOVV
+{
+    CHUNK hdr;
+    VECTOR3 visible_block_vertices[ hdr.size/12 ];
+};

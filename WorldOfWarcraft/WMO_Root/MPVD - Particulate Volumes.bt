@@ -1,0 +1,20 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// This section only applies to versions ≥ Battle (8.3.0.32044). Could have been added earlierᵘ.
+// particulateVolumes
+
+// I can't find this in any wmo
+
+struct MPVD
+{
+    CHUNK hdr;
+    uchar bytes[ hdr.Size ];
+};

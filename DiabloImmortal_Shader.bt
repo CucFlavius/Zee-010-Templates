@@ -1,0 +1,29 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: DiabloImmortal_Shader
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Extracting intact shader code from the shader cache files
+//  Category: Shader
+//------------------------------------------------
+
+#include "DiabloImmortal_ZZZ4.bt"
+
+struct VariantInfo
+{
+    byte checksum[16];
+    int compressedSize;
+};
+
+int variantCount;
+VariantInfo data[variantCount];
+
+local int i;
+for(i = 0; i < variantCount; i++ )
+{
+    int check <hidden = true>;
+    if (check != 0)
+        FSeek(FTell() - 4);
+    ZZZ4 shaderCompressed(data[i].compressedSize - 15);
+}

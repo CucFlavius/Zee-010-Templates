@@ -1,0 +1,36 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+// This section only applies to versions ≥ Legion (7.3.0.24473).
+
+// Optional. If not present, values are {0, 0, 0, 0} for all materials. 
+// If present, has same count as materials, so is repeating those zeros for materials not using any transformation. 
+// Currently, only a translating animation is possible for two of the texture layers.
+
+typedef struct 
+{
+    VECTOR2 translation_speed[2];
+} MapObjectUV;
+
+typedef struct
+{
+    CHUNK hdr;
+    MapObjectUV mapObjUV[hdr.size / 16];
+} MOUV;
+
+// The formula from translation_speed values to TexMtx translation values is along the lines of
+// a_i = translation_i ? 1000 / translation_i : 0
+// b_i = a_i ? (a_i < 0 ? (1 - (time? % -a_i) / -a_i) : ((time? % a_i) / a_i)) : 0
+
+// Note: Until Legion (7.3.0.24920) (i.e. just before release), a missing break; in the engine's loader will overwrite the data for MOGN with that of MOUV if MOUV comes second. 
+// Since MOGN comes second in Blizzard-exported files it works for those without issue.

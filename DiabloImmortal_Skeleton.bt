@@ -1,0 +1,92 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+#include "Lib/Common.bt"
+
+typedef struct
+{
+    byte zero;
+    byte type;       // Data type ? 
+    if (type == 1)
+    {
+        string s;
+    }
+    else if (type == 2)
+    {
+        ushort u;
+        ushort unk;
+    }
+    else
+    {
+        string s;
+    }
+} CELL <name = CellName>;
+
+
+string CellName(CELL &cell)
+{
+    if (cell.type == 1)
+    {
+        if (Strlen(cell.s) > 0)
+            return "String : " + cell.s;
+        else
+            return "String : ";
+    }
+    else if (cell.type == 2)
+    {
+        local string s;
+        SPrintf( s, "%d", cell.u );
+        return "Uint : " + s;
+    }
+    else
+    {
+        return "";
+    }
+}
+
+struct COLUMN_NAME (int count)
+{
+    STRING dataType[count]<optimize=false>;
+};
+
+
+char magic[4];
+int fileSize;
+int zero0;
+ubyte columnCount;
+local uint startPos = FTell() - 1;
+COLUMN_NAME columnNames(columnCount);
+
+byte zero1;
+short position0;
+
+short pos2;
+// Unknown data here, skipping
+byte zero1a;
+//short zero1b;
+BigEndian();
+uint unk0;
+
+ushort position1;
+//ushort unk1;
+//ushort unk2;
+ubyte unks[unk0];
+//ushort unknowns[10];
+
+FSeek(startPos + position0);
+
+LittleEndian();
+CELL cells[columnCount]<optimize = false>;
+//STRINGc columnMajor(12);
+//byte zero3;
+//unkDataType data[countUnknown0 - 1];
+

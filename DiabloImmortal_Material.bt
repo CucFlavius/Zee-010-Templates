@@ -1,0 +1,26 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: DiabloImmortal_Material
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading material data used to render models
+//  Category: Material
+//------------------------------------------------
+#include "Lib/Common.bt"
+
+struct MATERIAL
+{
+    STRINGd materialName;
+    STRINGd shaderName;
+    uint unk1;
+    ushort sizeOfProperties;
+    STRINGc properties(sizeOfProperties);
+};
+
+byte version;                                       // Probably version, always 46 ?
+STRINGc messiah(7);                                 // MESSIAH
+uint one;
+ushort zero;
+byte numberOfMaterials;
+MATERIAL materials[numberOfMaterials]<optimize=false>;

@@ -1,0 +1,860 @@
+//------------------------------------------------
+//      File: M3 MDX file format
+//   Authors: Zee
+//   Version: 4
+//   Purpose: Help parsing the new MDX format used in Warcraft 3 Reforged
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+//-------------------//
+//      globals      //
+//-------------------//
+
+local long endOfMTLS;
+local long endOfGEOS;
+local long endOfGEOA;
+local long endOfBONE;
+local long endOfATCH;
+local long endOfPIVT;
+local long endOfSubmesh;
+local long endOfTextureLayer;
+
+//----------------------------------------------------------------------//
+//      MDLX - Header                                                          //
+//----------------------------------------------------------------------//
+typedef struct {
+    char MDLX[4];       // "MDLX"
+} HEADER;
+
+//----------------------------------------------------------------------//
+//      VERS - file version                                             //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    char VERS[4];   // "VERS"
+    int VERSSize;
+    int version;    // version  = 900 or 1000
+} VERS;
+
+//----------------------------------------------------------------------//
+//      MODL - Model Info                                               //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    char MODL[4];               // "MODL"
+    int MODLSize;               // chunk size
+    char modelName[0x50];        // model name
+    char animationFile[0x104];  // always 0 filled
+    MODELBOUNDS modelBounds;
+    int blendTime;
+} MODL;
+
+//----------------------------------------------------------------------//
+//      SEQS - Animation Sequences                                      //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    char seqName[80];
+    int seqIntStart;       // start time
+    int seqIntEnd;         // end time
+    float seqMoveSpeed;     // movement speed of the entity while playing this animation
+    uint flags;             // &1: non looping
+    float seqRarity;
+    int seqLong;
+    MODELBOUNDS bounds;
+
+} SEQUENCE;
+
+typedef struct {
+    char SEQS[4];                           // "SEQS"
+    int SEQSsize;                           // chunk size
+    local int nSeqs = SEQSsize / 0x84;      // number of animation sequences
+    SEQUENCE sequence[nSeqs];               // animation sequence structs 
+} SEQS;
+
+//----------------------------------------------------------------------//
+//      MTLS - Materials                                                //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    int nunks;
+    int unk1;               // always 1
+    int type;             // always -1
+    local int totalUnks = nunks * 8;
+    byte unk2[totalUnks];
+} KMTA;
+
+typedef struct {
+    int nunks;
+    int unk1;               
+    int type;  
+    local int totalUnks = nunks * 8;
+    byte unk2[totalUnks];       
+} KMTE;
+
+typedef struct {
+    int textureLayerSize;   // including this int
+    endOfTextureLayer = FTell() + textureLayerSize - 4;
+    int shade;
+    int unk;
+    int texture;
+    int unk2;                       // always -1
+    float alpha;
+    int unk3[2];                   // big number always the same
+    
+    if (vers.version == 1000)
+    {
+        int unk4[3];                // big number always the same as unk3
+        int unk5[2];                // 0 filled
+    }
+
+    while(FTell() < endOfTextureLayer)
+    {
+        CHUNKID chunkID;
+        switch (chunkID.id)
+        {
+            case "KMTA":
+                KMTA kmta;          // alpha keys
+            break;
+            case "KMTE":
+                KMTE kmte;
+            break;
+            default:
+            break;
+        }
+    }
+} TEXTURELAYER;
+
+typedef struct {
+    char LAYS[4];
+    int numberOfLAYS;
+    TEXTURELAYER textureLayers[numberOfLAYS] <optimize=false>;
+} LAYS;
+
+typedef struct {
+    int sizeOfLayer;        // including the int
+    int priorityPlane;
+    int flags;
+    char shaderName[80];    // shader name
+} SHADERREF;
+
+typedef struct {
+    local long start = FTell();
+    char MTLS[4];                           // "MTLS"
+    int MTLSSize;                           // chunk size
+    endOfMTLS = start + MTLSSize;
+    while (FTell() < endOfMTLS)
+    {
+        SHADERREF shaderRef;        // reference to the shader
+        LAYS lays;                  // subchunk layers
+    }
+} MTLS;
+
+
+//----------------------------------------------------------------------//
+//      TEXS - Textures                                                 //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    char texturePath[268];
+} TEXTUREPATH;
+
+typedef struct {
+    char TEXS[4];                               // "TEXS"
+    int TEXSSize;                               // chunk size
+    local int totalTextures = TEXSSize / 268;   // total number of textures
+    TEXTUREPATH texturepaths[totalTextures];    // texture paths
+} TEXS;
+
+
+//----------------------------------------------------------------------//
+//      GEOS - Geometry                                                 //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    char VRTX[4];
+    int numberOfVerts;
+    VECTOR3 vertices[numberOfVerts];
+} VRTX;
+
+typedef struct {
+    char NRMS[4];
+    int numberOfNormals;
+    VECTOR3 normals[numberOfNormals];
+} NRMS;
+
+typedef struct {
+    char PTYP[4];
+    int numberOfPTYP;
+    byte unk[(numberOfPTYP + 1) * 8];
+} PTYP;
+
+typedef struct {
+    char PVTX[4];
+    int numberOfIndices;
+    short indices[numberOfIndices];
+} PVTX;
+
+typedef struct {
+    char GNDX[4];
+    int numberOfVertexGroups;
+    if (numberOfVertexGroups > 0)
+        byte vertexGroup[numberOfVertexGroups];
+} GNDX;
+
+typedef struct {
+    char MTGC[4];
+    int numberOfMatricesGroupCount;
+    int matrixGroupCount[numberOfMatricesGroupCount];
+} MTGC;
+
+typedef struct {
+    char MATS[4];
+    int numberOfBoneMatrices;
+    int boneMatrices[numberOfBoneMatrices];
+    int submeshID;                              // mesh ID, used for correctly assigning materials
+    int submeshID1;                             // same ID
+    int submeshID2;                             // same ID
+    int submeshID3;                             // same ID
+    char meshName[80];                          // mesh name
+    byte unk[32];
+} MATS;
+
+typedef struct {
+    char TANG[4];
+    int numberOfTangents;
+    VECTOR4 tangents[numberOfTangents];
+} TANG;
+
+typedef struct{
+    byte boneIndex0;
+    byte boneIndex1;
+    byte boneIndex2;
+    byte boneIndex3;
+    byte boneWeight0;
+    byte boneWeight1;
+    byte boneWeight2;
+    byte boneWeight3;
+} BONEWEIGHT;
+
+typedef struct {
+    char SKIN[4];
+    int numberOfSkins;
+    BONEWEIGHT boneWeight[numberOfSkins/8];
+} SKIN;
+
+typedef struct {
+    char UVAS[4];
+    int unk;
+} UVAS;
+
+typedef struct {
+    char UVBS[4];
+    int numberOfUVs;
+    VECTOR2 UVs[numberOfUVs];
+} UVBS;
+
+typedef struct {
+    char GEOS[4];                       // chunk name 
+    int GEOSSize;                       // chunk size
+    endOfGEOS = FTell() + GEOSSize; 
+    while (FTell() < endOfGEOS)
+    {
+        int submeshSize;                // including current int
+        endOfSubmesh = FTell() + submeshSize - 4;
+        
+        while (FTell() < endOfSubmesh)
+        {
+            CHUNKID chunkID <hidden = true>;
+            FSeek(FTell() - 4);
+            switch (chunkID.id)
+            {
+                case "VRTX":
+                    VRTX vrtx;          // mesh vertices
+                break;
+                case "NRMS":
+                    NRMS nrms;          // mesh normals
+                break;
+                case "PTYP":
+                    PTYP ptyp;          // primitive type
+                break;
+                case "PVTX":
+                    PVTX pvtx;          // mesh triangles
+                break;
+                case "GNDX":
+                    GNDX gndx;          // vertex groups
+                break;
+                case "MTGC":
+                    MTGC mtgc;          // matrices group count
+                break;
+                case "MATS":
+                    MATS mats;          // bone matrices
+                break;
+                case "TANG":
+                    TANG tang;          // mesh tangents
+                break;
+                case "SKIN":
+                    SKIN skin;          // vertex weights
+                break;
+                case "UVAS":
+                    UVAS uvas;          // ?? always 1, could be second UV layer if >1
+                break;
+                case "UVBS":
+                    UVBS uvbs;          // mesh UVs
+                break;
+                default:
+                break;
+            }
+        }
+    }
+} GEOS;
+
+
+//----------------------------------------------------------------------//
+//      GEOA - Geometry Animation                                       //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    int frame;
+    float state;
+} FRAMESTATE;
+
+typedef struct {
+    int num;
+    int ltype;
+    int unk;
+    FRAMESTATE framestates[num];
+} KGAO;
+
+typedef struct {
+    char GEOA[4];
+    int GEOASize;
+    endOfGEOA = FTell() + GEOASize;
+    while (FTell() < endOfGEOA)
+    {
+        int bytes;
+        int unk1;
+        int unk2;
+        int unk3;
+        int unk4;
+        int unk5;
+        int j;
+        char k;
+        char g;
+        char a;
+        char o;
+        if (k == 'K' && g == 'G' && a == 'A' && o == 'O')
+            KGAO kgao;
+        else
+            FSeek(FTell() - 4);
+    }
+} GEOA;
+
+
+//----------------------------------------------------------------------//
+//      MDLGENOBJECT Animation tracks                                   //
+//----------------------------------------------------------------------//
+typedef struct{
+    int size;                           // size of data for this object
+    local int end = FTell() + size - 4; // stream end position for this object
+    STRING name(80);                    // object name
+    int objectID;                       // index of the object (they're in order anyway 0, 1, 2..)
+    int parentID;                       // object parent index
+    int flags;                          // flags
+    while (FTell() < end)
+    {
+        char ID1; // type of transform
+        char ID2;
+        char ID3;
+        char ID4;
+        if (ID1 == 'K' && ID2 == 'G' && ID3 == 'T' && ID4 == 'R')
+        {
+            KGTR kgtr;      // read translation track
+        }
+        else if (ID1 == 'K' && ID2 == 'G' && ID3 == 'R' && ID4 == 'T')
+        {
+            KGRT kgrt;      // read rotation track
+        }
+        else if (ID1 == 'K' && ID2 == 'G' && ID3 == 'S' && ID4 == 'C')
+        {
+            KGSC kgsc;      // read scale track
+        }
+    }
+} MDLGENOBJECT;
+
+
+//----------------------------------------------------------------------//
+//      BONE - Bone Animation                                           //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    char BONE[4];
+    int BONESize;
+    endOfBONE = FTell() + BONESize;
+    local long end;
+    while (FTell() < endOfBONE)
+    {
+        MDLGENOBJECT boneTrack;
+        uint geosetId;                       // GEOS index or 0xFFFFFFFF if none
+        uint geosetAnimId;                   // GEOA index or 0xFFFFFFFF if none
+    }
+} BONE;
+
+
+//----------------------------------------------------------------------//
+//      ATCH - Bone Attachments                                         //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    char ATCH[4];
+    int ATCHSize;
+    endOfATCH = FTell() + ATCHSize;
+    local long end;
+    while (FTell() < endOfATCH)
+    {
+        int bytes;                          // size of this attachment data
+        end = FTell() + bytes - 4;
+        int unk1;                           // ??
+        STRING name(80);                    // name of the area where it's attached (ex: head)
+        int index;                          // attachment index (starts after last bone)
+        int parent;                         // bone index for this attachment
+        int flags;                           // ??
+        while (FTell() < end)
+        {
+            char ID1; // type of transform
+            char ID2;
+            char ID3;
+            char ID4;
+            if (ID1 == 'K' && ID2 == 'G' && ID3 == 'T' && ID4 == 'R')
+            {
+                KGTR kgtr;      // read translation track
+            }
+            else if (ID1 == 'K' && ID2 == 'G' && ID3 == 'R' && ID4 == 'T')
+            {
+                KGRT kgrt;      // read rotation track
+            }
+            else if (ID1 == 'K' && ID2 == 'G' && ID3 == 'S' && ID4 == 'C')
+            {
+                KGSC kgsc;      // read scale track
+            }
+            else if (ID1 == 'K' && ID2 == 'A' && ID3 == 'T' && ID4 == 'V')
+            {
+                KATV katv;      // read visibility track
+            }          
+            else
+            {
+                SKIP unk3(260); // empty space
+            }         
+        }
+    }    
+} ATCH;
+
+
+//----------------------------------------------------------------------//
+//      PIVT - Bone/Attachment Pivots                                   //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    char PIVT[4];
+    int PIVTSize;
+    endOfPIVT = FTell() + PIVTSize;
+    while (FTell() < endOfPIVT)
+    {
+        VECTOR3 pivot;
+    }
+} PIVT;
+
+
+//----------------------------------------------------------------------//
+//      CORN - Popcorn Emitters                                         //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    uint count;
+    uint lineType;          // TRACK_NO_INTERP = 0x0, TRACK_LINEAR = 0x1, TRACK_HERMITE = 0x2, TRACK_BEZIER = 0x3, NUM_TRACK_TYPES = 0x4
+    uint globalSeqID;       // GLBS index or 0xFFFFFFFF if none
+    TRACKPOINT1 track(lineType)[count] <optimize=false>;
+} KPP1;
+
+typedef struct {
+    uint count;
+    uint lineType;          // TRACK_NO_INTERP = 0x0, TRACK_LINEAR = 0x1, TRACK_HERMITE = 0x2, TRACK_BEZIER = 0x3, NUM_TRACK_TYPES = 0x4
+    uint globalSeqID;       // GLBS index or 0xFFFFFFFF if none
+    TRACKPOINT3 track(lineType)[count] <optimize=false>;
+} KPP3;
+
+typedef struct {
+    char CORN[4];
+    int CORNSize;
+    local long cornEnd = CORNSize + FTell();
+    local long emitterEnd;
+    local long nodeEnd;
+    while (FTell() < cornEnd)
+    {
+        int emitterSize;
+        emitterEnd = emitterSize + FTell() - 4;
+    
+        // node
+        int nodeSize;
+        nodeEnd = nodeSize + FTell() - 4;
+        STRING name(80);
+        int objectID;
+        int parentID;
+        uint flags;
+    
+        while (FTell() < nodeEnd)
+        {
+            char ID1<hidden = true>; // type of transform
+            char ID2<hidden = true>;
+            char ID3<hidden = true>;
+            char ID4<hidden = true>;
+            if (ID1 == 'K' && ID2 == 'G' && ID3 == 'T' && ID4 == 'R')
+            {
+                KGTR kgtr;      // read translation track
+            }
+            else if (ID1 == 'K' && ID2 == 'G' && ID3 == 'R' && ID4 == 'T')
+            {
+                KGRT kgrt;      // read rotation track
+            }
+            else if (ID1 == 'K' && ID2 == 'G' && ID3 == 'S' && ID4 == 'C')
+            {
+                KGSC kgsc;      // read scale track
+            }       
+            else
+            {
+                SKIP unk3(260); // empty space
+            }         
+        }
+    
+        RGBA color0;
+        RGBA color1;
+        STRING path(260);
+        STRING flags(260);
+    
+        while (FTell() < emitterEnd)
+        {
+            char ID1<hidden = true>; // type of transform
+            char ID2<hidden = true>;
+            char ID3<hidden = true>;
+            char ID4<hidden = true>;
+            if (ID1 == 'K' && ID2 == 'P' && ID3 == 'P' && ID4 == 'A')
+            {
+                KPP1 kppa;      // alpha
+            }
+            else if (ID1 == 'K' && ID2 == 'P' && ID3 == 'P' && ID4 == 'C')
+            {
+                KPP3 kppc;      // color
+            }
+            else if (ID1 == 'K' && ID2 == 'P' && ID3 == 'P' && ID4 == 'E')
+            {
+                KPP1 kppe;      // emission rate
+            }
+            else if (ID1 == 'K' && ID2 == 'P' && ID3 == 'P' && ID4 == 'L')
+            {
+                KPP1 kppl;      // lifespan
+            }
+            else if (ID1 == 'K' && ID2 == 'P' && ID3 == 'P' && ID4 == 'S')
+            {
+                KPP1 kpps;      // speed
+            } 
+            else if (ID1 == 'K' && ID2 == 'P' && ID3 == 'P' && ID4 == 'V')
+            {
+                KPP1 kppv;      // visibility
+            }          
+            else
+            {
+                // unknown animation track
+            }         
+        }
+    }
+
+} CORN;
+
+
+//----------------------------------------------------------------------//
+//      RIBB - ???                                                      //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    char RIBB[4];
+    int RIBBSize;
+    FSeek(FTell() + RIBBSize);
+    // soon tm
+} RIBB;
+
+
+//----------------------------------------------------------------------//
+//      CAMS - Cameras                                                  //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    char CAMS[4];
+    int CAMSSize;
+    FSeek(FTell() + CAMSSize);
+    // soon tm
+} CAMS;
+
+
+//----------------------------------------------------------------------//
+//      EVTS - Events                                                   //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    char EVTS[4];
+    int EVTSSize;
+    FSeek(FTell() + EVTSSize);
+    // soon tm
+} EVTS;
+
+
+//----------------------------------------------------------------------//
+//      CLID - Colliders                                                //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    char CLID[4];
+    int CLIDSize;
+    FSeek(FTell() + CLIDSize);
+    // soon tm
+} CLID;
+
+
+//----------------------------------------------------------------------//
+//      FAFX - FaceFX                                                   //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    char FAFX[4];
+    int FAFXSize;
+    STRING name(80); // "node"
+    STRING name(80); // facefx file path 
+    SKIP skip(180);  // empty
+} FAFX;
+
+
+//----------------------------------------------------------------------//
+//      BPOS - BindPoses                                                //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    char BPOS[4];
+    int BPOSSize;
+    int count;
+    READMATRIX3x4 bindPose[count];     // they only store 3x4, bottom row is always (0,0,0,1) // thanks Deamon
+} BPOS;
+
+//----------------------------------------------------------------------//
+//      PRE2 - Particle Emitter 2                                       //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    uint count;
+    uint lineType;          // TRACK_NO_INTERP = 0x0, TRACK_LINEAR = 0x1, TRACK_HERMITE = 0x2, TRACK_BEZIER = 0x3, NUM_TRACK_TYPES = 0x4
+    uint globalSeqID;       // GLBS index or 0xFFFFFFFF if none
+    TRACKPOINT1 track(lineType)[count] <optimize=false>;
+} KPV;
+
+typedef struct {
+    float emissionSpeed;
+    float emissionSpeedVariation;
+    float latitude;
+    float gravity;
+    float lifespan;
+    float emissionrate;
+    float emissionAreaLength;
+    float emissionAreaWidth;
+    int filterMode;
+    long textureDimensions_rows;
+    long textureDimensions_columns;
+    int headOrTail;
+    float tailLength;
+    float time;
+    BGR colorA;
+    BGR colorB;
+    BGR colorC;
+    byte alphaA;
+    byte alphaB;
+    byte alphaC;
+    float partScA;
+    float partScB;
+    float partScC;
+    long lifeSpanUVAnimA;
+    long lifeSpanUVAnimB;
+    long lifeSpanUVAnimC;
+    long decayUVAnimA;
+    long decayUVAnimB;
+    long decayUVAnimC;
+    long tailUVAnimA;
+    long tailUVAnimB;
+    long tailUVAnimC;
+    long tailDecayUVAnimA;
+    long tailDecayUVAnimB;
+    long tailDecayUVAnimC;
+    long textureID;
+    int squirt;
+    int priorityPlane;
+    int replaceableID;
+} PARTICLEEMITTER2;
+
+typedef struct {
+    char PRE2[4];
+    int PRE2Size;
+    local long PRE2End = PRE2Size + FTell();
+    local long emitterEnd;
+    local long MDLGENOBJECTend;
+    while(FTell() < PRE2End)
+    {
+        long emitterSize;
+        emitterEnd = FTell() + emitterSize - 4;
+        MDLGENOBJECT objectTracks;
+        PARTICLEEMITTER2 emitterInfo;
+
+        while (FTell() < emitterEnd)
+        {
+            char ID1; // type of transform
+            char ID2;
+            char ID3;
+            char ID4;
+            if (ID1 == 'K' && ID2 == 'P' && ID3 == '2' && ID4 == 'E') ////////////////
+            {
+                KPV kp2e;      // emissionrate
+            }  
+            else if (ID1 == 'K' && ID2 == 'P' && ID3 == '2' && ID4 == 'V') ////////////////
+            {
+                KPV kp2v;      // visibility
+            }
+            else if (ID1 == 'K' && ID2 == 'P' && ID3 == '2' && ID4 == 'N') ////////////////
+            {
+                KPV kp2n;      // ????
+            } 
+            else if (ID1 == 'K' && ID2 == 'P' && ID3 == '2' && ID4 == 'W') ////////////////
+            {
+                KPV kp2w;      // ????
+            }    
+            else if (ID1 == 'K' && ID2 == 'P' && ID3 == '2' && ID4 == 'L') ////////////////
+            {
+                KPV kp2l;      // ????
+            }   
+            else if (ID1 == 'K' && ID2 == 'P' && ID3 == '2' && ID4 == 'S') ////////////////
+            {
+                KPV kp2s;      // ????
+            }                      
+        }
+    }
+} PRE2;
+
+//----------------------------------------------------------------------//
+//      Texture Animations                                              //
+//----------------------------------------------------------------------//
+
+typedef struct {
+    uint texAnimSize;
+    local int texAnimEnd = FTell() + texAnimSize - 4;
+    while (FTell() < texAnimEnd)
+    {
+        char ID1; // type of transform
+        char ID2;
+        char ID3;
+        char ID4;
+        if (ID1 == 'K' && ID2 == 'T' && ID3 == 'A' && ID4 == 'T') 
+        {
+            KGTR ktat;      // translation keys
+        }  
+        else if (ID1 == 'K' && ID2 == 'T' && ID3 == 'A' && ID4 == 'R') ////////////////
+        {
+            KGRT ktar;      // rotation keys
+        }
+        else if (ID1 == 'K' && ID2 == 'T' && ID3 == 'A' && ID4 == 'S') ////////////////
+        {
+            KGSC ktas;      // scale keys
+        }                      
+    }
+} TEXTUREANIMATION;
+
+typedef struct {
+    char TXAN[4];
+    int TXANSize;
+    local long TXANEnd = TXANSize + FTell();
+    while(FTell() < TXANEnd)
+    {
+        TEXTUREANIMATION textureAnimation;
+    }
+} TXAN;
+
+//----------------------------------------------------------------------//
+//      MAIN PARSE LOOP                                                 //
+//----------------------------------------------------------------------//
+
+HEADER header;      // header
+
+while(FTell() < FileSize())
+{
+    CHUNKID chunkID <hidden = true>;
+    FSeek(FTell() - 4);
+    switch (chunkID.id)
+    {
+        case "VERS":
+            VERS vers;
+        break;
+        case "MODL":
+            MODL modl;          // model info
+        break;
+        case "SEQS":
+            SEQS seqs;          // animation sequences
+        break;
+        case "MTLS":
+            MTLS mtls;          // materials
+        break;
+        case "TEXS":
+            TEXS texs;          // textures
+        break;
+        case "GEOS":
+            GEOS geos;          // geometry meshes
+        break;
+        case "GEOA":
+            GEOA geoa;          // geometry animation
+        break;
+        case "BONE":
+            //SKIPCHUNK skip;     // skipping for now for debugging too big on some models
+            BONE bone;          // bone animation
+        break;
+        case "ATCH":
+            ATCH atch;          // bone attachments (bones/positions where item models are attached)
+        break;
+        case "PIVT":
+            PIVT pivt;          // bone pivots
+        break;
+        case "CORN":
+            CORN corn;          // popcornFX baked file reference
+        break;
+        case "RIBB":
+            RIBB ribb;          // ribbon emitter
+        break;
+        case "CAMS":
+            CAMS cams;          // cameras
+        break;
+        case "EVTS":
+            EVTS evts;          // events
+        break;
+        case "CLID":
+            CLID clid;          // colliders
+        break;
+        case "FAFX":
+            FAFX fafx;          // faceFx baked file reference
+        break;
+        case "BPOS":
+            BPOS bpos;          // bones binding poses
+        break;
+        case "PRE2":
+            PRE2 pre2;          // Particle emitter 2
+        break;
+        case "TXAN":
+            TXAN txan;          // texture animations
+        break;
+        default : 
+            SKIPCHUNK skip;
+        break;
+    }
+} 
+

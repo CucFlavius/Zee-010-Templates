@@ -1,0 +1,49 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// These are a new type of dynamic lights added in Shadowlands. E.g. Castle Nathria raid has 833 of them.
+// They're used for everything from torch fires to projecting light/shadow on the ground to make it look like light is coming through a window.
+
+struct NewLightDefinition
+{
+    int type;                       // 0 = point light (sphere), 1 = spot light (cone) 
+    int lightIndex;                 // Appears to be same as index in mapobject_new_light_defs[]
+    int enableColorGradient;        // 0 = false (use only startColor), 1 = true (use start and end color gradient)
+    int indexRelated2;              // Into other struct // possibly for layering lights
+    BGRA32 startColor;              // Start Color
+    VECTOR3 position;               // Light position in WMO
+    VECTOR3ROT rotation;               // Euler rotation in radians, for spot light rotates the light, for point light rotates the light cookie
+    float attenStart;               // Start attenuation
+    float attenEnd;                 // End attenuation
+    float intensity;                // Light intensity
+    BGRA32 endColor;                // End Color
+    float colorBlendStart;          // Gradient start distance from emitter position, for mixing start and end color
+    float colorBlendEnd;            // Gradient end distance from emitter position,  for mixing start and end color
+    char gap0[4];                   // empty
+    float flickerIntensity;         // Flickering light intensity
+    float flickerSpeed;             // Flickering light speed
+    int flickerMode;                // 0 = off, 1 = sine curve, 2 = noise curve, 3 = noise step curve
+    VECTOR3 field_54;               // Only found 0's so far
+    char gap1[4];                   // empty
+    uint lightCookieFileID;         // file ID for light cookie texture. For point light it's a cube map
+    char gap2[20];                  // empty
+    float spotlightRadius;          // The overall radius of the spot light, in radians
+    float spotlightDropoffStart;    // Start of dropoff gradient, in radians. Starts at center, ends at edge. Controls the rate at which light intensity decreases from the center to the edge of the spot light beam
+    float spotlightDropoffEnd;      // End of dropoff gradient, in radians. Both start and end dropoff angles have to be smaller than radius else sharp edge
+    uint unk0;                      // 14336 (power of 2)
+    char gap4[41];                  // empty
+    char field_50;                  // Only found 0's so far
+    char unk1[2];                   // Only found 0's so far
+}; // size 184
+
+struct MNLD {
+    CHUNK hdr;
+    NewLightDefinition lightDef[hdr.size / 184];
+};

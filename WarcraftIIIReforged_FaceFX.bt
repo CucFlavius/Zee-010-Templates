@@ -1,0 +1,172 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+typedef struct {
+    int size;
+    char name[size];
+} NAME;
+
+// file size 21424
+
+char FACE[4];
+int version;        // 2180
+int unk;           // 13
+NAME companyName;   // Blizzard Entertainment
+NAME productName;   // Lightbringer (working title)
+
+int unk;           // 1000
+short unk;         // 2
+int unk;           // 9
+int unk;           // 9
+int unk;           // 7
+int unk;           // 1
+int unk;           // 0
+
+NAME FxBone;
+short unk;  // 0
+int unk;    // 1
+int unk1[3]; // -1
+short unk;  // 0
+int unk;    // 17
+int unk;    // 1
+int unk;    // 1
+NAME FxCompiledFaceGraph;
+short unk;  // 5
+int unk;    // 1
+int unk2[3]; // -1
+short unk;  // 0
+int unk;    // 26
+int unk;    // 1
+int unk;    // 2
+NAME FxObject;
+short unk;  // 0
+int unk;    // 1
+int unk3[3]; // -1
+short unk;  // 0
+int unk;    // 28
+int unk;    // 1
+int unk;    // 3
+NAME FxActor;
+short unk;  // 5
+int unk;    // 1
+int unk4[3]; // -1
+short unk;  // 0
+int unk;    // 79
+int unk;    // 1
+int unk;    // 4
+NAME FxMasterBoneList;
+short unk;  // 7
+int unk;    // 1
+int unk5[3]; // -1
+short unk;  // 0
+int unk;    // 95
+int unk;    // 1
+int unk;    // 5
+NAME FxNamedObject;
+short unk;  // 0
+int unk;    // 1
+int unk6[3]; // -1
+short unk;  // 0
+int unk;    // 100
+int unk;    // 1
+int unk;    // 6
+NAME FxName;
+short unk;  // 1
+int unk;    // 1
+int unk7[3]; // -1
+short unk;  // 0
+int unk;    // 109
+int unk;    // 1
+int unk;    // 7
+NAME FxPhonemeMap;
+short unk;  // 3
+int unk;    // 1
+int unk8[3]; // -1
+short unk;  // 0
+int unk;    // 117
+int unk;    // 1
+int unk;    // 8
+NAME FxAnimGroup;
+short unk;  // 1
+int unk;    // 1
+int unk9[3]; // -1
+short unk;  // 0
+int unk;    // 54
+int unk;    // 9
+int unk;    // 31
+
+// Bones 40 or 39 names (if "Arthas" counts)
+NAME bone01;    // human_arthas_rig_cin:L_lip_corner_bind_jnt
+int index;      // 6
+int parentIndex;// -1
+int unk;        // 10
+int unk;        // 15
+NAME bone02;    // human_arthas_rig_cin:nose_bind_jnt
+int index;      // 5
+int parentIndex;// 9
+int unk;        // 11
+int unk;        // 7
+NAME bone03;    // human_arthas_rig_cin:L_upr_eyelid_bind_jnt
+int index;      // 4
+int parentIndex;// 10
+int unk;        // 12
+int unk;        // 3
+NAME bone04;    // human_arthas_rig_cin:L_otr_eyebrow_bind_jnt
+int index;      // 3
+int parentIndex;// 11
+int unk;        // 13
+int unk;        // 1
+NAME bone04;    // human_arthas_rig_cin:L_inr_eyebrow_bind_jnt
+int index;      // 2
+int parentIndex;// 12
+int unk;        // 14
+int unk;        // 0
+
+NAME CharacterName;    // Arthas
+int index;      // 1
+int parentIndex;// 13
+int unk;        // -1
+int unk;        // -1
+
+int unk;        // 983040
+int unk;        // 131072
+short unk;      // 0
+
+NAME bone06;    // human_arthas_rig_cin:L_mid_eyebrow_bind_jnt
+int index;      // 1
+int parentIndex;// 13
+int unk;        // -1
+int unk;        // -1
+int unk;        // 0
+int unk;        // 16
+int unk;        // 5
+
+NAME bone06;    // human_arthas_rig_cin:R_mid_eyebrow_bind_jnt
+int unk;        // 2
+int unk;        // 12
+int unk;        // 17
+int unk;        // 4
+
+NAME bone06;    // human_arthas_rig_cin:R_inr_eyebrow_bind_jnt
+int unk;        // 1
+int unk;        // 16
+int unk;        // -1
+int unk;        // -1
+
+int unk;        // 1179648
+int unk;        // 393216
+short unk;      // 0
+
+NAME bone06;    // human_arthas_rig_cin:R_otr_eyebrow_bind_jnt
+//NAME bones;
+//byte unk10[10];
+//NAME bones2;
+//NAME bones;
+//byte unk11[10];

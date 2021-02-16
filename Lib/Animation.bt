@@ -1,0 +1,74 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+// Animation Track Point for Visibility
+typedef struct (int lineType){
+    int time;
+    float point;
+    if (lineType > 1)
+    {
+        float inTan;
+        float outTan;
+    }
+} TRACKPOINT1;
+
+// Animation Track Point for Vector3
+typedef struct (int lineType){
+    int time;
+    VECTOR3 point;
+    if (lineType > 1)
+    {
+        VECTOR3 inTan;
+        VECTOR3 outTan;
+    }
+} TRACKPOINT3;
+
+// Animation Track Point for Quaternion
+typedef struct (int lineType){
+    int time;
+    QUATERNION point;
+    if (lineType > 1)
+    {
+        QUATERNION inTan;
+        QUATERNION outTan;
+    }
+} TRACKPOINT4;
+
+// Translation Animation Track
+typedef struct {
+    int num;
+    int lineType;
+    int unk1;
+    TRACKPOINT3 translationTrack(lineType)[num] <optimize=false>;
+} KGTR;
+
+// Rotation Animation Track
+typedef struct {
+    int num;
+    int lineType;
+    int unk1;
+    TRACKPOINT4 rotationTrack(lineType)[num] <optimize=false>;   
+} KGRT;
+
+// Scale Animation Track
+typedef struct {
+    int num;
+    int lineType;
+    int unk1;
+    TRACKPOINT3 scaleTrack(lineType)[num] <optimize=false>;
+} KGSC;
+
+// Visibility Animation Track
+typedef struct {
+    int num;
+    int lineType;
+    int unk1;
+    TRACKPOINT1 visibilityTrack(lineType)[num] <optimize=false>;
+} KATV;

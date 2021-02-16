@@ -1,0 +1,102 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+// Globals //
+local int headerSize;
+
+struct HEADER
+{
+    CHUNKID magic;            // "LDOM" ... "MODL"
+    uint32 version;           // 82 (old) 100 (new)
+
+    if (version == 82)
+    {
+        // Read old header //
+        headerSize = 1616;
+    }
+    if (version == 100) 
+    {
+        // Read new header //
+        headerSize = 1584;
+
+        byte gap_008[8];
+        M3ARRAY unk_offset_010;         // 112 bytes
+        M3DOUBLEARRAY unk_offset_020;   // 4, 1 bytes
+        M3DOUBLEARRAY unk_offset_038;   // 4, 1 bytes
+        M3DOUBLEARRAY unk_offset_050;   // 4, 1 bytes
+        M3DOUBLEARRAY unk_offset_068;   // 4, 1 bytes
+        M3ARRAY unk_offset_080;         // 48 bytes
+        M3DOUBLEARRAY unk_offset_090;   // 4, 1 bytes
+        M3DOUBLEARRAY unk_offset_0A8;   // 4, 1 bytes
+        M3DOUBLEARRAY unk_offset_0C0;   // 4, 1 bytes
+        M3DOUBLEARRAY unk_offset_0D8;   // 4, 1 bytes UInt32_UInt8
+        M3ARRAY unk_offset_0F0;         // 184 bytes
+        M3DOUBLEARRAY unk_offset_100;   // 4, 4 bytes
+        M3DOUBLEARRAY unk_offset_118;   // 4, 4 bytes
+        M3DOUBLEARRAY unk_offset_130;   // 4, 1 bytes
+        M3DOUBLEARRAY unk_offset_148;   // 4, 1 bytes
+        M3DOUBLEARRAY unk_offset_160;   // 4, 4 bytes
+        byte gap_178[8];
+        M3ARRAY bones;                  // Pointer to an array of bone elements
+        M3ARRAY unk_offset_190;         // uint16
+        M3ARRAY unk_offset_1A0;         // 2 bytes
+        M3ARRAY boneMapping;            // Pointer to an array of shorts. Each of them references back to {@link #bones} and is used by the vertices of {@link StructGeometry} to bypass the limit
+	                                    // of a byte to index more than 255 bones. Some bones are not used by vertices, but by other bones via parenting.
+        M3ARRAY textures;
+        M3ARRAY unk_offset_1D0;         // 2 bytes // could be material indices
+        M3ARRAY unk_offset_1E0;         // 152 bytes
+        M3ARRAY materials;               // 48 bytes
+        M3ARRAY model2Display;          // 4 bytes
+        M3ARRAY display2model;          //Contains the mapping for model2display to meshGroupId. And it is meshGroupId := display2meshGroupId[model2display]
+        M3ARRAY unk_offset_220;         // 70 bytes
+        M3ARRAY unk_offset_230;         // 4 bytes
+        M3ARRAY unk_offset_240;         // 112 bytes
+        M3ARRAY geometry;
+        M3ARRAY unk_offset_260;         // 4 bytes
+        M3ARRAY unk_offset_270;         // 2 bytes
+        M3ARRAY unk_offset_280;         // 8 bytes
+        M3DOUBLEARRAY unk_offset_290;   // 4, 2 Byte data
+        M3ARRAY unk_offset_2A8;         // 16b -> M3H_2Tuple -> 2b
+        M3ARRAY unk_offset_2B8;         // 40b -> {30b,M3H_2Tuple -> 32b}
+        M3ARRAY unk_offset_2C8;         // 8 bytes
+        M3ARRAY unk_offset_2D8;         // 2 bytes
+        M3ARRAY unk_offset_2E8;         // 8 bytes
+        M3ARRAY unk_offset_2F8;         // 160 bytes
+        M3ARRAY unk_offset_308;         // 80 bytes
+        M3ARRAY unk_offset_318;         // 400 bytes
+        M3ARRAY unk_offset_328;         // 56 bytes
+        M3ARRAY unk_offset_338;         // 2 bytes
+        byte gap_348[8];
+        M3DOUBLEARRAY unk_offset_350;   // 4b, 4b
+        byte gap_368[8];
+        M3DOUBLEARRAY unk_offset_370;   // 4b, 4b
+        byte gap_388[264];
+        M3ARRAY unk_offset_490;         // ? bytes
+        M3ARRAY unk_offset_4A0;         // 4 bytes
+        byte gap_4B0[96];
+        M3ARRAY unk_offset_510;         // 16 bytes
+        M3ARRAY unk_offset_520;         // 4 bytes
+        M3ARRAY unk_offset_530;         // 4 bytes
+        M3ARRAY unk_offset_540;         // 104 bytes
+        M3ARRAY unk_offset_550;         // 2 bytes
+        M3ARRAY unk_offset_560;         // 160 bytes
+        M3ARRAY unk_offset_570;         // 32 bytes
+        byte gap_580[8];
+        M3ARRAY unk_offset_588;         // 32 bytes
+        M3ARRAY unk_offset_598;         // 76 bytes
+        M3ARRAY unk_offset_5A8;         // 2 bytes
+        byte gap_5B8[8];
+        M3DOUBLEARRAY unk_offset_5C0;   // 4, 1 bytes
+        byte gap_5D8[88];    
+    }
+};
