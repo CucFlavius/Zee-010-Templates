@@ -1,14 +1,9 @@
 //------------------------------------------------
-//--- 010 Editor v9.0.1 Binary Template
-//
-//      File: 
-//   Authors: 
-//   Version: 
-//   Purpose: 
-//  Category: 
-// File Mask: 
-//  ID Bytes: 
-//   History: 
+//      File: DiabloImmortal_Package
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the package file that comes from the CDN
+//  Category: Archive
 //------------------------------------------------
 #include "Lib/Common.bt"
 

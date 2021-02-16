@@ -1,14 +1,9 @@
 //------------------------------------------------
-//--- 010 Editor v9.0.1 Binary Template
-//
-//      File: 
-//   Authors: 
-//   Version: 
-//   Purpose: 
-//  Category: 
-// File Mask: 
-//  ID Bytes: 
-//   History: 
+//      File: DiabloImmortal_ZZZ4
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading a compressed file or block from Diablo Immortal (Messiah Engine)
+//  Category: Archive
 //------------------------------------------------
 
 #include "Lib/Common.bt"

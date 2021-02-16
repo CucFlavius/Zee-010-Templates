@@ -1,11 +1,9 @@
 //------------------------------------------------
-//--- 010 Editor v9.0.1 Binary Template
-//
-//      File: 
-//   Authors: 
-//   Version: 
-//   Purpose: 
-//  Category: 
+//      File: StarcraftGhost_Nod
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the nod file from Starcraft Ghost
+//  Category: Model
 //------------------------------------------------
 
 #include "Lib/Common.bt"

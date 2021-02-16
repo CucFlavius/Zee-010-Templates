@@ -1,12 +1,12 @@
 //------------------------------------------------
-//--- 010 Editor v9.0.1 Binary Template
-//
-//      File: 
-//   Authors: 
-//   Version: 
-//   Purpose: 
-//  Category: 
+//      File: WarcraftIIIReforged_FaceFX
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the facefx file format used in WC3 reforged
+//  Category: Model
 //------------------------------------------------
+
+// status : not working, skipped
 
 typedef struct {
     int size;

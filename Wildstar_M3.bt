@@ -1,11 +1,9 @@
 //------------------------------------------------
-//--- 010 Editor v9.0.1 Binary Template
-//
 //      File: Wildstar_M3.bt
 //   Authors: Zee
 //   Version: 1.0
-//   Purpose: 
-//  Category: Wildstar File Format
+//   Purpose: Reading the wildstar model file format M3
+//  Category: Model
 //------------------------------------------------
 
 #include "Lib/Common.bt"
