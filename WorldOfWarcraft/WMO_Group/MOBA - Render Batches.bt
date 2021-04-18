@@ -1,0 +1,30 @@
+//------------------------------------------------
+// Render batches. 
+// Records of 24 bytes.
+//------------------------------------------------
+
+struct SMOBatch
+{
+    unsigned byte unknown[0xA];
+    uint16 material_id_large;              // used if flag_use_uint16_t_material is set.
+    uint32 startIndex;                     // index of the first face index used in MOVI
+    uint16 count;                          // number of MOVI indices used
+    uint16 minIndex;                       // index of the first vertex used in MOVT
+    uint16 maxIndex;                       // index of the last vertex used (batch includes this one)
+    unsigned byte flag_unknown_1 : 1;
+    unsigned byte flag_use_material_id_large : 1;  // instead of material_id use material_id_large
+                                           // F_RENDERED = 0xf0, so probably upper nibble isn't unused
+    unsigned byte material_id;                     // index in MOMT
+};
+
+struct MOBA
+{
+    CHUNK hdr;
+    SMOBatch batches[hdr.size / 24];
+};
+
+// Batches are groups of faces with the same material ID in root's MOMT, and they're used to accelerate rendering. 
+// Note that the client doesn't use them in the same way while rendering in D3D or OpenGL (only D3D uses all batches information). 
+// The vertex buffer containing vertices from minIndex to maxIndex can contain vertices that aren't used by the batch. 
+// On the other hand, if one of the faces used need a vertex, it has to be in the buffer. 
+// Concerning the byte at 0x16, as a material ID is coded on a uint8, I guess it is completely unused. --Gamhea 12:23, 29 July 2013 (UTC)

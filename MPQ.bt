@@ -1,0 +1,112 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#define MD5_DIGEST_SIZE 16
+
+// MPQ file header
+struct TMPQHeader
+{
+    // The ID_MPQ ('MPQ\x1A') signature
+    DWORD dwID;                         
+
+    // Size of the archive header
+    DWORD dwHeaderSize;                   
+
+    // Size of MPQ archive
+    // This field is deprecated in the Burning Crusade MoPaQ format, and the size of the archive
+    // is calculated as the size from the beginning of the archive to the end of the hash table,
+    // block table, or extended block table (whichever is largest).
+    DWORD dwArchiveSize;
+
+    // 0 = Format 1 (up to The Burning Crusade)
+    // 1 = Format 2 (The Burning Crusade and newer)
+    // 2 = Format 3 (WoW - Cataclysm beta or newer)
+    // 3 = Format 4 (WoW - Cataclysm beta or newer)
+    USHORT wFormatVersion;
+
+    // Power of two exponent specifying the number of 512-byte disk sectors in each logical sector
+    // in the archive. The size of each logical sector in the archive is 512 * 2^wBlockSize.
+    USHORT wBlockSize;
+
+    // Offset to the beginning of the hash table, relative to the beginning of the archive.
+    DWORD dwHashTablePos;
+    
+    // Offset to the beginning of the block table, relative to the beginning of the archive.
+    DWORD dwBlockTablePos;
+    
+    // Number of entries in the hash table. Must be a power of two, and must be less than 2^16 for
+    // the original MoPaQ format, or less than 2^20 for the Burning Crusade format.
+    DWORD dwHashTableSize;
+    
+    // Number of entries in the block table
+    DWORD dwBlockTableSize;
+
+    //-- MPQ HEADER v 2 -------------------------------------------
+    if (wFormatVersion == 1)
+    {
+        // Offset to the beginning of array of 16-bit high parts of file offsets.
+        ULONG HiBlockTablePos64;
+    
+        // High 16 bits of the hash table offset for large archives.
+        USHORT wHashTablePosHi;
+    
+        // High 16 bits of the block table offset for large archives.
+        USHORT wBlockTablePosHi;
+    }
+
+    //-- MPQ HEADER v 3 -------------------------------------------
+    if (wFormatVersion == 2)
+    {
+        // 64-bit version of the archive size
+        ULONG ArchiveSize64;
+    
+        // 64-bit position of the BET table
+        ULONG BetTablePos64;
+    
+        // 64-bit position of the HET table
+        ULONG HetTablePos64;
+    }
+
+    //-- MPQ HEADER v 4 -------------------------------------------
+    if (wFormatVersion == 3)
+    {
+        // Compressed size of the hash table
+        ULONG HashTableSize64;
+    
+        // Compressed size of the block table
+        ULONG BlockTableSize64;
+    
+        // Compressed size of the hi-block table
+        ULONG HiBlockTableSize64;
+    
+        // Compressed size of the HET block
+        ULONG HetTableSize64;
+    
+        // Compressed size of the BET block
+        ULONG BetTableSize64;
+    
+        // Size of raw data chunk to calculate MD5.
+        // MD5 of each data chunk follows the raw file data.
+        DWORD dwRawChunkSize;                                 
+    
+        // Array of MD5's
+        unsigned char MD5_BlockTable[MD5_DIGEST_SIZE];      // MD5 of the block table before decryption
+        unsigned char MD5_HashTable[MD5_DIGEST_SIZE];       // MD5 of the hash table before decryption
+        unsigned char MD5_HiBlockTable[MD5_DIGEST_SIZE];    // MD5 of the hi-block table
+        unsigned char MD5_BetTable[MD5_DIGEST_SIZE];        // MD5 of the BET table before decryption
+        unsigned char MD5_HetTable[MD5_DIGEST_SIZE];        // MD5 of the HET table before decryption
+        unsigned char MD5_MpqHeader[MD5_DIGEST_SIZE];       // MD5 of the MPQ header from signature to (including) MD5_HetTable
+    }
+};
+
+TMPQHeader header;

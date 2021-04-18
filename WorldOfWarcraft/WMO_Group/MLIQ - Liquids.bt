@@ -1,0 +1,146 @@
+//------------------------------------------------
+// Specifies liquids inside WMOs.
+// This is where the water from Stormwind and BFD etc. is hidden. (slime in Undercity, pool water in the Darnassus temple, some lava in IF)
+//------------------------------------------------
+
+struct HEADER
+{
+    VECTOR2INT liquidVerts;   // number of vertices (x, y) vertex count on each axis
+    VECTOR2INT liquidTiles;   // number of tiles (ntiles = nverts-1) tile count on each axis
+    VECTOR3 liquidCorner;     // base coordinates for X and Y, base location for this liquid
+    uint16 liquidMtlId;       // material ID (index into MOMT)
+};
+
+union SMOLVert
+{
+    struct SMOWVert
+    {
+        unsigned byte flow1;
+        unsigned byte  flow2;
+        unsigned byte  flow1Pct;
+        unsigned byte  filler;
+        float height;
+    } waterVert;
+
+    struct SMOMVert
+    {
+        int16 s;
+        int16 t;
+        float height;
+    } magmaVert;
+};
+
+struct SMOLTile
+{
+    unsigned byte liquid : 6;
+    unsigned byte fishable : 1;
+    unsigned byte shared : 1;
+};
+
+struct MLIQ
+{
+    CHUNK hdr;
+    HEADER header;
+    SMOLVert verts[header.liquidVerts.x * header.liquidVerts.y];
+    SMOLTile tiles[header.liquidTiles.x * header.liquidTiles.y];
+};
+
+// The liquid data contains the vertex height map (xverts * yverts * 8 bytes) and the tile flags (xtiles * ytiles bytes) as described in ADT files (MCLQ chunk).
+// The length and width of a liquid tile is the same as on the map, that is, 1/8th of the length of a map chunk. (which is in turn 1/16th the length of a map tile).
+
+// Note that although I could read Mh2o's heightmap and existstable in row major order (like reading a book),
+// I had to read this one in column major order to compensate for a 90° misrotation. --Bananenbrot 22:02, 1 August 2012 (UTC)
+
+// Either the unknown data or the "types" must somehow control how the points at the edges work.
+// In looking at 3D mesh screen captures, something is changed to create a flat edge where it meets other MLIQ chunks.
+// The first Unknown data is always 0 when a point isn't used. Other seen values: 1, 4, 12, 22, 27, 31, 105, & 124.
+// Not yet sure what they mean/how to use them, I suspect they become the modifier for the edge placement points. --Kjasi 14 February 2016
+
+// WMOs can have liquid in them even if MLIQ is not present!
+// If MOGP.groupLiquid is set but no MLIQ is present or xtiles = 0 or ytiles = 0 then entire group is filled with liquid.
+// In this case liquid height is equal to MOGP.boundingBox.max.z
+
+//------------------------------------------------
+// How to determine LiquidTypeRec to use
+//------------------------------------------------
+/*
+enum liquid_basic_types
+{
+    liquid_basic_types_water = 0,
+    liquid_basic_types_ocean = 1,
+    liquid_basic_types_magma = 2,
+    liquid_basic_types_slime = 3,
+    
+    liquid_basic_types_MASK = 3,
+};
+
+enum liquid_types
+{
+    // ...
+    LIQUID_WMO_Water = 13,
+    LIQUID_WMO_Ocean = 14,
+    LIQUID_Green_Lava = 15,
+    LIQUID_WMO_Magma = 19,
+    LIQUID_WMO_Slime = 20,
+    
+    LIQUID_END_BASIC_LIQUIDS = 20,
+    LIQUID_FIRST_NONBASIC_LIQUID_TYPE = 21,
+    
+    LIQUID_NAXX_SLIME = 21,
+    // ...
+};
+
+enum SMOGroup::flags
+{
+    LIQUIDSURFACE = 0x1000,
+    is_not_water_but_ocean = 0x80000,
+};
+
+liquid_types to_wmo_liquid (int x)
+{
+    liquid_basic_types const basic (x & liquid_basic_types_MASK);
+    switch (basic)
+    {
+        case liquid_basic_types_water:
+        return (smoGroup->flags & is_not_water_but_ocean) ? LIQUID_WMO_Ocean : LIQUID_WMO_Water;
+        case liquid_basic_types_ocean:
+        return LIQUID_WMO_Ocean;
+        case liquid_basic_types_magma:
+        return LIQUID_WMO_Magma;
+        case liquid_basic_types_slime:
+        return LIQUID_WMO_Slime;
+    }
+}
+
+if ( mapObj->mohd_data->flag_use_liquid_type_dbc_id )
+{
+    if ( smoGroup->groupLiquid < LIQUID_FIRST_NONBASIC_LIQUID_TYPE )
+    {
+        this->liquid_type = to_wmo_liquid (smoGroup->groupLiquid - 1);
+    }
+    else
+    {
+        this->liquid_type = smoGroup->groupLiquid;
+    }
+}
+else
+{
+    if ( smoGroup->groupLiquid == LIQUID_Green_Lava )
+    {
+        this->liquid_type = 0;  // use to_wmo_liquid(SMOLTile->liquid) ? It seems to work alright. ᵘ
+    }
+    else
+    {
+        int const liquidType (smoGroup->groupLiquid + 1);
+        if ( smoGroup->groupLiquid < LIQUID_END_BASIC_LIQUIDS )
+        {
+            this->liquid_type = to_wmo_liquid (smoGroup->groupLiquid);
+        }
+        else
+        {
+            liquid_type = smoGroup->groupLiquid + 1;
+        }
+        assert (!liquidType || !(smoGroup->flags & SMOGroup::LIQUIDSURFACE));
+    }
+}
+*/

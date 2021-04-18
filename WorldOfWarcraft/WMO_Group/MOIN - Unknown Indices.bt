@@ -1,0 +1,14 @@
+//------------------------------------------------
+// Unknown indices
+// This section only applies to versions ≤ PreVanilla (0.5.5.3494). Only used in v14.
+//------------------------------------------------
+
+struct MOIN
+{
+    CHUNK hdr;
+    uint16 indexList[hdr.size / 2];
+};
+
+// It's most of the time only a list incrementing from 0 to nFaces * 3 or less, not always up to nPolygons (calculated with MOPY).
+// Unlike in ≥ Vanilla where the faces indices (MOVI) point to a vertex in MOVT, here there are exactly nFaces * 3 vertices in MOVT, and the client just read them straightforward.
+// If you want to read them, just make nPolygons faces going incrementing, like (0, 1, 2), (3, 4, 5), … --Gamhea 15:44, 10 March 2013 (UTC)

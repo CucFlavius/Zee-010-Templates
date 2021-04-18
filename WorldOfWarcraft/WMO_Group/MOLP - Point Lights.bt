@@ -1,0 +1,23 @@
+//------------------------------------------------
+// Map Object Point Lights
+// This section only applies to versions ≥ Legion. Could have been added earlierᵘ.
+//------------------------------------------------
+
+struct POINTLIGHT
+{
+    uint32 unk;
+    BGRA32 color; 
+    VECTOR3 pos;        //position of light
+    float intensity; 
+    float attenStart;
+    float attenEnd;
+    float unk4;         //Only seen zeros here 
+    uint32 unk5;
+    uint32 unk6;        //CArgb?
+};
+
+struct MOLP
+{
+    CHUNK hdr;
+    POINTLIGHT pointLights[hdr.size / 56];
+};

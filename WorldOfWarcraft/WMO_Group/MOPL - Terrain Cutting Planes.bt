@@ -1,0 +1,10 @@
+//------------------------------------------------
+// Terrain Cutting Planes
+// This section only applies to versions ≥ WoD. Could have been added earlierᵘ.
+//------------------------------------------------
+
+struct MOPL
+{
+    CHUNK hdr;
+    PLANE planes[hdr.size / 16];
+};

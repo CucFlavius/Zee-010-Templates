@@ -1,0 +1,12 @@
+//------------------------------------------------
+// Doodad References
+// One 16-bit integer per light reference.
+//------------------------------------------------
+
+struct MODR
+{
+    CHUNK hdr;
+    uint16 doodadRefList[hdr.size / 2];
+};
+
+// The numbers are indices into the doodad instance table (MODD chunk) of the WMO root file. These have to be filtered to the doodad set being used in any given WMO instance.

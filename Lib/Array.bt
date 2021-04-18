@@ -11,6 +11,12 @@
 //   History: 
 //------------------------------------------------
 
+typedef struct
+{
+    uint32 count;
+    uint32 offset;
+} M2ARRAY;
+
 struct M3ARRAY
 {
     uint32 elements;

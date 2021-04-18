@@ -1,0 +1,105 @@
+//--------------------------------------
+//      File: WorldOfWarcraft_WMO_group.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Wmo group file
+//  Category: RE
+//--------------------------------------
+
+//--------------------------------------
+// WMO group files contain the actual polygon soup for a particular section of the entire WMO.
+// Every group file has one top-level MOGP chunk, that has a 68-byte header followed by more subchunks. 
+// So it can be effectively treated as a file with a header at 0x14 and chunks starting at 0x58.
+// The subchunks are not always present. Some are fixed and needed while others are only checked for if some flags in the header are set.
+// The chunks need to be in the right order if you want WoW to read it.
+// The following chunks are always present in the following order:
+// MOGP, MOPY, MOVI, MOVT, MONR, MOTV, MOBA
+// These chunks are only present if a flag in the header is set. See the list below for the flags.
+// Cataclysm introduced a new optional MOBS chunk, I guess it's related to MOBA. ---Bananenbrot, 12-18-2010
+// MOLR, MODR, MOBN, MOBR, MPBV, MPBP, MPBI, MPBG, MOCV, MLIQ, MORI, MORB, MOTV 2, MOCV 2
+//--------------------------------------
+
+#include "Lib/Common.bt"
+#include "WorldOfWarcraft/WMO_Group/MVER - Version.bt"
+#include "WorldOfWarcraft/WMO_Group/MOGP - Header.bt"
+#include "WorldOfWarcraft/WMO_Group/MOPY - Triangle Material Info.bt"
+#include "WorldOfWarcraft/WMO_Group/MOVI - Vertex Indices.bt"
+#include "WorldOfWarcraft/WMO_Group/MOVX - Vertex Indices.bt"
+#include "WorldOfWarcraft/WMO_Group/MOVT - Vertex Positions.bt"
+#include "WorldOfWarcraft/WMO_Group/MONR - Vertex Normals.bt"
+#include "WorldOfWarcraft/WMO_Group/MOTV - Vertex UVs.bt"
+#include "WorldOfWarcraft/WMO_Group/MOLV - Lightmap UVs.bt"
+#include "WorldOfWarcraft/WMO_Group/MOIN - Unknown Indices.bt"
+#include "WorldOfWarcraft/WMO_Group/MOBA - Render Batches.bt"
+#include "WorldOfWarcraft/WMO_Group/MOLR - Light References.bt"
+#include "WorldOfWarcraft/WMO_Group/MODR - Doodad References.bt"
+#include "WorldOfWarcraft/WMO_Group/MOBN - BSP Tree Nodes.bt"
+#include "WorldOfWarcraft/WMO_Group/MOBR - BSP Face Indices.bt"
+#include "WorldOfWarcraft/WMO_Group/MOCV - Vertex Colors.bt"
+#include "WorldOfWarcraft/WMO_Group/MLIQ - Liquids.bt"
+#include "WorldOfWarcraft/WMO_Group/MORI - Ribbon Indices.bt"
+#include "WorldOfWarcraft/WMO_Group/MORB - Ribbons.bt"
+#include "WorldOfWarcraft/WMO_Group/MOTA - Vertex Tangents.bt"
+#include "WorldOfWarcraft/WMO_Group/MOBS - Shadow Batches.bt"
+#include "WorldOfWarcraft/WMO_Group/MDAL - Header Color Replacement.bt"
+#include "WorldOfWarcraft/WMO_Group/MOPL - Terrain Cutting Planes.bt"
+#include "WorldOfWarcraft/WMO_Group/MOPB - Prepass Batches.bt"
+#include "WorldOfWarcraft/WMO_Group/MOLS - Spot Lights.bt"
+#include "WorldOfWarcraft/WMO_Group/MOLP - Point Lights.bt"
+
+#include "WorldOfWarcraft/WMO_Group/MNLR - New Light References.bt"
+
+struct WMO_GROUP
+{
+    MVER version;
+    MOGP header;
+    local int batchCount;
+    while( ! FEof() )
+    {
+        if     ( match( "MOPY" ) ) MOPY triangeMaterialInfo;
+        else if( match( "MOVI" ) ) MOVI vertexIndices;
+        else if( match( "MOVX" ) ) MOVX vertexIndices;
+        else if( match( "MOVT" ) ) MOVT vertexPositions;
+        else if( match( "MONR" ) ) MONR vertexNormals;
+        else if( match( "MOTV" ) ) MOTV vertexUVs;
+        else if( match( "MOLV" ) ) MOLV lightmapUVs;            // This section only applies to versions ≤ PreVanilla (0.5.5.3494). Only used in v14.
+        else if( match( "MOIN" ) ) MOIN unknownIndices;         // This section only applies to versions ≤ PreVanilla (0.5.5.3494). Only used in v14.
+        else if( match( "MOBA" ) ) { MOBA renderBatches; batchCount = renderBatches.hdr.size / 24; }
+        else if( match( "MOLR" ) ) MOLR lightReferences;
+        else if( match( "MODR" ) ) MODR doodadReferences;
+        else if( match( "MOBN" ) ) MOBN BSPNodes;
+        else if( match( "MOBR" ) ) MOBR BSPFaceIndices;
+        else if( match( "MOCV" ) ) MOCV vertexColors;
+        else if( match( "MLIQ" ) ) MLIQ liquids;
+        else if( match( "MORI" ) ) MORI ribbonIndices;
+        else if( match( "MORB" ) ) MORB ribbons;
+        else if( match( "MOTA" ) ) MOTA vertexTangents(batchCount);
+        else if( match( "MOBS" ) ) MOBS shadowBatches;
+        else if( match( "MDAL" ) ) MDAL headerColorReplacement;
+        else if( match( "MOPL" ) ) MOPL terrainCuttingPlanes;
+        else if( match( "MOPB" ) ) MOPB prepassBatches;
+        else if( match( "MOLS" ) ) MOLS spotLights;
+        else if( match( "MOLP" ) ) MOLP pointLights;
+        // MLSS https://wowdev.wiki/WMO#MLSS
+        // MLSP
+        // MLSO
+        // MLSK
+        // MOS2
+        // MOP2
+        // MPVR
+        // MAVR
+        // MBVR
+        // MFVR
+        else if( match( "MNLR" ) ) MNLR newLightReferences;
+        // MOLM
+        // MOLD
+        // MPBV
+        // MPBP
+        // MPBI
+        // MPBG
+
+        else SKIPCHUNKR unk; 
+    }
+};
+
+WMO_GROUP group;

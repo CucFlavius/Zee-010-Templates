@@ -1,0 +1,23 @@
+//------------------------------------------------
+// Diablo 2 Resurrected Shader
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+char shad[4];
+char shad2[4];
+int unk;        // version?
+int unk;        // -1
+int position0;        // 28
+int position1;        // 28
+int fileSize;
+char txt[4];
+char txt2[4];
+int count;
+int positions[count];
+int unks0[3];
+int size;
+char string0[size];
+char sym[4];
+char sym2[4];
+int unks1[10];

@@ -1,0 +1,37 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+struct BLSHeader
+{
+/*0x00*/	char magic[4];			    // FourCC-style magic, "GXVS", "GXPS", etc. Character order reversed in-file. "GXSH" in all new WoD shaders.
+/*0x04*/	uint32 version<format=hex>;	// version, 0x10003 in WotLK, 0x10004 in Cata/MoP/WoD, 0x10005 in BfA (25902), 0x10006 in BfA (25976)
+/*0x08*/	uint32 permutationCount;	// (from old definition)
+/*0x0c*/	uint32 nShaders;		    // the expected number of shaders in this file (this is the number
+						                // of distinct shaders that will be found if you inspect the file after decompression)
+/*0x10*/	uint32 ofsCompressedChunks;	// offset to array of offsets to compressed chunks
+/*0x14*/	uint32 nCompressedChunks;	// number of compressed chunks
+/*0x18*/	uint32 ofsCompressedData;	// offset to the start of the compressed (zlib) data 
+						                // bytes (all offsets from the array above are offset by this much)
+};
+
+BLSHeader header;
+uint32 offsets[header.nShaders];        // Offsets to the start of each shader block in the decompressed data
+
+// Go to compressed chunk offsets
+FSeek(header.ofsCompressedChunks + 4);
+uint32 compressedChunksOffsets[header.nCompressedChunks];
+
+// Go to compressed data
+FSeek(header.ofsCompressedData);
+
+uint test;

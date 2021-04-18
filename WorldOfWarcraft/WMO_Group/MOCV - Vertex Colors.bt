@@ -1,0 +1,236 @@
+//------------------------------------------------
+// Vertex colors
+// 4 bytes per vertex (BGRA), for WMO groups using indoor lighting.
+//------------------------------------------------
+
+struct MOCV
+{
+    CHUNK hdr;
+    BGRA32 colorVertexList[hdr.size / 4];
+};
+
+// I don't know if this is supposed to work together with, or replace, the lights referenced in MOLR.
+// But it sure is the only way for the ground around the goblin smelting pot to turn red in the Deadmines.
+//  (but some corridors are, in turn, too dark - how the hell does lighting work anyway, are there lightmaps hidden somewhere?)
+// - I'm pretty sure WoW does not use lightmaps in it's WMOs...
+
+// After further inspection, this is it, actual pre-lit vertex colors for WMOs - vertex lighting is turned off.
+// This is used if flag 0x2000 in the MOGI chunk is on for this group. This pretty much fixes indoor lighting in Ironforge and Undercity.
+// The "light" lights are used only for M2 models (doodads and characters).
+// (The "too dark" corridors seemed like that because I was looking at it in a window - in full screen it looks pretty much the same as in the game) Now THAT's progress!!!
+
+// Yes, 0x2000 (INDOOR) flagged WMO groups use _only_ MOCV for lighting, 
+// however this chunk is also used to light outdoor groups as well like lantern glow on buildings, etc. If 0x8 (OUTDOOR) flag is set,
+// you start out with normal world lighting (like with light db params) and then you multiply these vertex colors by the texture color and add it to the world lighting.
+// This makes many models look much better. See the Forsaken buildings in Howling Fjord for an example of some that make use of this a lot for glowing windows and lamps.
+// Relaxok 18:29, 20 March 2013 (UTC)
+
+//------------------------------------------------
+// CMapObjGroup::FixColorVertexAlpha
+//------------------------------------------------
+
+// Prior to being passed to the shaders, MOCV values are manipulated by the CMapObj::FixColorVertexAlpha function in the client.
+// This function performs different manipulations depending on the relationship between the vertex and the MOBA it appears in.
+// It's possible that FixColorVertexAlpha did not always exist, or does not exist in later versions of WoW.
+// It appears to have existed in WotLK, Cata, MoP, and WoD.
+
+// In client versions that use FixColorVertexAlpha, without applying the function, 
+// certain parts of WMOs are noticeably wrong: fireplaces lack a glowing effect;
+// the red light cast from bellows in blacksmith WMOs is undersaturated; etc.
+
+// Warning: this should only be used for the "first" MOCV chunk which is referenced by the group flag 0x4.
+// Regardless of whether this flag is set or not, this process should never be applied to the MOCV chunk referenced by the flag SMOGroup::CVERTS2 (0x1000000)
+// as its purpose is different. Only the alpha values from that "second" chunk (which can be the only MOCV chunk present in the group file)
+// are used for the purpose of blending the textures together.
+
+//------------------------------------------------
+// WMOs with MOHD->flags & 0x08
+//------------------------------------------------
+
+// Only one manipulation takes place:
+
+// MOCVs matching vertices in MOGP->batchCounts[1] and MOGP->batchCounts[2] are modified like so:
+// 1. If MOGP.flags & 0x08, replace MOCV->color[a] with 255; else replace MOCV->color[a] with 0
+
+//------------------------------------------------
+// All other WMOs
+//------------------------------------------------
+
+// The following manipulations take place:
+
+// MOCVs matching vertices in MOGP->batchCounts[0] (aka unkBatchCount) are modified like so:
+// 1. Subtract MOHD->color[r|g|b]
+// 2. Subtract MOCV->color[r|g|b] * MOCV->color[a]
+// 3. Divide new MOCV->color[r|g|b] values by 2.0
+
+// MOCVs matching vertices in MOGP->batchCounts[1] and MOGP->batchCounts[2] are modified like so:
+// 1. Subtract MOHD->color
+// 2. Add (MOCV->color[r|g|b] * MOCV->color[a]) >> 6
+// 3. Divide MOCV->color[r|g|b] values by 2.0
+// 4. If values are >= 0 and  <= 255, keep value as is; else clamp new value to 0, 255.
+// 5. If MOGP.flags & 0x08, replace MOCV->color[a] with 255; else replace MOCV->color[a] with 0
+
+//------------------------------------------------
+// Decompiled code
+//------------------------------------------------
+
+// From build 18179, courtesy of schlumpf
+/*
+void CMapObjGroup::FixColorVertexAlpha(CMapObjGroup *mapObjGroup)
+{
+    int begin_second_fixup = 0;
+    if ( mapObjGroup->unkBatchCount )
+    {
+        begin_second_fixup = mapObjGroup->moba[mapObjGroup->transBatchCount-1].maxIndex+ 1;
+    }
+
+    if ( mapObjGroup->m_mapObj->mohd->flags & flag_has_some_outdoor_group )
+    {
+        for (int i (begin_second_fixup); i < mapObjGroup->mocv_count; ++i)
+        {
+            mapObjGroup->mocv[i].w = mapObjGroup->m_groupFlags & SMOGroup::EXTERIOR ? 0xFF : 0x00;
+        }
+    }
+    else
+    {
+        if ( mapObjGroup->m_mapObj->mohd->flags & flag_skip_base_color )
+        {
+            v35 = 0;
+            v36 = 0;
+            v37 = 0;
+        }
+        else
+        {
+            v35 = (mapObjGroup->m_mapObj->mohd.color >> 0) & 0xff;
+            v37 = (mapObjGroup->m_mapObj->mohd.color >> 8) & 0xff;
+            v36 = (mapObjGroup->m_mapObj->mohd.color >> 16) & 0xff;
+        }
+
+        for (int mocv_index (0); mocv_index < begin_second_fixup; ++mocv_index)
+        {
+            mapObjGroup->mocv[mocv_index].x -= v36;
+            mapObjGroup->mocv[mocv_index].y -= v37;
+            mapObjGroup->mocv[mocv_index].z -= v35;
+            
+            v38 = mapObjGroup->mocv[mocv_index].w / 255.0f;
+            
+            v11 = mapObjGroup->mocv[mocv_index].x - v38 * mapObjGroup->mocv[mocv_index].x;
+            assert (v11 > -0.5f);
+            assert (v11 < 255.5f);
+            mapObjGroup->mocv[mocv_index].x = v11 / 2;
+            v13 = mapObjGroup->mocv[mocv_index].y - v38 * mapObjGroup->mocv[mocv_index].y;
+            assert (v13 > -0.5f);
+            assert (v13 < 255.5f);
+            mapObjGroup->mocv[mocv_index].y = v13 / 2;
+            v14 = mapObjGroup->mocv[mocv_index].z - v38 * mapObjGroup->mocv[mocv_index].z;
+            assert (v14 > -0.5f);
+            assert (v14 < 255.5f);
+            mapObjGroup->mocv[mocv_index++].z = v14 / 2;
+        }
+
+        for (int i (begin_second_fixup); i < mapObjGroup->mocv_count; ++i)
+        {
+            v19 = (mapObjGroup->mocv[i].x * mapObjGroup->mocv[i].w) / 64 + mapObjGroup->mocv[i].x - v36;
+            mapObjGroup->mocv[i].x = std::min (255, std::max (v19 / 2, 0));
+            
+            v30 = (mapObjGroup->mocv[i].y * mapObjGroup->mocv[i].w) / 64 + mapObjGroup->mocv[i].y - v37;
+            mapObjGroup->mocv[i].y = std::min (255, std::max (v30 / 2, 0));
+            
+            v33 = (mapObjGroup->mocv[i].w * mapObjGroup->mocv[i].z) / 64 + mapObjGroup->mocv[i].z - v35;
+            mapObjGroup->mocv[i].z = std::min (255, std::max (v33 / 2, 0));
+            
+            mapObjGroup->mocv[i].w = mapObjGroup->m_groupFlags & SMOGroup::EXTERIOR ? 0xFF : 0x00;
+        }
+    }
+}
+*/
+
+//------------------------------------------------
+// CMapObj::AttenTransVerts
+//------------------------------------------------
+
+// Similar to FixColorVertexAlpha above, the client will also run MOCV values through the CMapObj::AttenTransVerts function prior to rendering.
+
+// In MoP and WoD, it appears that the client only runs AttenTransVerts in cases where flag 0x01 is NOT set on MOHD.flags.
+
+// AttenTransVerts only modifies MOCV values for vertices in MOGP.batchCounts[0] (aka unkBatchCount) batches.
+
+// The function iterates over all vertices in MOGP.batchCounts[0], and checks all portals for the group:
+
+// If no portals are found that lead to a group with MOGI.flags & (0x08 | 0x40), all MOCV alpha values are set to 0.0.
+// If a portal is found leading to a group with MOGI.flags & (0x08 | 0x40), 
+// each MOCV alpha is manipulated to be a range of 0.0 to 1.0 based on the distance of the corresponding vertex to the portal.
+// Additionally, the RGB values for each MOCV are bumped by: (0.0 to 1.0) * (127 - existingRGB)
+
+//------------------------------------------------
+// Decompiled code
+//------------------------------------------------
+/*
+void CMapObj::AttenTransVerts (CMapObj *mapObj, CMapObjGroup *mapObjGroup)
+{
+    mapObjGroup->field_98 |= 1u;
+    if (!mapObjGroup->unkBatchCount)
+    {
+        return;
+    }
+    
+    for ( std::size_t vertex_index (0); vertex_index < (*((unsigned __int16 *)&mapObjGroup->moba[(unsigned __int16)mapObjGroup->unkBatchCount] - 2) + 1); ++vertex_index )
+    {
+        float opacity_accum (0.0);
+    
+        for ( std::size_t portal_ref_index (mapObjGroup->mogp->mopr_index); portal_ref_index < (mapObjGroup->mogp->mopr_index + mapObjGroup->mogp->mopr_count); ++portal_ref_index )
+        {
+            SMOPortalRef const& portalRef (mapObj->mopr[portal_ref_index]);
+            SMOPortal const& portal (mapObj->mopt[portalRef.portalIndex]);
+            C3Vector const& vertex (&mapObjGroup->movt[vertex_index]);
+        
+            float const portal_to_vertex (distance (portal.plane, vertex));
+            
+            C3Vector vertex_to_use (vertex);
+            
+            if (portal_to_vertex > 0.001 || portal_to_vertex < -0.001)
+            {
+                C3Ray ray ( C3Ray::FromStartEnd ( vertex, vertex + (portal_to_vertex > 0 ? -1 : 1) * portal.plane.normal, 0 ) );
+                NTempest::Intersect( ray, &portal.plane, 0LL, &vertex_to_use, 0.0099999998 );
+            }
+        
+            float distance_to_use;
+            
+            if ( NTempest::Intersect ( vertex_to_use, &mapObj->mopv[portal.base_index], portal.index_count, C3Vector::MajorAxis (portal.plane.normal) ) )
+            {
+                distance_to_use = portalRef.side * distance (portal.plane, vertex);
+            }
+            else
+            {
+                distance_to_use = NTempest::DistanceFromPolygonEdge( vertex, &mapObj->mopv[portal.base_index], portal.index_count );
+            }
+        
+            if (mapObj->mogi[portalRef.group_index].flags & 0x48)
+            {
+                float v25 (distance_to_use >= 0.0 ? distance_to_use / 6.0f : 0.0f);
+                if ((1.0 - v25) > 0.001)
+                {
+                    opacity_accum += 1.0 - v25;
+                }
+            }
+            else if (distance_to_use > -1.0)
+            {
+                opacity_accum = 0.0;
+                if (distance_to_use < 1.0)
+                {
+                    break;
+                }
+            }
+        }
+    
+        float const opacity ( opacity_accum > 0.001 ? std::min (1.0f, opacity_accum) : 0.0f );
+        
+        //! \note all assignments asserted to be > -0.5 && < 255.5f
+        CArgb& color (mapObjGroup->mocv[vertex_index]);
+        color.r = ((127.0f - color.r) * opacity) + color.r;
+        color.g = ((127.0f - color.g) * opacity) + color.g;
+        color.b = ((127.0f - color.b) * opacity) + color.b;
+        color.a = opacity * 255.0;
+    }
+}
+*/

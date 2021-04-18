@@ -1,0 +1,15 @@
+//------------------------------------------------
+// Map Object Spot Lights
+// This section only applies to versions ≥ Legion. Could have been added earlierᵘ.
+//------------------------------------------------
+
+struct SPOTLIGHT
+{
+    char _1[56];
+};
+
+struct MOLS
+{
+    CHUNK hdr;
+    SPOTLIGHT spotLights[hdr.size / 56];
+};

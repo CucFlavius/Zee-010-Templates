@@ -1,0 +1,12 @@
+//------------------------------------------------
+// Light References
+// One 16-bit integer per light reference.
+//------------------------------------------------
+
+struct MOLR
+{
+    CHUNK hdr;
+    uint16 lightRefList[hdr.size / 2];
+};
+
+// This is basically a list of lights used in this WMO group, the numbers are indices into the WMO root file's MOLT table.

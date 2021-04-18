@@ -1,0 +1,15 @@
+//------------------------------------------------
+// Map Object Prepass Batches
+// This section only applies to versions ≥ Legion. Could have been added earlierᵘ.
+//------------------------------------------------
+
+struct PREPASSBATCH
+{
+    char _1[24];
+};
+
+struct MOPB
+{
+    CHUNK hdr;
+    PREPASSBATCH prepassBatches[hdr.size / 24];
+};

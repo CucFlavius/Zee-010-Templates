@@ -1,0 +1,10 @@
+//------------------------------------------------
+// New Light References
+// This section only applies to versions ≥ SL (9.0.1.33978).
+//------------------------------------------------
+
+struct MNLR
+{
+    CHUNK hdr;
+    uint16 newLightRefs[hdr.size / 2];
+};

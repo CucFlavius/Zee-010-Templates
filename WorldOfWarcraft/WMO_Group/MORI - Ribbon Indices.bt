@@ -1,0 +1,9 @@
+//------------------------------------------------
+// Ribbon Indices
+//------------------------------------------------
+
+struct MORI
+{
+    CHUNK hdr;
+    uint16 triangleStripIndices[hdr.size / 2];
+};

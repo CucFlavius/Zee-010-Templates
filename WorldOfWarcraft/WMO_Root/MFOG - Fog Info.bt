@@ -13,27 +13,31 @@
 
 // Fog information. Made up of blocks of 48 bytes.
 
+enum EFogs 
+{
+  FOG = 0,
+  UWFOG = 1,                           // uw = under water
+  NUM_FOGS = 2,
+};
+
+struct FogDefinition
+{
+    float end;
+    float start_scalar;              // (0..1) -- minimum distance is end * start_scalar
+    BGRA32 color;                // The back buffer is also cleared to this colour
+};
+
 struct FOG
 {
-  /*000h*/  uint32 flag_infinite_radius : 1; // F_IEBLEND: Ignore radius in CWorldView::QueryCameraFog
-  /*000h*/  uint32 : 3;                      // unused as of 7.0.1.20994
-  /*000h*/  uint32 flag_0x10 : 1;
-  /*000h*/  uint32 : 27;                     // unused as of 7.0.1.20994
-  /*004h*/  VECTOR3 pos;
-  /*010h*/  float smaller_radius;              // start
-  /*014h*/  float larger_radius;               // end
-            enum EFogs 
-            {
-              FOG,
-              UWFOG,                           // uw = under water
-              NUM_FOGS,
-            };
-            struct Fog
-            {
-              float end;
-              float start_scalar;              // (0..1) -- minimum distance is end * start_scalar
-              BGRA32 color;                // The back buffer is also cleared to this colour
-  /*018h*/  } fogs[NUM_FOGS];
+    uint32 flag_infinite_radius : 1; // F_IEBLEND: Ignore radius in CWorldView::QueryCameraFog
+    uint32 : 3;                      // unused as of 7.0.1.20994
+    uint32 flag_0x10 : 1;
+    uint32 : 27;                     // unused as of 7.0.1.20994
+    VECTOR3 pos;
+    float smaller_radius;              // start
+    float larger_radius;               // end
+    FogDefinition landFog;
+    FogDefinition underwaterFog;
 };
 
 struct MFOG

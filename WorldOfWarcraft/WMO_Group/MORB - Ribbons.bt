@@ -1,0 +1,21 @@
+//------------------------------------------------
+// Ribbons
+// ignored if !CMap::enableTriangleStrips
+// modifies MOBA, therefore has same count.
+// size is not checked, but 2 * sizeof(int), even though it is only (int, short).
+//------------------------------------------------
+
+struct RIBBON
+{
+    uint32 start_index;
+    uint16 index_count;
+    uint16 padding;
+};
+
+struct MORB
+{
+    CHUNK hdr;
+    RIBBON ribbons[hdr.size / 8];
+};
+
+// overwrites 0xC and 0x10 of MOBA (start, count).

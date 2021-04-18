@@ -49,13 +49,6 @@ typedef struct {
     Printf("%c%c%c%c = 0x%04X,\n", Magic[0], Magic[1], Magic[2], Magic[3], MagicUInt);
 } _chunk;
 
-struct SKIP_CHUNK
-{
-    _chunk hdr;
-    //Printf(hdr.Size);
-    uchar bytes[ hdr.Size ];
-};
-
 int match(char m[])
 {
     local char s[] = ReadString( FTell());
@@ -64,11 +57,52 @@ int match(char m[])
     return 0;
 }
 
+int matchr(char m[])
+{
+    local char s[] = ReadString( FTell());
+    if( m[0] == s[0] && m[1] == s[1] && m[2] == s[2] && m[3] == s[3] ) 
+        return 1;
+    return 0;
+}
+
 //----------------------------------------------------------------------//
 //      Skip Chunk                                                      //
 //----------------------------------------------------------------------//
+
 typedef struct {
     char ID[4];
-    int ChunkSize;
-    FSeek(FTell() + ChunkSize);
-} SKIPCHUNK;
+    int size;
+    FSeek(FTell() + size);
+} SKIPCHUNK <name = SkipChunkName>;
+
+// Helper function for displaying the string instead of the variable name
+string SkipChunkName(SKIPCHUNK &str)
+{
+    if (Strlen(str.ID) > 0)
+    {
+        return ("Skip : " + str.ID);
+    }
+    else
+    {
+        return "";
+    }
+}
+
+typedef struct {
+    char ID[4];
+    int size;
+    FSeek(FTell() + size);
+} SKIPCHUNKR <name = SkipChunkNameReversed>;
+
+// Helper function for displaying the string instead of the variable name
+string SkipChunkNameReversed(SKIPCHUNKR &str)
+{
+    if (Strlen(str.ID) > 0)
+    {
+        return ("Skip : " + str.ID[3] + str.ID[2] + str.ID[1] + str.ID[0]);
+    }
+    else
+    {
+        return "";
+    }
+}

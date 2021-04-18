@@ -1,0 +1,38 @@
+//------------------------------------------------
+// Material info for triangles
+// two bytes per triangle. So size of this chunk in bytes is twice the number of triangles in the WMO group.
+//------------------------------------------------
+
+typedef struct
+{
+    uint F_UNK_0x01 : 1 <name = "Unknown 0x1">;
+    uint F_NOCAMCOLLIDE : 1 <name = "No Cam Collide">;
+    uint F_DETAIL : 1 <name = "Detail">;
+    uint F_COLLISION : 1 <name = "Collision", comment = "Turns off rendering of water ripple effects. May also do more. Should be used for ghost material triangles.">;
+    uint F_HINT : 1 <name = "Hint">;
+    uint F_RENDER : 1 <name = "Render">;
+    uint F_UNK_0x40 : 1 <name = "Unknown 0x40">; 
+    uint F_COLLIDE_HIT : 1 <name = "Collide Hit">;
+    /*
+    bool isTransFace() { return F_UNK_0x01 && (F_DETAIL || F_RENDER); } // triangles flagged as TRANSITION.  These triangles blend lighting from exterior to interior
+    bool isColor() { return !F_COLLISION; }
+    bool isRenderFace() { return F_RENDER && !F_DETAIL; }
+    bool isCollidable() { return F_COLLISION || isRenderFace(); }
+    */
+} MOPYFLAGS <name = "MOPYFlags", size = 1>;
+
+struct SMOPoly
+{
+    MOPYFLAGS flags;
+    unsigned byte materialID;
+};
+
+struct MOPY
+{
+    CHUNK hdr;
+    SMOPoly triangle[hdr.size / 2];
+};
+
+// 0xFF is used for collision-only triangles. They aren't rendered but have collision. 
+// Problem with it: WoW seems to cast and reflect light on them. Its a bug in the engine. --schlumpf_ 20:40, 7 June 2009 (CEST)
+// Triangles stored here are more-or-less pre-sorted by texture, so it's ok to draw them sequentially.

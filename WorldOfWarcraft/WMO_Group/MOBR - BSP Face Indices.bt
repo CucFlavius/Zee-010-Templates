@@ -1,0 +1,36 @@
+//------------------------------------------------
+// Face indices for CAaBsp (MOBN). Unsigned shorts.
+// Triangle indices (in MOVI which define triangles) to describe polygon planes defined by MOBN BSP nodes.
+//------------------------------------------------
+
+struct MOBR
+{
+    CHUNK hdr;
+    uint16 nodeFaceIndices[hdr.size / 2];
+};
+
+/*
+//------------------------------------------------
+// Example code required to get an actual indices array from MOBR array:
+//------------------------------------------------
+
+var bpsIndicies = new Array(mobr.length*3);
+for (var i = 0; i < mobr.length; i++)
+{
+    bpsIndices[i*3 + 0] = movi[3*mobr[i]+0];
+    bpsIndices[i*3 + 1] = movi[3*mobr[i]+1];
+    bpsIndices[i*3 + 2] = movi[3*mobr[i]+2];
+}
+
+
+//------------------------------------------------
+// Example code to get indices into MOVT for triangles, referenced from BSP node definition:
+//------------------------------------------------
+for (var triangleInd = node.firstFace; triangleInd<node.firstFace+node.numFaces; triangleInd++)
+{
+    //3 vertices per triangle
+    movt[bpsIndices[3*triangleInd + 0]]
+    movt[bpsIndices[3*triangleInd + 1]]
+    movt[bpsIndices[3*triangleInd + 2]]
+}
+*/

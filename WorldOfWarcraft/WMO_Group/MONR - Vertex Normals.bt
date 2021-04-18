@@ -1,0 +1,10 @@
+//------------------------------------------------
+// Normals
+// count = size / (sizeof(float) * 3). 3 floats per vertex normal, in (X,Z,-Y) order.
+//------------------------------------------------
+
+struct MONR
+{
+    CHUNK hdr;
+    VECTOR3 normalsList[hdr.size / 12];
+};

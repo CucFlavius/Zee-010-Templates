@@ -1,6 +1,6 @@
-
 //------------------------------------------------
-// Group information for WMO groups, 32 bytes per group, nGroups entries.
+// Group header chunk
+// IMPORTANT: This chunk contains all other chunks! The following variables are a header only. The MOGP chunk size will be way more than the header variables!
 //------------------------------------------------
 
 typedef struct
@@ -39,26 +39,71 @@ typedef struct
     uint unk0x80000000 : 1 <name = "unk0x80000000", comment = "Seen in world/wmo/kultiras/human/8hu_warfronts_armory_v2_000.wmo">;
 } GROUPFLAGS <name = "[GroupFlags]", size = 4>;
 
-typedef struct
-{
-    uint CanCutTerrain : 0x01 <name = "CanCutTerrain", comment = "≥ Mists has portal planes to cut">;
-    uint ShadowMapGen : 0x30000000 <name = "ShadowMapGen", comment = "SMOGroup::depSHADOWMAPGEN | SMOGroup::depSHADOWMAPGEN_DEPTH as per '(m_groupFlags & (SMOGroup::depSHADOWMAPGEN | SMOGroup::depSHADOWMAPGEN_DEPTH)) == 0' and *(_DWORD *)(a1 + 36) & 0x30000000. yes, this clashes with EXTERIOR_CULL, but that's in the same version. weird.">;
-} GROUPFLAGS2 <name = "GroupFlags2", size = 4>;
-
-struct GroupInfo
-{
-    GROUPFLAGS flags;           //  see information in in MOGP, they are equivalent
-    BOUNDINGBOX boundingBox;    // group bounding box
-    int nameOffset;             // name in MOGN chunk (-1 for no name)
-};
-
-struct MOGI
+struct MOGP
 {
     CHUNK hdr;
-    GroupInfo groupInfo[ hdr.size / sizeof(GroupInfo) ];
+    uint32 groupName;                   // offset into MOGN
+                                        // If a group wmo is named "antiportal", CMapObjGroup::CreateOccluders() is called and group flags 0x4000000 and 0x80 are set automatically in both, MOGP and MOGI.
+                                        // Also, the BSP tree is cleared and batch_count[interior] and [exterior] is set to 0. If flags & 0x4000000 is set, just CMapObjGroup::CreateOccluders() is called, without setting flags or clearing bsp.
+    uint32 descriptiveGroupName;        // offset into MOGN
+    GROUPFLAGS flags;                   // Flags: always contain more information than flags in MOGI. 
+                                        // I suppose MOGI only deals with topology/culling,
+                                        // while flags here also include rendering info.
+    BOUNDINGBOX boundingBox;            // as with flags, same as in corresponding MOGI entry
+    uint16 portalStart;                 // index into MOPR
+    uint16 portalCount;                 // number of MOPR items used after portalStart
+                                        // The fields referenced from the MOPR chunk indicate portals leading out of the WMO group in question.
+    uint16 transBatchCount;
+    uint16 intBatchCount;
+    uint16 extBatchCount;
+                                        // For the "Number of batches" fields, transBatchCount + intBatchCount + extBatchCount == the total number
+                                        // of batches in the WMO group (in the MOBA chunk). This might be some kind of LOD thing, or just separating
+                                        // the batches into different types/groups…?
+    uint16 padding_or_batch_type_d;     // probably padding, but might be data?
+    
+    unsigned byte fogIds[4];            // ids in MFOG
+    uint32 groupLiquid;                 // see below in the MLIQ chunk
+    uint32 uniqueID;                    // WMOAreaTableRec::m_WMOGroupID
+    enum { flag2_CanCutTerrain = 1 };   // ≥ Mists has portal planes to cut       
+    uint32 flags2;
+    uint32 unk;                         // UNUSED: 20740
 };
 
-// Groups don't have placement or orientation information, because the coordinates for the vertices in the additional. 
-// WMO files are already correctly transformed relative to (0,0,0) which is the entire WMO's base position in model space.
+/*
+void CMapObjGroup::CreateOccluders()
+{
+  for ( unsigned int mopy_index (0), movi_index (0)
+      ; mopy_index < this->mopy_count
+      ; ++mopy_index, ++movi_index
+      ) 
+  {
+    C3Vectorⁱ* points[3] = 
+      { &this->m_vertices[this->movi[3*mopy_index + 0]]
+      , &this->m_vertices[this->movi[3*mopy_index + 1]]
+      , &this->m_vertices[this->movi[3*mopy_index + 2]]
+      };
 
-// The name offsets point to the position in the file relative to the MOGN header.
+    float avg ((points[0]->z + points[1]->z + points[2]->z) / 3.0); 
+
+    unsigned int two_points[2];
+    unsigned int two_points_index (0);
+
+    for (unsigned int i (0); i < 3; ++i)
+    {
+      if (points[i]->z > avg)
+      {
+        two_points[two_points_index++] = i;
+      }
+    }
+
+    if (two_points_index > 1)
+    {
+      CMapObjOccluder* occluder (CMapObj::AllocOccluder());
+      occluder->p1 = points[two_points[0]];
+      occluder->p2 = points[two_points[1]];
+
+      append (this->occluders, occluder);
+    }
+  }
+}
+*/

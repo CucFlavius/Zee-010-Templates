@@ -1,0 +1,34 @@
+//--------------------------------------
+//      File: WorldOfWarcraft_M2.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: M2 Main File
+//  Category: RE
+//--------------------------------------
+
+//--------------------------------------
+// M2 files (also called MDX) contain model objects. 
+// Each M2 file describes the vertices, faces, materials, texture names, animations and properties of one model.
+// M2 files don't have a chunked format like most other WoW formats (except in Legion).
+// Since it is chunked in Legion, all offsets are relative to beginning of the MD21 chunk's data rather than the beginning of the file.
+
+// Models are used for doodads (decoration objects), players, monsters and really everything in the game except for Terrain and WMOs.
+
+// M2 files do not store all the data for the model in them. 
+// Additional model information is stored in these files: .anim, .skin, .phys, .bone, .skel which may vary depending on the client version.
+// Details on how to request and read them are described in the page below.
+//--------------------------------------
+
+#include "Lib/Common.bt"
+#include "WorldOfWarcraft/M2/MD21 - Header.bt"
+
+struct M2
+{
+    while( ! FEof() )
+    {
+        if     ( matchr( "MD21" ) ) MD21 header;
+        else SKIPCHUNK unk; 
+    }
+};
+
+M2 m2;

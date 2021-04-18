@@ -1,0 +1,21 @@
+//------------------------------------------------
+// Map Object Shadow Batches
+// This section only applies to versions ≥ Cata. Could have been added earlierᵘ.
+//------------------------------------------------
+
+struct SHADOWBATCH
+{
+    char unk0[10];
+    short materialIDBig;      // Index into MOMT
+    int field_2;              // Divided by 3 upon usage
+    short field_6;            // Divided by 3 upon usage
+    char unk1[4];
+    char flagThing;           // If & 2 use materialIDBig otherwise use materialIDSmall
+    char materialIDSmall;     // Index into MOMT
+};
+
+struct MOBS
+{
+    CHUNK hdr;
+    SHADOWBATCH shadowBatches[hdr.size / 24];
+};

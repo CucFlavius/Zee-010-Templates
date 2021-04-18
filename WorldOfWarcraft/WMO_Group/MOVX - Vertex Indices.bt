@@ -1,0 +1,9 @@
+//------------------------------------------------
+// Possible replacement for MOVI chunk but allowing for larger indices (uint vs MOVI's ushort)? Spotted in 9.0, but might have existed for a while.
+//------------------------------------------------
+
+struct MOVX
+{
+    CHUNK hdr;
+    uint32 indices[hdr.size / 4];
+};

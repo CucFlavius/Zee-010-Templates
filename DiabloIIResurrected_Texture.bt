@@ -1,0 +1,33 @@
+//------------------------------------------------
+// Diablo 2 Resurrected Texture
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct MipInfo
+{
+    uint size;
+    uint start;
+};
+
+struct MipData(int size)
+{
+    byte data[size];
+};
+
+char magic[4];
+short format;       // 31 = RGBA32  57,58 = DXT1  61,62 = DXT5  63 = BC4
+short unk1;         // 2818 always
+uint width;
+uint height;
+uint _depth;
+char empty[8];
+uint mipLevels;
+uint _channels;     // 4 always ?
+MipInfo mipInfo[mipLevels];
+
+local int i;
+for(i = 0; i < mipLevels; i++)
+{
+    MipData mipData(mipInfo[i].size);
+}

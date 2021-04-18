@@ -31,13 +31,14 @@ struct BGRA
   float a;
 };
 
-struct BGRA32
+typedef struct
 {
-  unsigned byte b;
-  unsigned byte g;
-  unsigned byte r;
-  unsigned byte a;
-};
+    unsigned byte b;
+    unsigned byte g;
+    unsigned byte r;
+    unsigned byte a;
+    
+} BGRA32;
 
 struct ARGB32
 {

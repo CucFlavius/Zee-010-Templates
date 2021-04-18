@@ -1,0 +1,17 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+struct MVER
+{
+    CHUNK hdr;
+    uint32 version;     // < PreVanilla (0.6.0.3592) 14, PreVanilla (0.6.0.3592) … < Vanilla 16,  ≥ Vanilla 17
+};
+
+// There never have been any additional versions after the alpha, even though the format changed a lot. Classic Blizzard.

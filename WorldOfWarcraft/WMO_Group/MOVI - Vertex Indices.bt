@@ -1,0 +1,16 @@
+//------------------------------------------------
+// (MapObject Vertex Indices)
+// The group's vertex indices from the group's vertex list (MOVT, MONR, MOTV) to form triangles.
+//------------------------------------------------
+
+struct MOVI
+{
+    CHUNK hdr;
+    uint16 indices[hdr.size / 2];
+};
+
+// Three indices form a single triangle. Therefore, the number of indices should be divisible by 3.
+
+// All triangles are set in a right-handed coordinate system, which means the order of vertices is anti-clockwise to make a front-face triangle (positive area).
+// When used in a left-handed coordinate system, the 2nd and 3rd vertex indices of each triangle have to be swapped, otherwise these triangles form a negative area, and with back-side culling enabled, get culled.
+// When incorrectly set, a 3D renderer will make textured meshes look "inside-out".

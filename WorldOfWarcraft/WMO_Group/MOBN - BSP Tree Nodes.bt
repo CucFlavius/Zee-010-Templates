@@ -1,0 +1,190 @@
+//------------------------------------------------
+// Nodes of the BSP (Binary Space Partitioning) tree
+// Used for collision (along with bounding boxes ?). Array of t_BSP_NODE. / CAaBspNode. 0x10 bytes.
+//------------------------------------------------
+
+
+typedef struct
+{
+    uint Flag_XAxis : 1 <name = "X Axis">;
+    uint Flag_YAxis : 1 <name = "Y Axis">;
+    uint Flag_ZAxis : 1 <name = "Z Axis">;
+    uint Flag_AxisMask : 1 <name = "Axis Mask">;
+    uint Flag_Leaf : 1 <name = "Leaf">;
+    uint Flag_NoChild : 0 <name = "No Child 0xFFFF">; 
+} BSPNODEFLAGS <name = "BPSNodeFlags", size = 2>;
+
+struct CAaBspNode
+{	
+    BSPNODEFLAGS flags;     // See above enum. 4: leaf, 0 for YZ-plane, 1 for XZ-plane, 2 for XY-plane
+    int16 negChild;         // index of bsp child node (right in this array)
+    int16 posChild;
+    uint16 nFaces;          // num of triangle faces in MOBR
+    uint32 faceStart;       // index of the first triangle index(in MOBR)
+    float planeDist;
+};
+    
+struct MOBN
+{
+    CHUNK hdr;
+    CAaBspNode nodes[hdr.size / 16];
+};
+
+// planetype might be 0 for YZ-plane, 1 for XZ-plane, 2 for XY-plane, 4 for BSP leaf. 
+// fDist is where split plane locates based on planetype, ex, you have a planetype 0 and fDist 15, so the split plane is located at offset ( 15, 0, 0 ) with Normal as ( 1, 0, 0 ), I think the offset is relative to current node's bounding box center. The BSP root ( ie. node 0 )'s bounding box is the WMO's boundingbox, then you subdivide it with plane and fdist, then you got two children with two bounding box, and so on. you got the whole BSP tree. As the bsp leaf might overlapping the dividing plane, i think you might have two same face exist on two different bsp leaf. I'll make further tests to prove this. --mobius.
+
+// The biggest leaf in terms of number of faces in 3.3.5 contains more than 2100 faces (some ice giant in the Storm Peaks),
+// so it's not advised to use more. (While I haven't investigated properly, there might be a limit at 8192 in 6.0.1.18179 --Schlumpf (talk) 11:18, 3 January 2016 (UTC))
+
+// fDist is relative to point (0,0,0) of whole WMO. children[0] is child on negative side of dividing plane, children[1] is on positive side. --Deamon (talk) 10:01, 15 January 2016 (UTC)
+
+/*
+//////////////////////////////
+//        Merge Box         //
+//////////////////////////////
+void MergeBox(CVect3 (&result)[2], float  *box1, float  *box2)
+{
+    result[0][0] = box1[0];
+    result[0][1] = box1[1];
+    result[0][2] = box1[2];
+    result[1][0] = box2[0];
+    result[1][1] = box2[1];
+    result[1][2] = box2[2];
+}
+
+//////////////////////////////
+//       Adjust Delta       //
+//////////////////////////////
+void AjustDelta(CVect3 (&src)[2], float *dst, float coef)
+{
+    float d1 = (src[1][0]- src[0][0]) * coef;// delta x
+    float d2 = (src[1][1]- src[0][1]) * coef;// delta y
+    float d3 = (src[1][2]- src[0][2]) * coef;// delta z
+    dst[1] = d1 + src[0][1];
+    dst[0] = d2 + src[0][0];
+    dst[2] = d3 + src[0][2];
+}
+
+//////////////////////////////
+//       Traverse BSP       //
+//////////////////////////////
+#define epsilon 0.01F
+void TraverseBsp(int iNode, CVect3 (&pEyes)[2] , CVect3 (&pBox)[2],void *(pAction)(T_BSP_NODE *,void *param),void *param)
+{
+    int plane;
+    float eyesmin_boxmin;
+    float boxmax_eyesmax;
+    float eyesmin_fdist;
+    float eyes_max_fdist;
+    float eyesmin_div_deltadist;
+    CVect3 tBox1[2];
+    CVect3 tBox2[2];
+    CVect3 newEyes[2];
+    CVect3 ajusted;
+    T_BSP_NODE *pNode = &m_tNode[iNode];
+    if ( pNode)
+    {
+        if (pNode->planetype & 4 )
+        {
+            if(pAction == 0)
+            {
+                RenderGeometry(GetEngine3DInstance(),pNode);
+                return;
+            }
+            else
+            {
+                pAction(pNode,param);
+            }
+        }
+        plane =pNode->planetype  & 3;
+        eyesmin_boxmin = pEyes[0][plane] - pBox[0][plane];
+        if ( ( -epsilon < eyesmin_boxmin) | (-epsilon == eyesmin_boxmin) || (pEyes[1][plane]- pBox[0][plane])  >= -epsilon )
+        {
+            boxmax_eyesmax = pBox[1][plane] - pEyes[1][plane];
+            if ( (epsilon < boxmax_eyesmax) | (epsilon == boxmax_eyesmax) || (pBox[1][plane] -  pEyes[0][plane]) >= epsilon )
+            {
+                memmove(tBox1,pBox,sizeof(pBox));
+                tBox1[0][plane] = pNode->fDist;
+                memmove(tBox2,pBox,sizeof(pBox));
+                tBox2[1][plane] = pNode->fDist;
+                eyesmin_fdist = pEyes[0][plane] - pNode->fDist;
+                eyes_max_fdist = (pEyes[1][plane]) - pNode->fDist;
+                if ( eyesmin_fdist >= -epsilon && eyesmin_fdist <= epsilon|| (eyes_max_fdist >= -epsilon) && eyes_max_fdist <= epsilon )
+                {
+                    if ( pNode->children[1] != (short)-1 ) TraverseBsp(pNode->children[1],  pEyes,  tBox1,pAction,param);
+                    if ( pNode->children[0] != (short)-1 ) TraverseBsp(pNode->children[0] , pEyes, tBox2,pAction,param);
+                    return;
+                }
+                if ( eyesmin_fdist > epsilon && eyes_max_fdist < epsilon)
+                {
+                    if ( pNode->children[1] != (short)-1 ) TraverseBsp(pNode->children[1], pEyes, tBox1,pAction,param);
+                    return;
+                }
+                if ( eyesmin_fdist < -epsilon && eyes_max_fdist < -epsilon)
+                {
+                    if ( pNode->children[0] != (short)-1 ) TraverseBsp(pNode->children[0] , pEyes, tBox2,pAction,param);
+                    return;
+                }
+                eyesmin_div_deltadist = (float)(eyesmin_fdist / (eyesmin_fdist - eyes_max_fdist));
+                AjustDelta(pEyes, ajusted, eyesmin_div_deltadist);
+                if ( eyesmin_fdist <= 0.0 )
+                {
+                    if ( pNode->children[0]  != (short)-1 )
+                    {
+                        MergeBox(newEyes, &pEyes[0][0], ajusted);
+                        TraverseBsp(pNode->children[0] , newEyes, tBox2,pAction,param);
+                    }
+                    if (pNode->children[1]  != (short)-1 )
+                    {
+                        MergeBox(newEyes, ajusted, &pEyes[1][0]);
+                        TraverseBsp(pNode->children[1] , newEyes, tBox1,pAction,param);
+                    }
+                }
+                else
+                {
+                    if ( pNode->children[1]  != (short)-1 )
+                    {
+                        MergeBox(newEyes, &pEyes[0][0], ajusted);
+                        TraverseBsp(pNode->children[1] , newEyes, tBox1,pAction,param);
+                    }
+                    if (pNode->children[0]  != (short)-1 )
+                    {
+                        MergeBox(newEyes, ajusted, &pEyes[1][0]);
+                        TraverseBsp(pNode->children[0] , newEyes, tBox2,pAction,param);
+                    }
+                }
+            }
+        }
+    }
+}
+
+//////////////////////////////
+//      Check From Eyes     //
+//////////////////////////////
+CheckFromEyes(CVect3 (&pEyes)[2],void *(pAction)(T_BSP_NODE *,void *param),void *param )
+{
+    CVect3 eyes[2];
+    instance_mat.invert();
+    eyes[0] = _fixCoordSystemInv((instance_mat*p->m_pCameraViewport->GetCameraTarget())+CVect3(0,-10,0) );
+    eyes[1] = _fixCoordSystemInv((instance_mat*p->m_pCameraViewport->GetCameraTarget())+CVect3(0,60,0) ); 
+    // make vector down
+
+    eyes[0] = CVect3(-1.474797e+001F, -1.195053e+001F,  5.416779e+000F); // Debug absolute position from WP  Azaroth 1164,58,-10645.83
+    eyes[1] = CVect3(-1.474797e+001F, -1.195053e+001F, -1.754583e+003F);
+
+    TraverseBsp(0,pEyes,m_bbox,pAction);
+}
+
+*/
+
+// This BSP seems to be used for collision purpose only.
+
+// An object could have has 2 collision system. 
+// The first one is encoded in a simplified Geometry (when MOPY. MaterialID=0xFF) the second one is encoded in T_BSP_NODE.
+// Some object has collision method 1 only, some other uses method 2 only. Some object have both collision systems (some polygons are missing in the BSP but are present in the simplified geometry).
+// how to use these 2 system remains unclear.
+
+// For the time being, I check first the simplified geometry, and then if there is no collision, I apply a second pass using the BSP.
+// It is sub-optimum, but it seems to work. Probably there is somewhere a flag telling us with which method we should use for the object.
+
+// The code attached seems to work fine for BSP method--peter-pan.

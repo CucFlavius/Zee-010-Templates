@@ -11,47 +11,68 @@
 const float pi = 3.14159265359;
 
 // Vector 2 (two floats x,y)
-typedef struct {
+typedef struct
+{
     float x;
     float y;
 } VECTOR2;
 
+// Vector 2 Int (two ints x,y)
+typedef struct
+{
+    int x;
+    int y;
+} VECTOR2INT;
+
 // Vector 2 (two shorts x,y)
-typedef struct {
+typedef struct
+{
     short x;
     short y;
 } VECTOR2SMALL;
 
 // Vector 3 (three floats x,y,z)
-typedef struct {
+typedef struct
+{
     float x;
     float y;
     float z;
 } VECTOR3 <name = Vector3String>;
 
 // Vector 3 (three floats x,y,z)
-typedef struct {
+typedef struct
+{
     float x;
     float y;
     float z;
 } VECTOR3ROT;
 
+typedef struct
+{
+    uint16 x;
+    uint16 y;
+    uint16 z;
+} VECTOR3SHORT;
+
 // Vector 3 (three bytes x,y,z)
-typedef struct {
+typedef struct
+{
     byte x;
     byte y;
     byte z;
 } VECTOR3SMALL;
 
 // Vector 4 (four floats x,y,z,w)
-typedef struct {
+typedef struct
+{
     float x;
     float y;
     float z;
     float w;
 } VECTOR4;
 
-typedef struct {
+typedef struct
+{
     byte x;
     byte y;
     byte z;
@@ -93,6 +114,17 @@ string Vector3String(VECTOR3 &v)
     SPrintf( y, "%f", v.y );
     local string z;
     SPrintf( z, "%f", v.z );
+    return "Vector3 (" + x + ", " + y + ", " + z + ")";
+}
+
+string Vector3ShortString(VECTOR3SHORT &v)
+{
+    local string x;
+    SPrintf( x, "%f", v.x / 32767 );
+    local string y;
+    SPrintf( y, "%f", v.y / 32767 );
+    local string z;
+    SPrintf( z, "%f", v.z / 32767 );
     return "Vector3 (" + x + ", " + y + ", " + z + ")";
 }
 

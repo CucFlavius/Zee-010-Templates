@@ -1,0 +1,84 @@
+//------------------------------------------------
+// Doodad References
+// One 16-bit integer per light reference.
+//------------------------------------------------
+
+typedef struct
+{
+    uint flag_tilt_x : 1 <name = "Tilt X", comment = "The model is tilted on the X axis.">;
+    uint flag_tilt_y : 1 <name = "Tilt Y", comment = "The model is tilted on the Y axis.">;
+    uint unk0x4 : 1 <name = "Unknown 0x4", comment = "">;
+    uint flag_use_texture_combiner_combos  : 1 <name = "Has blend mode overrides", comment = "add textureCombinerCombos array to end of data. The model has blend mode overrides.">;
+    uint unk0x10 : 1 <name = "Unknown 0x10", comment = "">;
+    uint flag_load_phys_data  : 1 <name = "Has Physics Data", comment = "">;
+    uint unk0x40 : 1 <name = "Unknown 0x40", comment = "">;
+    uint flag_unk_0x80  : 1 <name = "Has Skin LoDs", comment = "With this flag unset, demon hunter tattoos stop glowing, since Cata (4.0.1.12911)ᵘ everyᵘ model now has this flag">;
+    uint flag_camera_related  : 1 <name = "Unknown Camera Flag", comment = "">;
+    uint flag_new_particle_record : 1 <name = "New Particle Record", comment = "In CATA: new version of ParticleEmitters. By default, length of M2ParticleOld is 476, But if 0x200 is set or if version is bigger than 271, length of M2ParticleOld is 492.">;
+    uint flag_unk_0x400 : 1 <name = "Unknown 0x400", comment = "">;
+    uint flag_texture_transforms_use_bone_sequences  : 1 <name = "Texture Transforms Use Bone Sequences", comment = "≥ WoD 0x800 -- When set, texture transforms are animated using the sequence being played on the bone found by index in tex_unit_lookup_table[textureTransformIndex], instead of using the sequence being played on the model's first bone. Example model: 6DU_HellfireRaid_FelSiege03_Creature">;
+    uint flag_unk_0x1000 : 1 <name = "Unknown 0x1000", comment = "">;
+    uint flag_unk_0x2000 : 1 <name = "Unknown 0x2000", comment = "seen in various legion models">;
+    uint flag_unk_0x4000 : 1 <name = "Unknown 0x4000", comment = "">;
+    uint flag_unk_0x8000 : 1 <name = "Unknown 0x8000", comment = "seen in UI_MainMenu_Legion">;
+    uint flag_unk_0x10000 : 1 <name = "Unknown 0x10000", comment = "">;
+    uint flag_unk_0x20000 : 1 <name = "Unknown 0x20000", comment = "">;
+    uint flag_unk_0x40000 : 1 <name = "Unknown 0x40000", comment = "">;
+    uint flag_unk_0x80000 : 1 <name = "Unknown 0x80000", comment = "">;
+    uint flag_unk_0x100000 : 1 <name = "Unknown 0x100000", comment = "">;
+    uint flag_use_chunked_anim_files : 1 <name = "Use Chunked Anim Files", comment = "apparently: use 24500 upgraded model format: chunked .anim files, change in the exporter reordering sequence+bone blocks before name">;
+} GLOBALFLAGS <name = "[Global Flags]", size = 4>;
+
+
+struct MD21
+{
+    CHUNK hdr;
+    
+    local int startPos = FTell();
+
+    CHUNKID magic;      // "MD20"
+    uint32 version;
+    M2ARRAY name;       // should be globally unique, used to reload by name in internal clients
+    GLOBALFLAGS globalFlags;
+    M2ARRAY globalLoops;
+    M2ARRAY sequences;
+    M2ARRAY sequenceIdxHashByID;
+    M2ARRAY bones;
+    M2ARRAY boneIndicesByID;
+    M2ARRAY vertices;
+    uint32 numSkinProfiles;
+    M2ARRAY colors;
+    M2ARRAY textures;
+    M2ARRAY textureWeights;
+    M2ARRAY textureTransforms;
+    M2ARRAY textureIndicesByID;
+    M2ARRAY materials;
+    M2ARRAY boneCombos;
+    M2ARRAY textureCombos;
+    M2ARRAY textureTransformBoneMap;
+    M2ARRAY textureWeightCombos;
+    M2ARRAY textureTransformCombos;
+    BOUNDINGBOX boundingBox;
+    float boundingSphereRadius;
+    BOUNDINGBOX collisionBox;
+    float collisionSphereRadius;
+    M2ARRAY collisionIndices;
+    M2ARRAY collisionPositions;
+    M2ARRAY collisionFaceNormals;
+    M2ARRAY attachments;
+    M2ARRAY attachmentIndicesByID;
+    M2ARRAY events;
+    M2ARRAY lights;
+    M2ARRAY cameras;
+    M2ARRAY cameraIndicesByID;
+    M2ARRAY ribbonEmitters;
+    M2ARRAY particleEmitters;
+    if (globalFlags.flag_use_texture_combiner_combos)
+    {
+        M2ARRAY textureCombinerCombos;
+    }
+
+    FSeek(startPos + hdr.size);
+};
+
+// The numbers are indices into the doodad instance table (MODD chunk) of the WMO root file. These have to be filtered to the doodad set being used in any given WMO instance.

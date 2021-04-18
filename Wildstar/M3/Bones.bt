@@ -27,6 +27,7 @@ struct BONE // 352
                                     // Those values seem to be 0, for leaf bones
     M3DOUBLEARRAY bone_animation[2];
     M3DOUBLEARRAY unk_block_0A0[2];
+
     MATRIX4x4 matrix_0D0;           // Looks like a column-major transformation matrix
     MATRIX4x4 matrix_110;           // Looks like the inverse column-major transformation matrix
     float x;

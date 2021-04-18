@@ -1,0 +1,11 @@
+//------------------------------------------------
+// Replacement for header color
+// Model Ambient Light ?
+// This section only applies to versions ≥ WoD. Could have been added earlierᵘ.
+//------------------------------------------------
+
+struct MDAL
+{
+    CHUNK hdr;
+    RGBA32 color; // if -1 or not present, take color from header
+};

@@ -13,7 +13,6 @@
 struct MOGN
 {
     CHUNK hdr;
-    FSkip(2);
 
     local long startPos = FTell();
     local long currentPos = FTell();
@@ -23,6 +22,8 @@ struct MOGN
         STRING s;
         currentPos = FTell();
     }
+
+    FSkip(2);
 };
 
 // A contiguous block of zero-terminated strings. 

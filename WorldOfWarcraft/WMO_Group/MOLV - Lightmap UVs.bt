@@ -1,0 +1,11 @@
+//------------------------------------------------
+// Light map texture coords
+// This section only applies to versions ≤ PreVanilla (0.5.5.3494). Only used in v14.
+// This chunk is referenced by MOPY index with 3 entries per SMOPoly.
+//------------------------------------------------
+
+struct MOLV
+{
+    CHUNK hdr;
+    VECTOR2 lightmapVertexList[hdr.size / 8];        // ranging [0, 1], in case of light map I doubt it would go outside of 0-1 range because lightmaps need unique triangle mapping
+};

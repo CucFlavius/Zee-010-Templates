@@ -11,6 +11,8 @@
 //   History: 
 //------------------------------------------------
 
+local long geometryEndPos;
+
 typedef struct {
     uint16 name : 1 <name = "0x0001", comment = "(value 1 or 2)">;
     uint16 name : 1 <name = "0x0002", comment = "(value 3)">;
@@ -84,7 +86,40 @@ enum<byte> BODYPART {
     BODY_Horns = 96
 };
 
-struct MESH (int index)
+struct VERTEX (VERTEXBLOCKFIELDTYPE vertexBlockFieldType[])
+{
+    local int i;
+    for( i = 0; i < 11; i++ )
+    {
+        switch( vertexBlockFieldType[i] ) 
+        {
+            case LocationXYZ16Bit : 
+                VECTOR3SHORT position;
+                break;
+            case unk16Bit :
+                short unk;
+                break;
+            case BoneMapWeight :
+                int unkbone;   // needs figuring out
+                break;
+            case UVMap :
+                short x; // convert to floats
+                short y;
+                break;
+            case VBFT_Null:
+                break;
+            default :
+                break;
+        }
+    }
+};
+
+struct VERTICES (int count, VERTEXBLOCKFIELDTYPE vertexBlockFieldType[])
+{
+    VERTEX vertex(vertexBlockFieldType)[count]<optimize=false>;
+};
+
+struct MESH
 {
     uint32 startIndex;      // This value is an index and defines at which position of {@link StructGeometry#indexData} the indices start, which define this mesh. 
                             // The number of indices which belong to this mesh is given by {@link #indexCount}
@@ -93,7 +128,9 @@ struct MESH (int index)
                             // The index is defined on a per vertex basis, the number of bytes which belongs to a vertex is defined by {@link StructGeometry#vertexBlockSizeInBytes}
     uint32 indexCount;
     uint32 vertexCount;
-    byte gap_010[6];
+    uint16 unk0;            // This does weird stuff to the model, it twists the tail of chua if >0
+    uint16 unk1;
+    uint16 unk3;            // index into something?
     byte materialSelector;  // {@link StructMaterial material} index, linked under {@link StructM3Header header}
     byte gap_017[7];
     byte meshGroupId;       // Defines the group this mesh belongs to. For models without groups, this seems to be -1
@@ -105,20 +142,17 @@ struct MESH (int index)
                             // It is reasonable to assume that this <code>ID</code> is used to blend out meshes if, for example, the model wears gear. This still needs to be checked.
                             // The information may be part of a item model or may be found in a .tbl defining said item.
     byte gap_023[29];
-    float gap_040[4];
-    float gap_050[4];
-    byte gap_060[16];
+    float gap_040[4];       // bounds start ?? test when rendering
+    float gap_050[4];       // bounds end ??
+    float unkf[4];
 };
 
-struct MESHES (int elements)
+struct MESHES (int count)
 {
-    for( i = 0; i < elements; i++ )
-    {
-        MESH mesh(i);
-    }
+    MESH mesh[count]<optimize=false>;
 };
 
-struct GEOMETRY (int index)
+struct GEOMETRY
 {
     byte gap_000[8];                                // For all 34712 scanned m3, the first value is 80, the other seven are 0. 
                                                     // This is probably a 64 uint, maybe used as a signature to identify this packet.
@@ -131,7 +165,7 @@ struct GEOMETRY (int index)
     byte vertexBlockFieldPosition[11];              // Contains information from which byte to which byte certain informations can be found. 
                                                     // Starting at i, a range ends at i+n with n>0 if [i+n] != 0
     uint16 gap_036;
-    M3ARRAY vertexBlockData;                        // 1b
+    M3ARRAY vertexBlockArray;                        // 1b
     M3ARRAY unk_offset_048;                         // For all 34712 scanned m3 empty (2018.12.11)
     M3ARRAY unk_offset_058;                         // For all 34712 scanned m3 empty (2018.12.11)
     uint32 indexCount;
@@ -142,7 +176,7 @@ struct GEOMETRY (int index)
                                                     // Additional, if 4 bytes are read, the bytes which hold the actual index can be the first 2 LSB or MSB.
     int16 padding_06E;
     M3ARRAY indexData;                              // 1b
-    M3ARRAY meshes;                                 // 112b
+    M3ARRAY meshesArray;                            // 112b
     uint32 nVertexBlocks2;                          // Mostly equal to {@link #vertexBlockCount}, probably part of a struct within this struct, so this value doesn't need to be passed around as a separate value.
                                                     // Sometimes this value is smaller than the other
     int32 gap_093;
@@ -156,16 +190,21 @@ struct GEOMETRY (int index)
                                                     // Related to unk_offset_0A8, it seems it contains ranges like submeshVertexBlockRange
                                                     // goes from 0 to X to unk_offset_0A8.size - 1
 
-    FSeek(headerSize + header.geometry.offset + (header.geometry.elements * 200) + meshes.offset);
-    MESHES meshList(meshes.elements);
-    FSeek(headerSize + header.geometry.offset + ((index + 1) * 200));
+    local long savePos = FTell();
+
+    FSeek(geometryEndPos + vertexBlockArray.offset);
+    VERTICES vertices(vertexBlockArray.elements, vertexBlockFieldType);
+
+    FSeek(geometryEndPos + meshesArray.offset);
+    MESHES meshes(meshesArray.elements);
+
+    FSeek(savePos);
 };
 
 struct GEOMETRIES (HEADER &header)
 {
-    local int i;
-    for( i = 0; i < header.geometry.elements; i++ )
-    {
-        GEOMETRY geometry(i);
-    }
+    geometryEndPos = 8 + headerSize + header.geometry.offset + (header.geometry.elements * 200);
+    GEOMETRY geometry[header.geometry.elements]<optimize=false>;
 };
+
+

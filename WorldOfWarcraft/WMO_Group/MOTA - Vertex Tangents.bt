@@ -1,0 +1,16 @@
+//------------------------------------------------
+// Map Object Tangent Array
+//------------------------------------------------
+
+struct MOTA (int batchesCount)
+{
+    CHUNK hdr;
+    uint16 first_index[batchesCount];   // either -1 or first index of batch.count indices into tangents[]. 
+                                        // if auto-generated, only has entries for batches with 
+                                        // material[batch.material].shader == 10 or 14.
+    local int tangentCount = (hdr.size - (batchesCount * 2)) / 16;
+    VECTOR4 tangents[tangentCount];     // sum (batches[i].count | material[batches[i].material].shader == 10 or 14)
+};
+
+// Is auto generated, if there are batches with shaders 10 or 14, but no tangents.
+// (And maybe some additional condition.) See CMapObjGroup::Create().

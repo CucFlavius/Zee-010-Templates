@@ -1,0 +1,12 @@
+//------------------------------------------------
+// Vertices chunk
+// count = size / (sizeof(float) * 3). 3 floats per vertex, the coordinates are in (X,Z,-Y) order. 
+// It's likely that WMOs and models (M2s) were created in a coordinate system with the Z axis pointing up and the Y axis into the screen, whereas in OpenGL, the coordinate system used in WoWmapview the Z axis points toward the viewer and the Y axis points up. 
+// Hence the juggling around with coordinates.
+//------------------------------------------------
+
+struct MOVT
+{
+    CHUNK hdr;
+    VECTOR3 positionsList[hdr.size / 12];
+};

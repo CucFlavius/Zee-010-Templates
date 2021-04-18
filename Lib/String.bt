@@ -10,12 +10,14 @@
 
 
 // Read null terminated string
-typedef struct {
+typedef struct
+{
     string s;
 } STRING <name = StringName>;
 
 // Read a string of given size 
-typedef struct (int size) {
+typedef struct (int size)
+{
     char s[size];
 } STRINGc <name = StringCName>;
 
@@ -26,11 +28,21 @@ typedef struct
     char s[strSize];
 } STRINGd <name = StringDName>;
 
-typedef struct (int size) {
+typedef struct (int size)
+{
     wchar_t path[size];
 } WSPATH;
 
-
+// Read null terminated string, with variable name
+typedef struct (char nn[])
+{
+    string s;
+    local char n[];
+    if (sizeof(nn) > 0)
+        n = nn;
+    else
+        n = " ";
+} STRINGn <name = StringNName>;
 
 // Helper function for displaying the string instead of the variable name
 string StringName(STRING &str)
@@ -55,4 +67,12 @@ string StringDName(STRINGd &str)
         return "String : " + str.s;
     else
         return "";
+}
+
+string StringNName(STRINGn &str)
+{
+    if (Strlen(str.s) > 0)
+        return "string " + str.n + " : " + str.s;
+    else
+        return " ";
 }

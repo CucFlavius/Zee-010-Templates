@@ -1,0 +1,24 @@
+//------------------------------------------------
+// Texture coordinates, 2 floats per vertex in (X,Y) order.
+// The values usually range from 0.0 to 1.0, but it's ok to have coordinates out of that range. 
+// Vertices, normals and texture coordinates are in corresponding order, of course.
+// Not present in antiportal WMO groups.
+//------------------------------------------------
+
+struct MOTV
+{
+    CHUNK hdr;
+    VECTOR2 texCoordsList[hdr.size / 8];        // ranging [0, 1], can be outside that range though and will be normalised.
+};
+
+// Client loads multiple MOTV chunks into an array but only keeps the count of the last one.
+// This behavior is different to all other chunk types read. The array has 3 entries, after that the client will overwrite its data structures,
+// starting with the MOTV_Counter field itself.
+// (checked with client 29297, client 30918 still has this severe bug)
+/*
+else                                                      // MOTV
+{
+  this->MOTV[this->MOTV_Counter++] = Chuck->Payload;      // careful, unchecked array access
+  this->MOTV_Count = Chunk->Length >> 3;
+}
+*/

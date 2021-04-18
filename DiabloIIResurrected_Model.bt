@@ -1,0 +1,192 @@
+//--------------------------------------------------------------------------------------------------------------------------//
+// Diablo 2 Resurrected Model
+// It's basicly rad granny format, with extra data added by blizz
+// Template might work on other gr2 files, like Teso/Metin
+// Compression seems to always be bitknit2
+// 1. Read the data as seen in this template
+// 2. Decompress the compressed sections and pointer fixup data
+// 3. Transfer pointers based on the descriptions at pointerFixupArrayOffset
+// 4. There's also some data that needs to be shifted around, I skip this step, 
+// based on data at mixedMarshallingFixupArrayOffset
+// 5. I merge all the sections into one file that can be parsed, 
+// the reason why I do it is because there are pointers in one section that refer to another during the pointer fixup stage
+//--------------------------------------------------------------------------------------------------------------------------//
+
+#include "Lib/Common.bt"
+
+#define GrannyGRNExtraTagCount 4
+#define HeaderStartPos 32
+
+struct GrnMagic
+{
+    byte magicValue[16];
+    uint headerSize;                        // from start of file
+    uint headerFormat;
+    uint reserved[2];
+};
+
+struct GrnReference
+{
+    uint sectionIndex;
+    uint sectionOffset;
+};
+
+// here is the info header (not sure if rootobjecttype is correct in it's definition but the rootobjectoffset is correct):
+struct Header
+{
+    uint version;
+    uint totalSize;
+    byte CRC[4];
+    uint sectionArrayOffset;                // offset inside header
+    uint sectionArrayCount;                 // sections count
+    GrnReference rootObjectDefinition;      // defines which section root object is in ?
+    GrnReference rootObject;                // defines offset from start of section above where root object is located ?
+    uint typeTag;
+    uint extraTags[GrannyGRNExtraTagCount];
+    uint stringDatabaseCRC;
+    uint reservedUnused[3];
+};
+
+typedef enum
+{
+    GrannyNoCompression,
+    GrannyOodle0Compression,
+    GrannyOodle1Compression,
+    GrannyBitKnitCompression,
+    GrannyBitKnit2Compression,
+    GrannyOnePastLastCompressionType,
+    Grannycompression_type_forceint = 0x7fffffff
+} CompressionType;
+
+typedef enum
+{
+    GrannyStandardMainSection = 0,
+    GrannyStandardRigidVertexSection = 1,
+    GrannyStandardRigidIndexSection = 2,
+    GrannyStandardDeformableVertexSection = 3,
+    GrannyStandardDeformableIndexSection = 4,
+    GrannyStandardTextureSection = 5,
+    GrannyStandardDiscardableSection = 6,
+    GrannyStandardUnloadedSection = 7,
+    GrannyStandardSectionCount,
+    Grannystandard_section_index_forceint = 0x7fffffff
+} SectionType;
+
+struct DATA(int size, int id)
+{
+    local int ID = id;
+    byte data[size];
+};
+
+struct Section
+{
+    CompressionType format;
+    uint dataOffset;                        // from start of file
+    uint dataSize;                          // compressed size and uncompressed size must be equal
+    uint expandedDataSize;                  // compressed size and uncompressed size must be equal
+    uint internalAllignment;                // The Alignment value specifies what alignment objects inside the section should adhere to. 
+                                            // If this were 4, for example, then each object would start on an even 4-byte boundary relative to the start of the section.
+                                            // This is used primarily for pre-aligning data to larger alignments (say, 16-byte or 128-byte boundaries) for direct loading of sections into hardware-usable addresses, or for use with SSE optimized routines. 
+                                            // If you're not doing something fancy like this, you should probably stick with 4-byte alignment. 
+    uint first16Bit;                        // offset + sectionfileoffset = location, # Stop0 for Oodle1
+    uint first8Bit;                         // offset + sectionfileoffset = location, # Stop1 for Oodle1
+    uint pointerFixupArrayOffset;           // from start of file
+    uint pointerFixupArrayCount;
+    uint mixedMarshallingFixupArrayOffset;  // usually points to end of file
+    uint mixedMarshallingFixupArrayCount;   // always 0
+};
+
+struct FixupDATA
+{
+    int compressedSize;
+    byte data[compressedSize];
+};
+
+string GetSectionName(DATA &data)
+{
+    if (data.ID == 0)
+        return "DATA - MainSection";
+    else if (data.ID == 1)
+        return "DATA - RigidVertexSection";
+    else if (data.ID == 2)
+        return "DATA - RigidIndexSection";
+    else if (data.ID == 3)
+        return "DATA - DeformableVertexSection";
+    else if (data.ID == 4)
+        return "DATA - DeformableIndexSection";
+    else if (data.ID == 5)
+        return "DATA - TextureSection";
+    else if (data.ID == 6)
+        return "DATA - DiscardableSection";
+    else if (data.ID == 7)
+        return "DATA - UnloadedSection";
+    else
+        return "DATA - UnknownSection";
+}
+
+GrnMagic gran;
+Header header;
+FSeek(HeaderStartPos + header.sectionArrayOffset);
+Section sections[header.sectionArrayCount];
+local int i;
+for (i = 0; i < header.sectionArrayCount; i++)
+{
+    if (sections[i].dataSize > 0)
+    {
+        FSeek(sections[i].dataOffset);
+        DATA compressedData(sections[i].dataSize, i)<name = GetSectionName>;
+    }
+}
+
+for (i = 0; i < header.sectionArrayCount; i++)
+{
+    if (sections[i].dataSize > 0)
+    {
+        if (sections[i].pointerFixupArrayCount > 0)
+        {
+            FSeek(sections[i].pointerFixupArrayOffset);
+            FixupDATA fixupData;
+        }
+        if (sections[i].mixedMarshallingFixupArrayCount > 0)
+        {
+            FSeek(sections[i].mixedMarshallingFixupArrayOffset);
+            FixupDATA marshalData;
+        }
+    }
+}
+
+// How I do the pointer fixup, this is guess work but it works, maybe sdk does this differently
+// Need to keep track of where each section starts after merging the decompressed sections
+// Marching function is similar, just you also read a count of how much data to move, never implemented tho, didn't need to
+/*
+ParseFixupData(byte[] input, uint count, byte[] output, int currentSectionIndex)
+{
+    for (int i = 0; i < count; i++)
+    {
+        uint to = input.ReadUInt32()
+        int sectionIndex = input.ReadInt32()
+        uint from = input.ReadUInt32()
+
+        if (sectionIndex == currentSectionIndex)
+        {
+            // converting :from: to long, then into byte[8], and then placing it in the correct spot
+            long ptr = from;
+            byte[] ptrData = BitConverter.GetBytes(ptr);
+            for (int j = 0; j < 8; j++)
+            {
+                output[j + to] = ptrData[j]
+            }
+        }
+        else
+        {
+            // converting :from: to long, then into byte[8], and then placing it in the correct spot
+            long ptr = from + sectionStart[sectionIndex]
+            byte[] ptrData = BitConverter.GetBytes(ptr)
+            for (int j = 0; j < 8; j++)
+            {
+                output[j + to] = ptrData[j]
+            }
+        }
+    }
+}
+*/

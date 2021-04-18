@@ -17,7 +17,9 @@
 
 HEADER header;
 
-FSeek(headerSize + header.bones.offset); 
+//Printf("headerSize : (%d)", headerSize);
+
+FSeek(headerSize + header.bones.offset);
 BONES bones(header);
 
 FSeek(headerSize + header.textures.offset);
@@ -29,5 +31,12 @@ MATERIALS materials(header);
 FSeek(headerSize + header.model2Display.offset);
 MODEL2DISPLAYS model2Displays(header);
 
-FSeek(headerSize + header.geometry.offset);
-GEOMETRIES geometries(header);
+if (header.version == 82)
+{
+
+}
+else if (header.version == 100)
+{
+    FSeek(headerSize + header.geometry.offset);
+    GEOMETRIES geometries(header);
+}

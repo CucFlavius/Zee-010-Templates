@@ -22,7 +22,63 @@ struct HEADER
     if (version == 82)
     {
         // Read old header //
-        headerSize = 1616;
+        headerSize = 1632;
+
+        byte gap_008[8];
+        M3ARRAY unk_offset_010;         // 112 bytes
+        M3DOUBLEARRAY unk_offset_020;   // 4, 1 bytes
+        M3DOUBLEARRAY unk_offset_038;   // 4, 1 bytes // Art\Creature\Avatus\Avatus.m3
+        M3DOUBLEARRAY unk_offset_050;   // 4, 1 bytes // Art\Creature\Avatus\Avatus.m3
+        M3DOUBLEARRAY unk_offset_068;   // 4, 1 bytes // Art\Creature\Avatus\Avatus.m3
+        M3ARRAY unk_offset_080;         // 48 bytes
+        M3DOUBLEARRAY unk_offset_090;   // 4, 1 bytes
+        M3DOUBLEARRAY unk_offset_0A8;   // 4, 1 bytes
+        M3DOUBLEARRAY unk_offset_0C0;   // 4, 1 bytes
+        M3DOUBLEARRAY unk_offset_0D8;   // 4, 1 bytes UInt32_UInt8
+        M3ARRAY unk_offset_0F0;         // 184 bytes
+        M3DOUBLEARRAY unk_offset_100;
+        M3DOUBLEARRAY unk_offset_118;
+        M3DOUBLEARRAY unk_offset_130;
+        M3DOUBLEARRAY unk_offset_148;
+        M3ARRAY bones;                  // Pointer to an array of bone elements
+        M3ARRAY unk18;
+        M3ARRAY unk19;
+        M3ARRAY bone_mapping;
+
+        M3ARRAY textures;
+        M3ARRAY unk21;
+		
+		M3ARRAY unk22;
+		M3ARRAY materials;
+		M3ARRAY model2Display;
+        M3ARRAY display2model;
+		M3ARRAY vertices;
+		M3ARRAY indices;                // not actually indices for the geometry
+		M3ARRAY subMeshes;
+		
+        M3DOUBLEARRAY unk23;            // same number as vertices
+        M3ARRAY unk24;
+        M3ARRAY views;                  // probably
+        M3ARRAY unk24;
+        M3ARRAY unk25;
+        M3ARRAY unk26;
+        M3ARRAY unk27;
+        M3DOUBLEARRAY unk28;
+        M3ARRAY unk29;
+        M3ARRAY unk30;
+        M3ARRAY unk31;
+        M3ARRAY unk32;
+
+        M3ARRAY unk33;
+        M3ARRAY unk34;
+        M3ARRAY unk35;
+        M3ARRAY unk36;
+        M3ARRAY unk37;
+        M3ARRAY unk38;
+        M3ARRAY unk39;
+        M3ARRAY unk40;
+
+		//byte various4[0x3E8];
     }
     if (version == 100) 
     {
