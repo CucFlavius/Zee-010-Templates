@@ -1,0 +1,12 @@
+//------------------------------------------------
+// MAOF - Map Area Offset
+//------------------------------------------------
+
+// Contains 64*64 = 4096 unsigned 32-bit integers, these are absolute offsets in the file to each map tile's MapAreaLow-array-entry.
+// For unused tiles the value is 0.
+
+struct MAOF
+{
+    CHUNK hdr;
+    uint areaLowOffsets[4096];
+};

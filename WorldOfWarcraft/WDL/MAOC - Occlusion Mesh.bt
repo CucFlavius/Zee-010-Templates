@@ -1,0 +1,13 @@
+//------------------------------------------------
+// MAOC - Occlusion Mesh
+// This section only applies to versions ≤ WoD.
+//------------------------------------------------
+
+// This chunk appears to define vertices for an occlusion mesh.
+// The values are passed in to CMapAreaLow::CreateOcclusion.
+
+struct MAOC
+{
+    CHUNK hdr;
+    short vertices[hdr.size / 2];
+};

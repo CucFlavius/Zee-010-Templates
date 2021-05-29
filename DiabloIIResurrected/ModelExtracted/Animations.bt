@@ -1,0 +1,37 @@
+//------------------------------------------------
+// D2R Animations
+//------------------------------------------------
+
+struct Animation
+{
+    local string name = ReadStringPTR("Name");
+    float Duration;
+    float TimeStep;
+    float Oversampling;
+    TrackGroups tracks;
+    int DefaultLoopCount;
+    int Flags;
+    Extended ExtendedData;
+};
+
+struct Animations
+{
+    int animationsCount;
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if(animationsCount > 0)
+    {
+        int64 animationPtrs[animationsCount]<bgcolor=cYellow>;
+        local int i;
+        for (i = 0; i < animationsCount; i++)
+        {
+            FSeek(animationPtrs[i]);
+            Animation animation<optimize=false>;
+
+            Printf( "Animation [%d], Name = '%s'\n", i, animation.name );
+        }
+    }
+    FSeek(save);
+};

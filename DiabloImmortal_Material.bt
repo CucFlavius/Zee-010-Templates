@@ -3,7 +3,7 @@
 //   Authors: Zee
 //   Version: 1.0
 //   Purpose: Reading material data used to render models
-//  Category: Material
+//  Category: DiabloImmortal
 //------------------------------------------------
 #include "Lib/Common.bt"
 

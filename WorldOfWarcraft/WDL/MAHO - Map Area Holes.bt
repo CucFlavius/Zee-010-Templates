@@ -1,0 +1,19 @@
+//------------------------------------------------
+// MAHO - Map Area Holes
+//------------------------------------------------
+
+// After each MARE chunk there follows a MAHO (MapAreaHOles) chunk.
+
+// This chunk is an array of 16 uint16_t values.
+// Each one is a bitmask, representing a boolean value that determines whether or not there is a hole at that position 
+// - if the bit is not set, there is a hole at that position.
+
+// If the MAHO chunk is missing, the client will treat that map area as having a MAHO chunk with all values set to 0.
+// In Blizzard's files, the chunk is always included no matter what the values are.
+// This behavior is most likely a form of backwards compatibility to allow the client to load WDL files from before Wrath of the Lich King.
+
+struct MAHO 
+{
+    CHUNK hdr;
+    uint16 unk[16];
+};

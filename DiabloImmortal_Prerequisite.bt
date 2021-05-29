@@ -1,0 +1,29 @@
+//------------------------------------------------
+//      File: DiabloImmortal_Prerequisite
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading prerequisite file
+//  Category: DiabloImmortal
+//------------------------------------------------
+
+struct HASH
+{
+    char fileHash[16];
+};
+
+struct File
+{
+    byte unk;
+    int pathLength;
+    byte path[pathLength];
+    int unk;
+    int unk;
+    short unk;
+    HASH hash;
+    HASH hash;
+    byte unk;
+    int unk;
+};
+
+byte unk;
+File files[259]<optimize=false>;

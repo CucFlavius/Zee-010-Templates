@@ -1,0 +1,14 @@
+//------------------------------------------------
+// PEDC - Parent Event Data
+// This section only applies to versions ≥ Legion (7.3.???). Exact build unknownᵘ.
+//------------------------------------------------
+
+struct PEDC
+{
+    CHUNK hdr;
+    local long save = FTell();
+    M2ARRAY parentEventData;
+    FSeek(save + hdr.size);     // Skipping to end of chunk after because rest of the data comes from M2ARRAY offsets
+};
+
+// M2InitParentEventData: eventTracks

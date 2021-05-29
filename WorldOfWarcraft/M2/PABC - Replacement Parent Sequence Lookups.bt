@@ -1,0 +1,22 @@
+//------------------------------------------------
+// PABC - Replacement Parent Sequence Lookups
+// This section only applies to versions ≥ Legion (7.3.???). Appears to replace #Animation_Lookupᵘ from old file. Exact build unknownᵘ.
+//------------------------------------------------
+
+struct PABC
+{
+    CHUNK hdr;
+    local long save = FTell();
+    M2ARRAY m_replacementParentSequenceLookups; // only seen in quillboarbrute*.m2. Contains AnimationIds
+    FSeek(save + hdr.size);     // Skipping to end of chunk after because rest of the data comes from M2ARRAY offsets
+};
+
+// Replaces parentSequencesLookups. 
+// But unlike header.sequence_lookups of parent model, this is straight array and not a map.
+// If index with target animation is not found in here, parentSequencesLookups are used instead.
+
+// This chunk called BlacklistAnimData in client.
+
+// Client doesnt seem to use found index and thus whole array is used only to check if the target animation is present.
+
+// M2InitBlacklistAnimData: sequenceIds

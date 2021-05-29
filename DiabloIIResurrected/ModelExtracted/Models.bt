@@ -1,0 +1,48 @@
+//------------------------------------------------
+// D2R Models
+//------------------------------------------------
+
+struct MeshBindings
+{
+    int MeshBindingCount;
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if(MeshBindingCount > 0)
+    {
+        int64 meshBinding[MeshBindingCount];    // Ref to existing data
+    }
+    
+    FSeek(save);
+};
+
+
+struct Model
+{
+    ReadStringPTR("Name");
+    int64 ptrSkeleton;              // Ref to existing data
+    Transform InitialPlacement;
+    MeshBindings meshBindings;
+    Extended ExtendedData;
+};
+
+struct Models
+{
+    int modelsCount;
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if(modelsCount > 0)
+    {
+        int64 modelPtrs[modelsCount]<bgcolor=cYellow>;
+        local int i;
+        for (i = 0; i < modelsCount; i++)
+        {
+            FSeek(modelPtrs[i]);
+            Model model<optimize=false>;
+        }
+    }
+    FSeek(save);
+};

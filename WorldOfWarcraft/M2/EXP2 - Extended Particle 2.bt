@@ -1,0 +1,22 @@
+//------------------------------------------------
+// EXP2 - Extended Particle 2
+// This section only applies to versions ≥ Legion (7.3.???). Appears to partially replace M2ParticleOld's variables. Exact build unknownᵘ.
+//------------------------------------------------
+/*
+struct M2ExtendedParticle
+{
+  float zSource;
+  float unk1;
+  float unk2;
+  M2PartTrack<fixed16> unk3;
+};
+*/
+struct EXP2
+{
+    CHUNK hdr;
+    local long save = FTell();
+    M2ARRAY exp2;               // M2Array<M2ExtendedParticle>
+    FSeek(save + hdr.size);     // Skipping to end of chunk after because rest of the data comes from M2ARRAY offsets
+};
+
+// The length of this M2Array is the same as length of particle_emitters

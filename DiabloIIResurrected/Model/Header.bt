@@ -1,0 +1,28 @@
+//------------------------------------------------
+// D2R Header
+//------------------------------------------------
+
+#define GrannyGRNExtraTagCount 4
+#define HeaderStartPos 32
+
+struct GrnReference
+{
+    uint sectionIndex;
+    uint sectionOffset;
+};
+
+// here is the info header (not sure if rootobjecttype is correct in it's definition but the rootobjectoffset is correct):
+struct Header
+{
+    uint version;
+    uint totalSize;
+    byte CRC[4];
+    uint sectionArrayOffset;                // offset inside header
+    uint sectionArrayCount;                 // sections count
+    GrnReference rootObjectDefinition;      // defines which section root object is in ?
+    GrnReference rootObject;                // defines offset from start of section above where root object is located ?
+    uint typeTag;
+    uint extraTags[GrannyGRNExtraTagCount];
+    uint stringDatabaseCRC;
+    uint reservedUnused[3];
+};

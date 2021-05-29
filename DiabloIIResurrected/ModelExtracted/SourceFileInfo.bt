@@ -1,0 +1,8 @@
+//------------------------------------------------
+// D2R Source File Info
+//------------------------------------------------
+
+struct SourceFileInfo
+{
+    ReadStringPTR("SourceFile");
+};

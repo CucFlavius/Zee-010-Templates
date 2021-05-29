@@ -1,0 +1,10 @@
+//------------------------------------------------
+// WFV2 - Unknown
+// This section only applies to versions ≥ Battle (8.2.0.30080).
+//------------------------------------------------
+
+struct WFV2
+{
+    CHUNK hdr;
+    // Unknown
+};

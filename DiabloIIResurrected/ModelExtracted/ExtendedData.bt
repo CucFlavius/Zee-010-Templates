@@ -1,0 +1,20 @@
+//------------------------------------------------
+// D2R Extended Data
+//------------------------------------------------
+
+typedef struct
+{
+    DataTypeDefinition type;
+    int64 ptrObj;
+}Extended<bgcolor = cBlack, fgcolor = 0x383838>;
+
+typedef struct
+{
+    local long save = FTell();
+    int64 skip<hidden=true>;
+    int64 ptr<hidden=true>;
+    FSeek(save);
+    DefinitionData data(ptr);
+    int64 ptrObj;
+
+}ExtendedDATA<bgcolor = cPurple, fgcolor = cWhite>;

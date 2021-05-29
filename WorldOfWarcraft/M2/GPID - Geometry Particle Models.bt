@@ -1,0 +1,10 @@
+//------------------------------------------------
+// GPID - Geometry Particle Models
+// This section only applies to versions ≥ Battle (8.1.0.27826). Replaces #M2ParticleOld's geometry_model_filename.
+//------------------------------------------------
+
+struct GPID
+{
+    CHUNK hdr;
+    uint32 fileID[hdr.size / 4];
+};

@@ -1,0 +1,13 @@
+//------------------------------------------------
+// MAOE - Ocean Texture
+// This section only applies to versions ≥ Legion.
+//------------------------------------------------
+
+// optional, but shall be before MAHO else ignored
+// This defines ocean (float?) texture (m_ocean or AreaOceanAlphaTexture)
+
+struct MAOE 
+{
+    CHUNK hdr;
+    byte unk[0x20];    // ??? fixed size 0x20, some mask?
+};

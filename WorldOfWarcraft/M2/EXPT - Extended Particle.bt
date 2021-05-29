@@ -1,0 +1,20 @@
+//------------------------------------------------
+// EXPT - Extended Particle
+// This section only applies to versions ≥ Legion.
+// Appears to partially replace M2ParticleOld's variables. Exact build unknown, not the first one thoughᵘ.
+//------------------------------------------------
+
+struct ExtendedParticle
+{
+    float zSource;
+    float unk1;
+    float unk2;
+};
+
+struct EXPT
+{
+    CHUNK hdr;
+    ExtendedParticle extendedParticle;
+};
+
+// Probably outdated chunk after introduction of EXP2 chunk. If EXP2 doesnt exist, client tries to reconstruct it with data from EXPT chunk.

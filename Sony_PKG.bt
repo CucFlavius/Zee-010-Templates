@@ -1,0 +1,67 @@
+//------------------------------------------------
+//      File: Sony_PKG
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Extracting game data from sony pkg
+//  Category: Diablo 4
+//------------------------------------------------
+#include "Lib/Common.bt"
+
+struct Header
+{
+    BigEndian(); 
+    CHUNKID magic;
+    uint type;
+    uint unk0x008;
+    uint fileCount;
+    uint entryCount;
+    ushort scEntryCount;
+    ushort entryCount2;
+    uint tableOffset;
+    uint entryDataSize;
+    unsigned int64 bodyOffset;
+    unsigned int64 bodySize;
+    unsigned int64 contentOffset;
+    unsigned int64 contentSize;
+    STRINGc contentID(0x24);
+    STRINGc padding(0xC);
+    uint drmType;
+    uint contentType;
+    uint contentFlags;
+    uint promoteSize;
+    uint versionDate;
+    uint versionHash;
+    uint unk0x88;
+    uint unk0x8C;
+    uint unk0x90;
+    uint unk0x94;
+    uint iroTag;
+    uint drmTypeVersion;
+
+    FSeek(0x100);
+    byte digestEntries1[0x20];
+    byte digestEntries2[0x20];
+    byte digestTableDigest[0x20];
+    byte digestBodyDigest[0x20];
+
+    FSeek(0x400);
+    uint unk0x400;
+    uint pfsImageCount;
+    unsigned int64 pfsImageFlags;
+    unsigned int64 pfsImageOffset;
+    unsigned int64 pfsImageSize;
+    unsigned int64 mountImageOffset;
+    unsigned int64 mountImageSize;
+    unsigned int64 pkgSize;
+    uint pfsSignedSize;
+    uint pfsCacheSize;
+    byte pfsImageDigest[0x20];
+    byte pfsSignedDigest[0x20];
+    unsigned int64 pfsSplitSizeNth0;
+    unsigned int64 pfsSplitSizeNth1;
+
+    FSeek(0xFE0);
+    byte pkgDigest[0x20];
+};
+
+Header header<bgcolor=cGreen>;

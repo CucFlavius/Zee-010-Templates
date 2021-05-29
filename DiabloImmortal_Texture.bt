@@ -8,12 +8,24 @@
 
 #include "Lib/Common.bt"
 
+enum<ubyte> Format
+{
+    BGRA_32 = 3,
+    ETC2_RGB = 31,
+    ETC2_RGBA8 = 32,
+    ASTC_6x5 = 39,
+    ASTC_RGBA_6x6 = 40,
+    ASTC_8x6 = 42,
+    ASTC_RGB_10x10 = 46,
+    ASTC_RGBA_10x10 = 47,
+    ASTC_12x12 = 49,
+};
+
 struct Header   // 40 bytes
 {
-    short unk1;
-    short unk2;
+    int magic;
     byte unk3;
-    ubyte format;
+    Format format;
     byte unk4;      // also mip levels?
     byte unk4b;
     uint empty1;

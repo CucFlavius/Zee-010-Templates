@@ -3,7 +3,7 @@
 //   Authors: Zee
 //   Version: 1.0
 //   Purpose: M2 Main File
-//  Category: RE
+//  Category: WoW
 //--------------------------------------
 
 //--------------------------------------
@@ -21,12 +21,60 @@
 
 #include "Lib/Common.bt"
 #include "WorldOfWarcraft/M2/MD21 - Header.bt"
+#include "WorldOfWarcraft/M2/PFID - Physics FileID.bt"
+#include "WorldOfWarcraft/M2/SFID - Skin FileIDs.bt"
+#include "WorldOfWarcraft/M2/AFID - Anim FileIDs.bt"
+#include "WorldOfWarcraft/M2/BFID - Bone FileIDs.bt"
+#include "WorldOfWarcraft/M2/TXAC - Unknown.bt"
+#include "WorldOfWarcraft/M2/EXPT - Extended Particle.bt"
+#include "WorldOfWarcraft/M2/EXP2 - Extended Particle 2.bt"
+#include "WorldOfWarcraft/M2/PABC - Replacement Parent Sequence Lookups.bt"
+#include "WorldOfWarcraft/M2/PADC - Replacement Texture Weights.bt"
+#include "WorldOfWarcraft/M2/PSBC - Parent Sequence Bounds.bt"
+#include "WorldOfWarcraft/M2/PEDC - Parent Event Data.bt"
+#include "WorldOfWarcraft/M2/SKID - Skeleton FileID.bt"
+#include "WorldOfWarcraft/M2/TXID - Texture FileIDs.bt"
+#include "WorldOfWarcraft/M2/LDV1 - Lod Data.bt"
+#include "WorldOfWarcraft/M2/RPID - Recursive Particle Models.bt"
+#include "WorldOfWarcraft/M2/GPID - Geometry Particle Models.bt"
+#include "WorldOfWarcraft/M2/WFV1 - Unknown.bt"
+#include "WorldOfWarcraft/M2/WFV2 - Unknown.bt"
+#include "WorldOfWarcraft/M2/WFV3 - Waterfall Data V3.bt"
+#include "WorldOfWarcraft/M2/PGD1 - Particle Geoset Data.bt"
+#include "WorldOfWarcraft/M2/PFDC - Physics.bt"
+#include "WorldOfWarcraft/M2/EDGF - Edge Fade.bt"
+#include "WorldOfWarcraft/M2/NERF - Unknown.bt"
+#include "WorldOfWarcraft/M2/DETL - Unknown.bt"
 
 struct M2
 {
     while( ! FEof() )
     {
         if     ( matchr( "MD21" ) ) MD21 header;
+        else if( matchr( "PFID" ) ) PFID physicsFileID;
+        else if( matchr( "SFID" ) ) SFID skinFileIDs;
+        else if( matchr( "AFID" ) ) AFID animFileIDs;
+        else if( matchr( "BFID" ) ) BFID boneFileIDs;
+        else if( matchr( "TXAC" ) ) TXAC unknown;
+        else if( matchr( "EXPT" ) ) EXPT extendedParticle;
+        else if( matchr( "EXP2" ) ) EXP2 extendedParticle;
+        else if( matchr( "PABC" ) ) PABC replacementParentSequenceLookups;
+        else if( matchr( "PADC" ) ) PADC replacementTextureWeights;
+        else if( matchr( "PSBC" ) ) PSBC parentSequenceBounds;
+        else if( matchr( "PEDC" ) ) PEDC parentEventData;
+        else if( matchr( "SKID" ) ) SKID skeletonFileID;
+        else if( matchr( "TXID" ) ) TXID textureFileIDs;
+        else if( matchr( "LDV1" ) ) LDV1 lodData;
+        else if( matchr( "RPID" ) ) RPID recursiveParticleModels;
+        else if( matchr( "GPID" ) ) GPID geometryParticleModels;
+        else if( matchr( "WFV1" ) ) WFV1 unknown;
+        else if( matchr( "WFV2" ) ) WFV2 unknown;
+        else if( matchr( "WFV3" ) ) WFV3 waterfallData;
+        else if( matchr( "PGD1" ) ) PGD1 particleGeosetData;
+        else if( matchr( "PFDC" ) ) PFDC physics;
+        else if( matchr( "EDGF" ) ) EDGF edgeFade;
+        else if( matchr( "NERF" ) ) NERF unknown;
+        else if( matchr( "DETL" ) ) DETL unknown;
         else SKIPCHUNK unk; 
     }
 };

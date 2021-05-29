@@ -1,0 +1,14 @@
+//------------------------------------------------
+// PFDC - Physics
+// This section only applies to versions ≥ SL (9.0.1.33978).
+//------------------------------------------------
+
+struct PFDC
+{
+    CHUNK hdr;
+    //PHYS physics;     // !!!!! I need to write phys template first..............
+    char PADDING[6];    // follows right after the last chunk in PHYS, or it could be data, only seen 0's
+                        // likely it isn't 6 but "whatever is needed until the next 8 (or 16?) byte alignment". --Schlumpf (talk)
+};
+
+// Contains inline physics information in the same structure as the .phys files.

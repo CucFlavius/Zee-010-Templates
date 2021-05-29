@@ -1,0 +1,93 @@
+//------------------------------------------------
+// D2R Track Groups
+//------------------------------------------------
+
+struct VectorTrack
+{
+    ReadStringPTR("Name");
+    uint trackKey;
+    int dimension;
+    Curve curve;
+};
+
+struct VectorTracks
+{
+    int VectorTrackCount;
+    int64 ptrVectorTracks;
+
+    local long save = FTell();
+    FSeek(ptrVectorTracks);
+
+    if (VectorTrackCount > 0)
+        VectorTrack track[VectorTrackCount]<optimize=false>;
+
+    FSeek(save);
+};
+
+struct TransformTrack
+{
+    local string name = ReadStringPTR("Name");
+    int flags;
+    Curve orientationCurve;
+    Curve positionCurve;
+    Curve scaleShearCurve;
+};
+
+struct TransformTracks
+{
+    int TransformTrackCount;
+    int64 ptrTransformTracks;
+
+    local long save = FTell();
+    FSeek(ptrTransformTracks);
+
+    if (TransformTrackCount > 0)
+    {
+        TransformTrack track[TransformTrackCount]<optimize=false>;
+    
+        local int i;
+        for(i = 0; i < TransformTrackCount; i++)
+        {
+            if (track[i].orientationCurve.curveDescription.type.definition[0].name == "CurveDataHeader_DaK32fC32f")
+                Printf( "Num = %d, Str = '%s'\n", i, track[i].name );
+        }
+    }
+
+    FSeek(save);
+};
+
+struct TrackGroup
+{
+    ReadStringPTR("Name");
+    VectorTracks vectorTracks;
+    TransformTracks transformTracks;
+    int TransformLODErrorCount;
+    int64 ptrTransformLODErrors;    // TODO
+    int TextTrackCount;
+    int64 ptrTextTracks;            // TODO
+    Transform InitialPlacement;
+    int Flags;
+    VECTOR3 LoopTranslation;
+    int64 ptrPeriodicLoop;          // TODO
+    Extended ExtendedData;
+};
+
+struct TrackGroups
+{
+    int trackGroupsCount;
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if(trackGroupsCount > 0)
+    {
+        int64 trackGroupPtrs[trackGroupsCount]<bgcolor=cYellow>;
+        local int i;
+        for (i = 0; i < trackGroupsCount; i++)
+        {
+            FSeek(trackGroupPtrs[i]);
+            TrackGroup trackGroup<optimize=false>;
+        }
+    }
+    FSeek(save);
+};

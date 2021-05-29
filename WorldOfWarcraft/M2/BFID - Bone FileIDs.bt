@@ -1,0 +1,11 @@
+//------------------------------------------------
+// BFID - Bone fileIDs
+// his section only applies to versions ≥ Legion (7.0.1.20740).
+// This used to be filename based, using ${basename}_${i}.bone.
+//------------------------------------------------
+
+struct BFID
+{
+    CHUNK hdr;
+    uint32 boneFileIDs[hdr.size / 4];
+};

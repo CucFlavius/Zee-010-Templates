@@ -1,0 +1,12 @@
+//------------------------------------------------
+// TXID - Texture FileIDs
+// This section only applies to versions ≥ Battle (8.0.1.26629). Replaces the filename for {{#Textures}} with hardcoded type..
+//------------------------------------------------
+
+struct TXID
+{
+    CHUNK hdr;
+    uint32 fileID[hdr.size / 4];
+};
+
+// Replaces in-file texture filenames.

@@ -1,0 +1,18 @@
+//------------------------------------------------
+// AFID - Anim fileIDs
+// This section only applies to versions ≥ Legion (7.0.1.20740).
+// This used to be filename based, using ${basename}${anim_id}-${sub_anim_id}.anim.
+//------------------------------------------------
+
+struct AnimFileInfo
+{
+    uint16 animID;
+    uint16 subAnimID;
+    uint32 fileID;        // might be 0 for "none" (so this is probably not sparse, even if it could be)
+};
+
+struct AFID
+{
+    CHUNK hdr;
+    AnimFileInfo fileInfos[hdr.size / 8];
+};

@@ -1,0 +1,15 @@
+//------------------------------------------------
+// PADC - Replacement Texture Weights
+// This section only applies to versions ≥ Legion (7.3.???). Moves texture weights from old file to a chunk. Exact build unknownᵘ.
+// Defines replacement for header.texture_weights (WHY?)
+//------------------------------------------------
+
+struct PADC
+{
+    CHUNK hdr;
+    local long save = FTell();
+    M2ARRAY texture_weights;
+    FSeek(save + hdr.size);     // Skipping to end of chunk after because rest of the data comes from M2ARRAY offsets
+};
+
+// M2InitParentAnimData: parentTextureWeights

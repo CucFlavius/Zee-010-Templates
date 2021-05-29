@@ -1,0 +1,22 @@
+//------------------------------------------------
+// WFV1 - Unknown
+// This section only applies to versions ≥ Battle (8.2.0.30080).
+//------------------------------------------------
+
+struct WFV1
+{
+    CHUNK hdr;
+    // Unknown
+};
+
+// WFV1 = WaterFallVersion1 Tells that model has PBR-ish stuff and normal map.
+// It uses separate render path from usual M2.
+
+// First tested on waterfall in 8.2.0 (fdid 2445860).
+// And at that moment it was WFV1.
+
+// Later this same tech was used to create different models, which have no relation to waterfalls.
+// But internally even the name "waterfall" was kept.
+
+// Even stuff around areas in Shadowlands map is still called waterfall internally (fdid 3445776 for example).
+// These models have WFV3 chunk.

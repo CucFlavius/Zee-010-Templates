@@ -1,0 +1,56 @@
+//------------------------------------------------
+// D2R Skeletons
+//------------------------------------------------
+
+struct Bone
+{
+    ReadStringPTR("Name");
+    int ParentIndex;
+    Transform LocalTransform;
+    MATRIX4x4 InverseWorld4x4;
+    float LODError;
+    Extended ExtendedData;
+};
+
+struct Bones (int count)
+{
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if (count > 0)
+    {
+        Bone bone[count]<optimize=false>;
+    }
+    FSeek(save);
+};
+
+struct Skeleton
+{
+    ReadStringPTR("Name");
+    int BoneCount;
+    Bones bones(BoneCount);
+    int LODType;
+    Extended ExtendedData;
+};
+
+struct Skeletons
+{
+    int skeletonCount;
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if (skeletonCount > 0)
+    {
+        int64 skeletonPtrs[skeletonCount]<bgcolor=cYellow>;
+        local int i;
+        for (i = 0; i < skeletonCount; i++)
+        {
+            FSeek(skeletonPtrs[i]);
+            Skeleton skeleton<optimize=false>;
+        }
+    }
+
+    FSeek(save);
+};

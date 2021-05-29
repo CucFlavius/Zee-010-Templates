@@ -1,9 +1,9 @@
 //------------------------------------------------
 //      File: DiabloImmortal_Mesh
 //   Authors: Zee
-//   Version: 1.0
+//   Version: 2.0
 //   Purpose: Reading the mesh file from Diablo Immortal (Messiah Engine)
-//  Category: Model
+//  Category: DiabloImmortal
 //------------------------------------------------
 #include "Lib/Common.bt"
 
@@ -27,23 +27,53 @@ struct SUBMESH_BOUNDS
     BOUNDINGCAPSULE boundingCapsule;                // Probably
 };
 
-struct VERTEX0
+int bufferMatch(char m[], char s[], int sizeA, int sizeB)
 {
-    VECTOR3 position;
-    VECTOR4SMALL normal;                                 // Packed normal 
-    VECTOR2 uv;
-};
+    if (sizeA != sizeB)
+        return 0;
 
-struct VERTEX1
-{
-    VECTOR4H tangent;
-    VECTOR4H bitangent;
-};
+    local int i;
+    local int similar = 1;
+    for (i = 0; i < sizeA; i++)
+    {
+        if (m[i] != s[i])
+            similar = 0;
+    }
 
-struct VERTEX2
+    return similar;
+}
+
+struct VERTEX_BUFFER(char description[], int size)
 {
-    ubyte boneWeights[4];
-    ubyte boneIndices[4];
+    if ( bufferMatch( "P3F_N4B_T2F", description, 11, size ) )
+    {
+        VECTOR3 position;
+        VECTOR4SMALL normal;                                 // Packed normal 
+        VECTOR2 uv;
+    }
+    else if( bufferMatch( "T4H_B4H", description, 7, size ) )
+    {
+        VECTOR4H tangent;
+        VECTOR4H bitangent;
+    }
+    else if( bufferMatch( "W4B_I4B", description, 7, size ) )
+    {
+        ubyte boneWeights[4];
+        ubyte boneIndices[4];
+    }
+    else if( bufferMatch( "P3F", description, 3, size ) )
+    {
+        VECTOR3 position;
+    }
+    else if( bufferMatch( "Q4H_T2H", description, 7, size ) )
+    {
+        VECTOR4H tangentAsQuat;
+        VECTOR2H uv;
+    }
+    else
+    {
+        // Idk
+    }
 };
 
 byte version;                                       // Probably version, always 46 ?
@@ -59,7 +89,9 @@ BOUNDINGBOX boundingBox;                            // Bounding box
 BOUNDINGSPHERE_B boundingSphere;                    // Bounding sphere
 SUBMESH_SECTION submeshSections[submeshCount];      // Submesh index info
 ushort indices[indexCount];                         // Triangle indices
-VERTEX0 vertices[vertexCount];                      // Vertex buffer 0 - Position, Normal, UVs
-VERTEX1 tangents[vertexCount];                      // Vertex Buffer 1 - Tangent Bitangent
-VERTEX2 boneWeights[vertexCount];                   // Vertex Buffer 2 - Bone weights and indices
+VERTEX_BUFFER buffer0(bDescriptions[0].description.s, bDescriptions[0].strSize)[vertexCount];
+VERTEX_BUFFER buffer1(bDescriptions[1].description.s, bDescriptions[1].strSize)[vertexCount];
+VERTEX_BUFFER buffer2(bDescriptions[2].description.s, bDescriptions[2].strSize)[vertexCount];
+if (bDescriptions[3].description.s != "None")
+    VERTEX_BUFFER buffer3(bDescriptions[3].description.s, bDescriptions[3].strSize);
 SUBMESH_BOUNDS submeshBounds[submeshCount];         // Per submesh bounds

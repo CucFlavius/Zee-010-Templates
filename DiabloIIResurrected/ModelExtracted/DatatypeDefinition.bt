@@ -1,0 +1,182 @@
+//------------------------------------------------
+// D2R DataTypeDefinition
+//------------------------------------------------
+
+enum<uint> MemberType
+{
+    GrannyEndMember,
+    GrannyInlineMember,
+    GrannyReferenceMember,
+    GrannyReferenceToArrayMember,
+    GrannyArrayOfReferencesMember,
+    GrannyVariantReferenceMember,
+    GrannyUnsupportedMemberType_Remove,
+    GrannyReferenceToVariantArrayMember,
+    GrannyStringMember,
+    GrannyTransformMember,
+    GrannyReal32Member,
+    GrannyInt8Member,
+    GrannyUInt8Member,
+    GrannyBinormalInt8Member,
+    GrannyNormalUInt8Member,
+    GrannyInt16Member,
+    GrannyUInt16Member,
+    GrannyBinormalInt16Member,
+    GrannyNormalUInt16Member,
+    GrannyInt32Member,
+    GrannyUInt32Member,
+    GrannyReal16Member,
+    GrannyEmptyReferenceMember,
+    GrannyOnePastLastMemberType,
+    GrannyBool32Member = GrannyInt32Member,
+    Grannymember_type_forceint = 0x7fffffff
+};
+
+
+struct Def
+{
+    MemberType Type;
+    local string name = ReadStringPTR("Name");
+    int64 ReferencePtr;            // Ref to the ptr of another DataTypeDefinition, not reading in case infinite recursive
+    int ArrayWidth;
+    int Extra[3];
+    uint64 Ignored_Ignored;
+};
+
+struct DefinitionData(int64 ptrObj)
+{
+    int64 position;
+
+    if (position != 0)
+    {
+        local long save = FTell();
+        FSeek(position);
+    
+        local int i;
+        local int counter = 0;
+        for(i = 0; i < 1000; i++)
+        {
+            Def definition<hidden = true>;
+            if (definition.Type == 0)
+                break;
+            counter = counter + 1;
+        }
+
+        FSeek(save);
+        Def definitions[counter];
+
+        FSeek(ptrObj);
+
+        local string vName;
+
+        for(i = 0; i < counter; i++)
+        {
+            //local long save2 = FTell();
+            
+            vName = definitions[i].name;
+
+            switch (definitions[i].Type)
+            {
+                case 0:
+Printf("GrannyInlineMember");
+                    break;
+                case 1:
+                    int64 ReferenceMember;
+                    break;
+                case 1:
+                    int32 ReferenceToArrayMember_Count;
+                    int64 ReferenceToArrayMember_Offset;
+                    break;
+                case 2:
+Printf("GrannyArrayOfReferencesMember");
+                    break;
+                case 3:
+Printf("GrannyVariantReferenceMember");
+                    break;
+                case 4:
+Printf("GrannyUnsupportedMemberType_Remove");
+                    break;
+                case 5:
+Printf("GrannyReferenceToVariantArrayMember");
+                    break;
+                case 6:
+                    ReadStringPTR("StringMember");
+                    break;
+                case 7:
+Printf("GrannyTransformMember");
+                    break;
+                case 8:
+                    float Real32Member;
+                    break;
+                case 9:
+                    byte Int8Member;
+                    break;
+                case 10:
+                    unsigned byte UInt8Member;
+                    break;
+                case 11:
+Printf("GrannyBinormalInt8Member");
+                    break;
+                case 12:
+Printf("GrannyNormalUInt8Member");
+                    break;
+                case 13:
+                    int16 Int16Member;
+                    break;
+                case 14:
+                    uint16 UInt16Member;
+                    break;
+                case 15:
+Printf("GrannyBinormalInt16Member");
+                    break;
+                case 16:
+Printf("GrannyNormalUInt16Member");
+                    break;
+                case 17:
+                    int32 Int32Member;
+                    break;
+                case 18:
+                    uint32 UInt32Member;
+                    break;
+                case 19:
+Printf("GrannyReal16Member");
+                    break;
+                case 20:
+Printf("GrannyEmptyReferenceMember");
+                    break;
+                case 21:
+Printf("GrannyOnePastLastMemberType");
+                    break;
+                case 22:
+Printf("Grannymember_type_forceint");
+                    break;
+                default:
+Printf("UnkDefinitionType\n");
+                    break;
+            }
+        }
+        FSeek(save);
+    }
+};
+
+struct DataTypeDefinition
+{
+    int64 position;
+
+    if (position != 0)
+    {
+        local long save = FTell();
+        FSeek(position);
+    
+        // Read until MemberType is EndMember, hard coding to read up to 100 just in case infinite loop
+        local int i;
+        for(i = 0; i < 100; i++)
+        {
+            Def definition;
+            if (definition.Type == 0)
+                break;
+        }
+
+        FSeek(save);
+    }
+};

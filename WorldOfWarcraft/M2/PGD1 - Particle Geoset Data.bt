@@ -1,0 +1,17 @@
+//------------------------------------------------
+// PGD1 - Particle Geoset Data
+// This section only applies to versions ≥ Vanilla (1.13.2.30172).
+//------------------------------------------------
+
+struct PGD1Entry
+{
+   uint16 geoset;
+};
+
+struct PGD1
+{
+    CHUNK hdr;
+    local long save = FTell();
+    M2ARRAY p_g_d_v1;           // M2Array<PGD1Entry>
+    FSeek(save + hdr.size);     // Skipping to end of chunk after because rest of the data comes from M2ARRAY offsets
+};

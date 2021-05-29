@@ -1,0 +1,31 @@
+//------------------------------------------------
+//      File: Index
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Parse package index file
+//  Category: DiabloImmortal
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct Hash
+{
+    char hashA[16];
+    char hashB[16];
+};
+
+struct Block
+{
+    int ID;            // 1
+    int offset;            // large number, some size
+    int fileCount;            // first archive count
+    int count;
+    int fileSizes[fileCount];            // 4194304
+    int unks[count * 2];
+    int unks2[count];
+    Hash hashes[fileCount];  
+};
+
+CHUNKID magic;      // HPPK
+int blockCount;
+Block blocks[blockCount]<optimize=false>;

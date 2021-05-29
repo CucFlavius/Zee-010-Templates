@@ -1,0 +1,121 @@
+//------------------------------------------------
+// D2R Materials
+//------------------------------------------------
+
+// This is just a test struct, actual extended data is custom in nature so it's read based on the description in datatype definitions
+typedef struct
+{
+    int caching;
+    int frozen;
+    int nodeState;
+    int nodeState;
+    float outColor[3];
+    float outColorR;
+    float outColorG;
+    float outColorB;
+    float outTransparency[3];
+    float outTransparencyR;
+    float outTransparencyG;
+    float outTransparencyB;
+    float outGlowColor[3];
+    float outGlowColorR;
+    float outGlowColorG;
+    float outGlowColorB;
+    float outMatteOpacity[3];
+    float outMatteOpacityR;
+    float outMatteOpacityG;
+    float outMatteOpacityB;
+    int enableHwShading;
+    int varyingParametersCount;
+    int64 varyingParametersOffset;
+    int uniformParametersCount;
+    int64 uniformParametersOffset;
+    ReadStringPTR("Shader");
+    ReadStringPTR("Effect Parameters");
+    ReadStringPTR("Technique");
+    ReadStringPTR("Description");
+    ReadStringPTR("Diagnostics");
+    ReadStringPTR("LightInfo");
+    int isDoubleSided;
+    int64 albedoTextureOffset;      // pointer to material that has reference to albedo texture
+    float albedoTextureR;
+    float albedoTextureG;
+    float albedoTextureB;
+    int64 normalTextureOffset;      // pointer to material that has reference to albedo texture
+    float normalTextureR;
+    float normalTextureG;
+    float normalTextureB;
+    int64 ormTextureOffset;      // pointer to material that has reference to albedo texture
+    float ormTextureR;
+    float ormTextureG;
+    float ormTextureB;
+    int64 PositionOffset;
+    ReadStringPTR("Position_DefaultTexture");
+    int64 NormalOffset;
+    ReadStringPTR("Normal_DefaultTexture");
+    int64 Color0Offset;
+    ReadStringPTR("Color0_DefaultTexture");
+    int64 TexCoord0Offset;
+    ReadStringPTR("TexCoord0_DefaultTexture");
+    int techniqueEnum;
+    int techniqueEnum;
+    float emissiveIntensity;
+    ReadStringPTR("TypeName_DefaultTexture");
+} ExtendedData_Shader<bgcolor=cWhite, fgcolor = cBlack>;
+
+struct MaterialMap
+{
+    ReadStringPTR("Usage");
+    int64 ptrMaterial;      // this points to existing material data
+};
+
+struct MaterialMaps (int count)
+{
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if (count > 0)
+    {
+        MaterialMap materialMap[count]<optimize=false>;
+    }
+    FSeek(save);
+};
+
+struct Material
+{
+    ReadStringPTR("Name");
+    int MapCount;
+    MaterialMaps materialMaps(MapCount);
+    int64 ptrTexture;       // this points to existing texture data
+    Extended ExtendedData;
+
+    // Read extended data
+    local long save = FTell();
+    FSeek(ExtendedData.ptrObj);
+    if (ptrTexture == 0)        // if no texture it's an actual material
+        ExtendedData_Shader shader;
+    FSeek(save);
+};
+
+
+struct Materials
+{
+    int materialCount;
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if (materialCount > 0)
+    {
+        int64 materialPtrs[materialCount]<bgcolor=cYellow>;
+        local int i;
+        for (i = 0; i < materialCount; i++)
+        {
+            FSeek(materialPtrs[i]);
+            Material material<optimize=false>;
+        }
+    }
+
+    FSeek(save);
+};

@@ -1,0 +1,10 @@
+//------------------------------------------------
+// PFID - Physics fileID
+// This section only applies to versions ≥ Legion (7.0.1.20740). This used to be filename based, using ${basename}.phys.
+//------------------------------------------------
+
+struct PFID
+{
+    CHUNK hdr;
+    uint32 physFileID;
+};

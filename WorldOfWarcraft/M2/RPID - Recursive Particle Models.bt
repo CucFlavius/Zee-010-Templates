@@ -1,0 +1,10 @@
+//------------------------------------------------
+// RPID - Recursive Particle Models
+// This section only applies to versions ≥ Battle (8.1.0.27826). Replaces #M2ParticleOld's recursion_model_filename.
+//------------------------------------------------
+
+struct RPID
+{
+    CHUNK hdr;
+    uint32 fileID[hdr.size / 4];
+};

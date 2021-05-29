@@ -11,11 +11,11 @@
 #include "Lib/Vector.bt"
 #include "Lib/Color.bt"
 #include "Lib/Bounds.bt"
-#include "Lib/Animation.bt"
 #include "Lib/Matrix.bt"
 #include "Lib/Chunk.bt"
 #include "Lib/String.bt"
 #include "Lib/Array.bt"
+#include "Lib/Animation.bt"
 
 // skip bites of size
 typedef struct (int size) {

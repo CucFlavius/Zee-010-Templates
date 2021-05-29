@@ -1,0 +1,10 @@
+//------------------------------------------------
+// D2R Granny Magic
+//------------------------------------------------
+struct GrnMagic
+{
+    byte magicValue[16];
+    uint headerSize;                        // from start of file
+    uint headerFormat;
+    uint reserved[2];
+};

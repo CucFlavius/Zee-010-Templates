@@ -1,0 +1,45 @@
+//------------------------------------------------
+// D2R Textures
+//------------------------------------------------
+
+struct PixelLayout
+{
+    int BytesPerPixel;
+    int ShiftForComponent[4];
+    int BitsForComponent[4];
+};
+
+struct Texture
+{
+    ReadStringPTR("FromFileName");
+    int TextureType;
+    int Width;
+    int Height;
+    int Encoding;
+    int SubFormat;
+    PixelLayout Layout;
+    int ImageCount;
+    int64 ptrTextureImage;      // TODO, or empty ?
+    Extended ExtendedData;
+};
+
+struct Textures
+{
+    int textureCount;
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if (textureCount > 0)
+    {
+        int64 texturePtrs[textureCount]<bgcolor=cYellow>;
+        local int i;
+        for (i = 0; i < textureCount; i++)
+        {
+            FSeek(texturePtrs[i]);
+            Texture texture<optimize=false>;
+        }
+    }
+
+    FSeek(save);
+};

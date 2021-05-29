@@ -1,0 +1,132 @@
+//------------------------------------------------
+// D2R Triangle Topologies
+//------------------------------------------------
+
+struct Group
+{
+    int MaterialIndex;
+    int TriFirst;
+    int TriCount;
+};
+
+struct Groups (int count)
+{
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if (count > 0)
+    {
+        Group group[count]<optimize=false>;
+    }
+    FSeek(save);
+};
+
+struct Int32s (int count)
+{
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if (count > 0)
+    {
+        int index[count]<optimize=false>;
+    }
+    FSeek(save);
+};
+
+struct UInt32s (int count)
+{
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if (count > 0)
+    {
+        uint index[count]<optimize=false>;
+    }
+    FSeek(save);
+};
+
+struct UInt16s (int count)
+{
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if (count > 0)
+    {
+        ushort index[count]<optimize=false>;
+    }
+    FSeek(save);
+};
+
+struct TriAnnotationSet
+{
+    ReadStringPTR("Name");
+    int64 ptrTriAnnotationType;             // TODO
+    int TriAnnotationCount;
+    int64 ptrTriAnnotations;                // TODO
+    int IndicesMapFromTriToAnnotation;
+    int TriAnnotationIndexCount;
+    int64 ptrTriAnnotationIndices;          // TODO
+};
+
+struct TriAnnotationSets (int count)
+{
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if (count > 0)
+    {
+        TriAnnotationSet set[count]<optimize=false>;
+    }
+    FSeek(save);
+};
+
+struct TriangleTopology
+{
+    int GroupCount;
+    Groups groups(GroupCount);
+    int IndexCount;
+    Int32s indices(IndexCount);
+    int Index16Count;
+    UInt16s indices(Index16Count);
+    int VertexToVertexCount;
+    Int32s VertexToVertexMap(VertexToVertexCount);
+    int VertexToTriangleCount;
+    Int32s VertexToTriangleMap(VertexToTriangleCount);
+    int SideToNeighborCount;
+    UInt32s SideToNeighborMap(SideToNeighborCount);
+    int PolygonIndexStartCount;
+    Int32s PolygonIndexStarts(PolygonIndexStartCount);
+    int PolygonIndexCount;
+    Int32s PolygonIndices(PolygonIndexCount);
+    int BonesForTriangleCount;
+    Int32s BonesForTriangle(BonesForTriangleCount);
+    int TriangleToBoneCount;
+    Int32s ptrTriangleToBoneIndices(TriangleToBoneCount);
+    int TriAnnotationSetCount;
+    TriAnnotationSets triAnnotationSets(TriAnnotationSetCount);
+};
+
+struct TriangleTopologies
+{
+    int triangleToplogiesCount;
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if(triangleToplogiesCount > 0)
+    {
+        int64 triangleTopologyPtrs[triangleToplogiesCount]<bgcolor=cYellow>;
+        local int i;
+        for (i = 0; i < triangleToplogiesCount; i++)
+        {
+            FSeek(triangleTopologyPtrs[i]);
+            TriangleTopology triangleTopology<optimize=false>;
+        }
+    }
+    FSeek(save);
+};

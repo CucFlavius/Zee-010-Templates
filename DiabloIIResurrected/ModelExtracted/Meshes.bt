@@ -1,0 +1,80 @@
+//------------------------------------------------
+// D2R Meshes
+//------------------------------------------------
+
+
+struct MaterialBindings
+{
+    int MaterialBindingCount;
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if(MaterialBindingCount > 0)
+    {
+        int64 materialBinding[MaterialBindingCount];    // Ref to existing data
+    }
+    
+    FSeek(save);
+};
+
+struct BoneBinding
+{
+    ReadStringPTR("BoneName");
+    VECTOR3 OBBMin;
+    VECTOR3 OBBMax;
+    int TriangleCount;          // Unused ??
+    int64 ptrTriangleIndices;   // Unused ??
+};
+
+struct BoneBindings
+{
+    int BoneBindingCount;
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if(BoneBindingCount > 0)
+    {
+        BoneBinding boneBinding[BoneBindingCount]<optimize=false>;    // Ref to existing data
+    }
+    
+    FSeek(save);
+};
+
+struct Mesh
+{
+    ReadStringPTR("Name");
+    int64 ptrPrimaryVertexData;
+    local long save = FTell();
+    FSeek(ptrPrimaryVertexData);
+    VertexData primaryVertexData;
+    FSeek(save);
+
+    int MorphTargetCount;
+    int64 ptrMorphTargets;          // TODO, unused?
+    int64 ptrPrimaryTopology;       // Ref to existing data
+    MaterialBindings materialBindings;
+    BoneBindings boneBindings;
+    Extended ExtendedData;
+};
+
+struct Meshes
+{
+    int meshesCount;
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if(meshesCount > 0)
+    {
+        int64 meshPtrs[meshesCount]<bgcolor=cYellow>;
+        local int i;
+        for (i = 0; i < meshesCount; i++)
+        {
+            FSeek(meshPtrs[i]);
+            Mesh mesh<optimize=false>;
+        }
+    }
+    FSeek(save);
+};

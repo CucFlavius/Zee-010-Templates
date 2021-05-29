@@ -1,0 +1,76 @@
+//------------------------------------------------
+// D2R Section
+//------------------------------------------------
+
+
+typedef enum
+{
+    GrannyStandardMainSection = 0,
+    GrannyStandardRigidVertexSection = 1,
+    GrannyStandardRigidIndexSection = 2,
+    GrannyStandardDeformableVertexSection = 3,
+    GrannyStandardDeformableIndexSection = 4,
+    GrannyStandardTextureSection = 5,
+    GrannyStandardDiscardableSection = 6,
+    GrannyStandardUnloadedSection = 7,
+    GrannyStandardSectionCount,
+    Grannystandard_section_index_forceint = 0x7fffffff
+} SectionType;
+
+typedef enum
+{
+    GrannyNoCompression,
+    GrannyOodle0Compression,
+    GrannyOodle1Compression,
+    GrannyBitKnitCompression,
+    GrannyBitKnit2Compression,
+    GrannyOnePastLastCompressionType,
+    Grannycompression_type_forceint = 0x7fffffff
+} CompressionType;
+
+struct Section
+{
+    CompressionType format;
+    uint dataOffset;                        // from start of file
+    uint dataSize;                          // compressed size and uncompressed size must be equal
+    uint expandedDataSize;                  // compressed size and uncompressed size must be equal
+    uint internalAllignment;                // The Alignment value specifies what alignment objects inside the section should adhere to. 
+                                            // If this were 4, for example, then each object would start on an even 4-byte boundary relative to the start of the section.
+                                            // This is used primarily for pre-aligning data to larger alignments (say, 16-byte or 128-byte boundaries) for direct loading of sections into hardware-usable addresses, or for use with SSE optimized routines. 
+                                            // If you're not doing something fancy like this, you should probably stick with 4-byte alignment. 
+    uint first16Bit;                        // offset + sectionfileoffset = location, # Stop0 for Oodle1
+    uint first8Bit;                         // offset + sectionfileoffset = location, # Stop1 for Oodle1
+    uint pointerFixupArrayOffset;           // from start of file
+    uint pointerFixupArrayCount;
+    uint mixedMarshallingFixupArrayOffset;  // usually points to end of file
+    uint mixedMarshallingFixupArrayCount;   // always 0
+};
+
+struct DATA(int size, int id)
+{
+    local int ID = id;
+    byte data[size];
+};
+
+
+string GetSectionName(DATA &data)
+{
+    if (data.ID == 0)
+        return "DATA - MainSection";
+    else if (data.ID == 1)
+        return "DATA - RigidVertexSection";
+    else if (data.ID == 2)
+        return "DATA - RigidIndexSection";
+    else if (data.ID == 3)
+        return "DATA - DeformableVertexSection";
+    else if (data.ID == 4)
+        return "DATA - DeformableIndexSection";
+    else if (data.ID == 5)
+        return "DATA - TextureSection";
+    else if (data.ID == 6)
+        return "DATA - DiscardableSection";
+    else if (data.ID == 7)
+        return "DATA - UnloadedSection";
+    else
+        return "DATA - UnknownSection";
+}

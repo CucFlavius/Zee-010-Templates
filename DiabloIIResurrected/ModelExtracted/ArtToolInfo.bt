@@ -1,0 +1,23 @@
+//------------------------------------------------
+// D2R Art Tool Info
+//------------------------------------------------
+
+struct ArtToolInfo
+{
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    ReadStringPTR("FromArtToolName");
+    int ArtToolMajorRevision;
+    int ArtToolMinorRevision;
+    int ArtToolPointerSize;
+    float UnitsPerMeter;
+    VECTOR3 Origin;
+    VECTOR3 RightVector;
+    VECTOR3 UpVector;
+    VECTOR3 BackVector;
+    Extended ExtendedData;
+
+    FSeek(save);
+};

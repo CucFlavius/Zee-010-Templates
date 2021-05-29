@@ -1,0 +1,13 @@
+//------------------------------------------------
+// TXFN - File Names
+//------------------------------------------------
+
+struct TXFN
+{
+    CHUNK hdr;
+    local long save = FTell();
+    while(FTell() < hdr.size + save)
+    {
+        STRING fileName;
+    }
+};

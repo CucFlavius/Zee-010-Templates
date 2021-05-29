@@ -1,0 +1,19 @@
+//------------------------------------------------
+// TXAC - Unknown
+// This section only applies to versions ≥ Legion. It is unknown what this replaced. Exact build unknown, not the first one thoughᵘ.
+//------------------------------------------------
+
+struct TextureAC
+{
+    char unk[2]; // likely used in CM2SceneRender::SetupTextureTransforms and uploaded to the shader directly. 0 otherwise.
+};
+
+struct TXAC
+{
+    CHUNK hdr;
+    TextureAC textureAC[hdr.size / 2];
+};
+
+// This chunk doesn't seem to be used directly.
+// Inside CParticleEmitter2 class there are non-null checks that deal with selection of VertexBufferFormat for particles.
+// Apart from that, the usage of these fields is unknown

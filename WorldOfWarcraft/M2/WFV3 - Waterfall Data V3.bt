@@ -1,0 +1,30 @@
+//------------------------------------------------
+// WFV3 - Waterfall Data V3
+// This section only applies to versions ≥ SL (9.0.1.33978).
+//------------------------------------------------
+
+struct WFV3
+{
+    CHUNK hdr;
+    float bumpScale;  //Passed to vertex shader
+    float value0_x;
+    float value0_y;
+    float value0_z;
+    float value1_w;
+    float value0_w;
+    float value1_x;
+    float value1_y;
+    float value2_w;
+    float value3_y;
+    float value3_x;
+    RGBA basecolor; // in rgba (not bgra)
+    uint16 flags;
+    uint16 unk0;
+    float values3_w;
+    float values3_z;
+    float values4_y;
+    float unk1;
+    float unk2;
+    float unk3;
+    float unk4;
+};

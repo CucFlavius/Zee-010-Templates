@@ -1,0 +1,16 @@
+//------------------------------------------------
+// MWMO - WMO File Names
+// This section only applies to versions ≤ WoD.
+//------------------------------------------------
+
+// Filenames for WMO that appear in the low resolution map. Zero terminated strings.
+
+struct MWMO
+{
+    CHUNK hdr;
+    local long save = FTell();
+    while(FTell() < hdr.size + save)
+    {
+        STRING fileName;
+    }
+};

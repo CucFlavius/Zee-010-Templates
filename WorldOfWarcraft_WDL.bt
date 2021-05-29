@@ -1,0 +1,57 @@
+//--------------------------------------
+//      File: WorldOfWarcraft_WDL.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Wdl file
+//  Category: WoW
+//--------------------------------------
+
+// WDL files contain a low-resolution heightmap for a world.
+// This is probably what the WoW client uses to draw the solid-colored mountain ranges in the background
+// ('in front of' the sky, but 'behind' the fog and the rest of the scenery).
+// It can also be conveniently used to construct a minimap - however, since no water level information is present,
+// the best guess is 0 (sea level) - this results in some lower-than-sea-level areas being blue on the WoWmapview minimap.
+
+#include "Lib/Common.bt"
+#include "WorldOfWarcraft/WDL/MVER - Version.bt"
+#include "WorldOfWarcraft/WDL/MWMO - Wmo File Names.bt"
+#include "WorldOfWarcraft/WDL/MWID - Wmo Indices.bt"
+#include "WorldOfWarcraft/WDL/MODF - Wmo Placement Info.bt"
+#include "WorldOfWarcraft/WDL/MAOF - Map Area Offset.bt"
+#include "WorldOfWarcraft/WDL/MARE - Map Area.bt"
+#include "WorldOfWarcraft/WDL/MAOC - Occlusion Mesh.bt"
+#include "WorldOfWarcraft/WDL/MAOE - Ocean Texture.bt"
+#include "WorldOfWarcraft/WDL/MAHO - Map Area Holes.bt"
+
+// Chunked structure.
+// This section only applies to version Wrath (3.3.5.12340).
+// The WotLK parser is very picky about the files it reads.
+// It assumes that if there is a #MWMO chunk as the first chunk,
+// the #MWID and #MODF chunks follow in that order.
+// Otherwise, or after the three, it *will* be #MAOF, and after that it only uses the offsets in that chunk to parse #MAREs.
+
+struct WDL
+{
+    while( ! FEof() )
+    {
+        if     ( match( "MVER" ) ) MVER version;
+        else if( match( "MWMO" ) ) MWMO wmoFileNames;
+        else if( match( "MWID" ) ) MWID wmoIndices;
+        else if( match( "MODF" ) ) MODF wmoPlacementInfo;
+        // MLDD
+        // MLDX
+        // MLMD
+        // MLMX
+        else if( match( "MAOF" ) ) MAOF mapAreaOffset;
+        // MSSN
+        // MSSC
+        // MSSO
+        else if( match( "MARE" ) ) MARE mapArea;
+        else if( match( "MAOC" ) ) MAOC occlusionMesh;
+        else if( match( "MAOE" ) ) MAOE oceanTexture;
+        else if( match( "MAHO" ) ) MAHO mapAreaHoles;
+        else SKIPCHUNKR unk; 
+    }
+};
+
+WDL wdl;

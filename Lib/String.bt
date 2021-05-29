@@ -76,3 +76,17 @@ string StringNName(STRINGn &str)
     else
         return " ";
 }
+
+// Using this to jump to a string pointer, read the string, then go back to where I left off
+// Currently only used for diablo 2 resurrected sections
+string ReadStringPTR(char name[])
+{
+    int64 ptr<hidden=true>;
+    local long savePos = FTell();
+    FSeek(ptr);
+    if (sizeof(name) > 0)
+        STRINGn str(name);
+    FSeek(savePos);
+
+    return str.s;
+}

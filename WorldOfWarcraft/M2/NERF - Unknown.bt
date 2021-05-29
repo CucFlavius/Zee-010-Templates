@@ -1,0 +1,17 @@
+//------------------------------------------------
+// NERF - Unknown
+// This section only applies to versions ≥ SL (9.0.1.33978).
+//------------------------------------------------
+
+struct NERF
+{
+    CHUNK hdr;
+    VECTOR2 coefs;
+};
+
+// Something related to calculation of alpha for whole model and related to distance.
+// Components of coefs form ration with squared length of instanced model radius.
+
+// (coefs.x - squaredRadius) / (coefs.x - coefs.y)
+
+// And this value is used as multiplier for model instace's alpha.

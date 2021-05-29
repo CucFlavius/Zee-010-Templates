@@ -1,15 +1,8 @@
-//------------------------------------------------
-//--- 010 Editor v9.0.1 Binary Template
-//
-//      File: 
-//   Authors: 
-//   Version: 
-//   Purpose: 
-//  Category: 
-//------------------------------------------------
+// ------------ Warcraft 3 Reforged -------------- //
 
 // Animation Track Point for Visibility
-typedef struct (int lineType){
+typedef struct (int lineType)
+{
     int time;
     float point;
     if (lineType > 1)
@@ -20,7 +13,8 @@ typedef struct (int lineType){
 } TRACKPOINT1;
 
 // Animation Track Point for Vector3
-typedef struct (int lineType){
+typedef struct (int lineType)
+{
     int time;
     VECTOR3 point;
     if (lineType > 1)
@@ -31,7 +25,8 @@ typedef struct (int lineType){
 } TRACKPOINT3;
 
 // Animation Track Point for Quaternion
-typedef struct (int lineType){
+typedef struct (int lineType)
+{
     int time;
     QUATERNION point;
     if (lineType > 1)
@@ -42,7 +37,8 @@ typedef struct (int lineType){
 } TRACKPOINT4;
 
 // Translation Animation Track
-typedef struct {
+typedef struct
+{
     int num;
     int lineType;
     int unk1;
@@ -50,7 +46,8 @@ typedef struct {
 } KGTR;
 
 // Rotation Animation Track
-typedef struct {
+typedef struct
+{
     int num;
     int lineType;
     int unk1;
@@ -58,7 +55,8 @@ typedef struct {
 } KGRT;
 
 // Scale Animation Track
-typedef struct {
+typedef struct
+{
     int num;
     int lineType;
     int unk1;
@@ -66,9 +64,18 @@ typedef struct {
 } KGSC;
 
 // Visibility Animation Track
-typedef struct {
+typedef struct
+{
     int num;
     int lineType;
     int unk1;
     TRACKPOINT1 visibilityTrack(lineType)[num] <optimize=false>;
 } KATV;
+
+// ------------- World of Warcraft ------------ //
+
+typedef struct
+{
+    M2ARRAY timestamps;
+    M2ARRAY values;
+} M2PartTrack;

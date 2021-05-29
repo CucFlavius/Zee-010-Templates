@@ -1,0 +1,12 @@
+//------------------------------------------------
+// SKID - Skeleton FileID
+// This section only applies to versions ≥ Legion (7.3.???). Exact build unknownᵘ.
+//------------------------------------------------
+
+struct SKID
+{
+    CHUNK hdr;
+    uint32 skeletonFileID;
+};
+
+// M2InitParentEventData: eventTracks

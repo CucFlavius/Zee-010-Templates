@@ -3,7 +3,7 @@
 //   Authors: Zee
 //   Version: 1.0
 //   Purpose: Reading the skeleton from Diablo Immortal (Messiah Engine)
-//  Category: Model
+//  Category: DiabloImmortal
 //------------------------------------------------
 #include "Lib/Common.bt"
 
@@ -11,19 +11,30 @@ typedef struct
 {
     byte zero;
     byte type;       // Data type ? 
+
     if (type == 1)
     {
         string s;
     }
-    else if (type == 2)
+    else if (type == 2 || type == 4 || type == 5)
     {
         ushort u;
         ushort unk;
+    }
+    else if (type == 3)
+    {
+        byte u;
+        byte unk;
+    }
+    else if (type == 6)
+    {
+        Printf("6");
     }
     else
     {
         string s;
     }
+
 } CELL <name = CellName>;
 
 
@@ -36,7 +47,13 @@ string CellName(CELL &cell)
         else
             return "String : ";
     }
-    else if (cell.type == 2)
+    else if (cell.type == 2 || cell.type == 4 || cell.type == 5)
+    {
+        local string s;
+        SPrintf( s, "%d", cell.u );
+        return "Uint : " + s;
+    }
+    else if (cell.type == 3)
     {
         local string s;
         SPrintf( s, "%d", cell.u );
@@ -46,6 +63,7 @@ string CellName(CELL &cell)
     {
         return "";
     }
+
 }
 
 struct COLUMN_NAME (int count)
@@ -54,33 +72,71 @@ struct COLUMN_NAME (int count)
 };
 
 
-char magic[4];
-int fileSize;
+char magic[4]<bgcolor=cBlue>;
+int fileSize<bgcolor=cLtPurple>;
 int zero0;
-ubyte columnCount;
-local uint startPos = FTell() - 1;
-COLUMN_NAME columnNames(columnCount);
+local uint startPos = FTell();
+ubyte columnCount<bgcolor=0x32a8a6>;
+COLUMN_NAME columnNames(columnCount)<bgcolor=0x32a8a6>;
+
 
 byte zero1;
-short position0;
+uint position0;
+uint zero2;
+short position1;
+//unsigned byte unk;
+//byte unk;
+byte unk;
+short sunk;
+byte unk;
+byte unk;
+byte unk;
+byte unk;
+byte unk;
+byte unk;
+short sunk;
+byte unk;
+byte unk;
+byte unk;
+byte unk;
+short sunk;
+short sunk;
+short sunk;
+short sunk;
+short sunk;
+short sunk;
+short sunk;
+short sunk;
+short sunk;
+short sunk;
+short sunk;
+byte unk;
+byte unk;
+short sunk;
+short sunk;
+short sunk;
+short sunk;
+//unsigned byte counts[count0];
 
-short pos2;
+//short pos2;
 // Unknown data here, skipping
-byte zero1a;
+//byte zero1a;
 //short zero1b;
-BigEndian();
-uint unk0;
+//BigEndian();
 
-ushort position1;
+//ushort position1;
 //ushort unk1;
 //ushort unk2;
-ubyte unks[unk0];
+//ubyte unks[count0 * 2];
 //ushort unknowns[10];
 
 FSeek(startPos + position0);
 
-LittleEndian();
-CELL cells[columnCount]<optimize = false>;
+//LittleEndian();
+CELL cells[position1 / 2]<optimize=false, bgcolor=cLtBlue>;
+//CELL cells0[2]<optimize=false, bgcolor=cLtGreen>;
+//CELL cells1[count0]<optimize=false, bgcolor=cGreen>;
+//CELL cells2[counts[4]]<optimize=false, bgcolor=cLtBlue>;
 //STRINGc columnMajor(12);
 //byte zero3;
 //unkDataType data[countUnknown0 - 1];

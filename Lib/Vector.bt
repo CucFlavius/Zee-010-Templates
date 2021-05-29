@@ -86,12 +86,13 @@ typedef struct
     short y;
     short z;
     short w;
-
-    //hfloat x;
-    //hfloat y;
-    //hfloat z;
-    //hfloat w;
 } VECTOR4H <name = Vector4HString>;
+
+typedef struct
+{
+    short x;
+    short y;
+} VECTOR2H <name = Vector2HString>;
 
 string Vector4HString(VECTOR4H &v)
 {
@@ -104,6 +105,15 @@ string Vector4HString(VECTOR4H &v)
     local string w;
     SPrintf( w, "%f", v.w / 32767.0f );
     return "Vector4 (" + x + ", " + y + ", " + z + ", " + w + ")";
+}
+
+string Vector2HString(VECTOR2H &v)
+{
+    local string x;
+    SPrintf( x, "%f", v.x / 32767.0f );
+    local string y;
+    SPrintf( y, "%f", v.y / 32767.0f );
+    return "Vector2 (" + x + ", " + y + ")";
 }
 
 string Vector3String(VECTOR3 &v)
@@ -202,7 +212,20 @@ typedef struct {
     float y;
     float z;
     float w;
-} QUATERNION;
+} QUATERNION <name = QuaternionString>;
+
+string QuaternionString(QUATERNION &v)
+{
+    local string x;
+    SPrintf( x, "%f", v.x );
+    local string y;
+    SPrintf( y, "%f", v.y );
+    local string z;
+    SPrintf( z, "%f", v.z );
+    local string w;
+    SPrintf( w, "%f", v.w );
+    return "Quaternion (" + x + ", " + y + ", " + z + ", " + w + ")";
+}
 
 string vector3RotConvert (float &val)
 {

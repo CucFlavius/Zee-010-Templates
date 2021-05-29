@@ -3,11 +3,16 @@
 //   Authors: Zee
 //   Version: 1.0
 //   Purpose: Reading the wildstar model file format M3
-//  Category: Model
+//  Category: Wildstar
 //------------------------------------------------
 
 #include "Lib/Common.bt"
-#include "Wildstar/M3.bt"
+#include "Wildstar/M3/Header.bt"
+#include "Wildstar/M3/Bones.bt"
+#include "Wildstar/M3/Textures.bt"
+#include "Wildstar/M3/Materials.bt"
+#include "Wildstar/M3/Model2Displays.bt"
+#include "Wildstar/M3/Geometries.bt"
 
 // M3 files are a model format which means they contain geometry, animation, textures and various other informations required to display a model.
 // Unlike the I3 models the M3 ones store dynamic models with animations.

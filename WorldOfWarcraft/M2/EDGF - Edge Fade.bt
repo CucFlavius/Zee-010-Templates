@@ -1,0 +1,19 @@
+//------------------------------------------------
+// EDGF - Edge Fade
+// This section only applies to versions ≥ SL (9.0.1.33978).
+//------------------------------------------------
+
+struct EdgeFade
+{
+/*0x00*/ float _0x0[2];
+/*0x08*/ float _0x8;
+/*0x0C*/ char _0xC[0xC];
+};
+
+struct EDGF
+{
+    CHUNK hdr;
+    EdgeFade edgf[hdr.size / 24];
+};
+
+// EdgeFade. This data is applied to mesh only if M2Batch.flags2 has 0x8 flag

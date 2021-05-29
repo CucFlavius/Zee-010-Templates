@@ -1,0 +1,14 @@
+//------------------------------------------------
+// PSBC - Parent Sequence Bounds
+// This section only applies to versions ≥ Legion (7.3.???). Exact build unknownᵘ.
+//------------------------------------------------
+
+struct PSBC
+{
+    CHUNK hdr;
+    local long save = FTell();
+    M2ARRAY parentSequenceBounds;
+    FSeek(save + hdr.size);     // Skipping to end of chunk after because rest of the data comes from M2ARRAY offsets
+};
+
+// M2InitParentSequenceBoundsData: M2Bounds

@@ -1,0 +1,19 @@
+//------------------------------------------------
+// SFID - Skin file IDs
+// This section only applies to versions ≥ Legion (7.0.1.20740). 
+// This used to be filename based, using ${basename}${view}.skin and ${basename}_lod${lodband}.skin.
+//------------------------------------------------
+
+#define lodBands 2
+
+struct SFID
+{
+    CHUNK hdr;
+    uint32 skinFileDataIDs[(hdr.size / 4) - lodBands];
+    uint32 lodSkinFileDataIDs[lodBands /* 2? */];
+};
+
+// Some model files, for example 'Creature\NightborneFemaleCitizen\NightborneFemaleCitizen.m2' have 4 skin files and 2 lod files but only 20 bytes are in chunk.
+// In chunk there are 4 skins and 1 lod present.
+
+// Lod skins are selected based on distance to entity/doodad and chosen based on GetCVar("entityLodDist")/X and GetCVar("doodadLodDist")/X where X - distance. Lods are ignored when "M2UseLOD" CVar is set to 0.

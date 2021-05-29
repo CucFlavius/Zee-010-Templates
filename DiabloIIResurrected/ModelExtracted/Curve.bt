@@ -1,0 +1,214 @@
+//------------------------------------------------
+// D2R Curves
+//------------------------------------------------
+struct CurveDataHeader
+{
+    unsigned byte format;
+    unsigned byte degree;
+};
+
+struct CurveDataHeader_DaIdentity
+{
+    CurveDataHeader header;
+    short dimension;
+};
+
+struct CurveDataHeader_D3Constant32f
+{
+    CurveDataHeader header;
+    short Padding;
+    float Controls[3];
+};
+
+struct CurveDataHeader_D4Constant32f
+{
+    CurveDataHeader header;
+    short padding;
+    float Controls[4];
+};
+
+struct CurveDataHeader_DaConstant32f
+{
+    CurveDataHeader header;
+    short padding;
+    int controlCount;
+
+    int64 controlOffset;
+    local long save = FTell();
+    FSeek(controlOffset);
+    float Controls[controlCount];
+    FSeek(save);
+};
+
+struct CurveDataHeader_D4nK16uC15u
+{
+    CurveDataHeader header;
+    ushort ScaleOffsetTableEntries;
+    float OneOverKnotScale;
+
+    int KnotControlCount;
+    int64 KnotControlOffset;
+    local long save = FTell();
+    FSeek(KnotControlOffset);
+    uint16 KnotsControls[KnotControlCount];
+    FSeek(save);
+};
+
+struct CurveDataHeader_D3I1K8uC8u
+{
+    CurveDataHeader header;
+    ushort OneOverKnotScaleTrunc;
+    float ControlScales[3];
+    float ControlOffsets[3];
+
+    int KnotControlCount;
+    int64 KnotControlOffset;
+    local long save = FTell();
+    FSeek(KnotControlOffset);
+    unsigned byte KnotsControls[KnotControlCount];
+    FSeek(save);
+};
+
+struct CurveDataHeader_D4nK8uC7u
+{
+    CurveDataHeader header;
+    ushort ScaleOffsetTableEntries;
+    float OneOverKnotScale;
+
+    int KnotControlCount;
+    int64 KnotControlOffset;
+    local long save = FTell();
+    FSeek(KnotControlOffset);
+    unsigned byte KnotsControls[KnotControlCount];
+    FSeek(save);
+};
+
+struct CurveDataHeader_DaK16uC16u
+{
+    CurveDataHeader header;
+    ushort OneOverKnotScaleTrunc;
+
+    int ControlScaleOffsetCount;
+    int64 ControlScaleOffsetOffset;
+    local long save0 = FTell();
+    FSeek(ControlScaleOffsetOffset);
+    float ControlScaleOffsets[ControlScaleOffsetCount];
+    FSeek(save0);
+
+    int KnotControlCount;
+    int64 KnotControlOffset;
+    local long save1 = FTell();
+    FSeek(KnotControlOffset);
+    uint16 KnotsControls[KnotControlCount];
+    FSeek(save1);
+};
+
+struct CurveDataHeader_DaK8uC8u
+{
+    CurveDataHeader header;
+    ushort OneOverKnotScaleTrunc;
+
+    int ControlScaleOffsetCount;
+    int64 ControlScaleOffsetOffset;
+    local long save0 = FTell();
+    FSeek(ControlScaleOffsetOffset);
+    float ControlScaleOffsets[ControlScaleOffsetCount];
+    FSeek(save0);
+
+    int KnotControlCount;
+    int64 KnotControlOffset;
+    local long save1 = FTell();
+    FSeek(KnotControlOffset);
+    unsigned byte KnotsControls[KnotControlCount];
+    FSeek(save1);
+};
+
+struct CurveDataHeader_D3K8uC8u
+{
+    CurveDataHeader header;
+    ushort OneOverKnotScaleTrunc;
+    float ControlScales[3];
+    float ControlOffsets[3];
+
+    int KnotControlCount;
+    int64 KnotControlOffset;
+    local long save = FTell();
+    FSeek(KnotControlOffset);
+    unsigned byte KnotsControls[KnotControlCount];
+    FSeek(save);
+};
+
+struct CurveDataHeader_D3K16uC16u
+{
+    CurveDataHeader header;
+    ushort OneOverKnotScaleTrunc;
+    float ControlScales[3];
+    float ControlOffsets[3];
+
+    int KnotControlCount;
+    int64 KnotControlOffset;
+    local long save = FTell();
+    FSeek(KnotControlOffset);
+    ushort KnotsControls[KnotControlCount];
+    FSeek(save);
+};
+
+struct CurveDataHeader_DaK32fC32f
+{
+    CurveDataHeader header;
+    short Padding;
+
+    int KnotCount;
+    int64 KnotOffset;
+    local long save1 = FTell();
+    FSeek(KnotOffset);
+    float Knots[KnotCount];
+    FSeek(save1);
+
+    int ControlCount;
+    int64 ControlOffset;
+    local long save2 = FTell();
+    FSeek(ControlOffset);
+    float Controls[ControlCount];
+    FSeek(save2);
+};
+
+struct Curve
+{
+    Extended curveDescription;
+
+    local long save = FTell();
+    FSeek(curveDescription.ptrObj);
+
+    local string curveName = curveDescription.type.definition[0].name;
+
+    if (curveName == "CurveDataHeader_DaIdentity")
+        CurveDataHeader_DaIdentity curveData;
+    else if (curveName == "CurveDataHeader_D3Constant32f")
+        CurveDataHeader_D3Constant32f curveData;
+    else if (curveName == "CurveDataHeader_D4Constant32f")
+        CurveDataHeader_D4Constant32f curveData;
+    else if (curveName == "CurveDataHeader_DaConstant32f")
+        CurveDataHeader_DaConstant32f curveData;
+    else if (curveName == "CurveDataHeader_D4nK16uC15u")
+        CurveDataHeader_D4nK16uC15u curveData;
+    else if (curveName == "CurveDataHeader_D3I1K8uC8u")
+        CurveDataHeader_D3I1K8uC8u curveData;
+    else if (curveName == "CurveDataHeader_D4nK8uC7u")
+        CurveDataHeader_D4nK8uC7u curveData;
+    else if (curveName == "CurveDataHeader_DaK16uC16u")
+        CurveDataHeader_DaK16uC16u curveData;
+    else if (curveName == "CurveDataHeader_DaK8uC8u")
+        CurveDataHeader_DaK8uC8u curveData;
+    else if (curveName == "CurveDataHeader_D3K8uC8u")
+        CurveDataHeader_D3K8uC8u curveData;
+    else if (curveName == "CurveDataHeader_D3K16uC16u")
+        CurveDataHeader_D3K16uC16u curveData;
+    else if (curveName == "CurveDataHeader_DaK32fC32f")
+        CurveDataHeader_DaK32fC32f curveData;
+    else
+        Printf(curveName + "\n");
+    // so on and so forth
+
+    FSeek(save);
+};

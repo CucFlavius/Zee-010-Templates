@@ -1,0 +1,19 @@
+//------------------------------------------------
+// D2R Transform
+//------------------------------------------------
+
+typedef struct
+{
+    uint HasPosition : 1;
+    uint HasOrientation : 1;
+    uint HasScaleShear : 1;
+    uint Forceint : 0x7fffffff;
+} TransformFlags<size = 4>;
+
+struct Transform
+{
+    TransformFlags Flags;
+    VECTOR3 Position;
+    QUATERNION Orientation;
+    VECTOR3 ScaleShear[3];
+};

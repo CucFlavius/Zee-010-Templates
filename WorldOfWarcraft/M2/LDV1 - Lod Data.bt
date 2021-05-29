@@ -1,0 +1,40 @@
+//------------------------------------------------
+// LDV1 - Lod Data
+// This section only applies to versions ≥ Battle (8.0.1.26629).
+//------------------------------------------------
+
+struct LDV1
+{
+    CHUNK hdr;
+    uint16 unk0; 
+    uint16 lodCount; //maxLod = lodCount-1;  
+    float unk2_f;
+    unsigned byte particleBoneLod[4]; //lod serves as indes into this array
+    float unk4;
+};
+
+// Somehow defines _lod%0d.skin files. 
+// On pandarenfemale.m2, lodCount == 4. SFID has 7 files first 4 are ordinary .skin files and last 3 are _lod%0d.skin files.
+// Enumeration for _lod%0d.skin files for that model starts from 1, and last file in SFID is pandarenfemale_lod03.skin
+// So technically maxLod indeed represents maximum Lod
+
+// unk2_f is used in formula, but it's purpose is unknown
+// fmaxf(fminf(740.0 / unk2_f, 5.0), 0.5);
+
+// LodData.particleBoneLod works this way: Each model has current lod which is [0..3]. Next:
+/*
+  if ( lod < 1 )
+    result = 0;
+  
+  if ( LodData)
+    result = (0x10000 << LodData->particleBoneLod[lod]);
+  else
+    result = (0x10000 << (lod- 1));
+
+...
+//For each ParticleEmitter and related M2Particle record
+if ( result & M2CompBone[M2Particle->old.boneIndex].flags ) {
+  //Do not animate this emitter
+}
+*/
+

@@ -1,0 +1,37 @@
+//--------------------------------------
+//      File: WorldOfWarcraft_TEX.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Tex file
+//  Category: WoW
+//--------------------------------------
+
+// This section only applies to versions ≥ Cata.
+// This is storing really low resolution textures for use if the real file is not yet loaded or streamed.
+// One per continent (e.g. Azeroth.tex) and some special ones (spell effects by class). Chunked structure. Internally called 'TextureBlob'.
+
+// The main purpose of this file is to have a fast access to thousands of BLP textures in low resolution to render continent 
+// data from a far distance without the need to load each BLP texture with a high resolution.
+// This will speed up level loading times drastically as well as reduce memory footprint.
+// Most likely texture data is simply extracted from the referenced BLP textures starting at the around 7 lowest mipmap levels.
+
+#include "Lib/Common.bt"
+#include "WorldOfWarcraft/TEX/TXVR - Version.bt"
+#include "WorldOfWarcraft/TEX/TXBT - Blob Texture.bt"
+#include "WorldOfWarcraft/TEX/TXFN - File Names.bt"
+#include "WorldOfWarcraft/TEX/TXMD - Mip Data.bt"
+
+// While this is properly chunked, order is required.
+struct TEX
+{
+    while( ! FEof() )
+    {
+        if     ( match( "TXVR" ) ) TXVR version;
+        else if( match( "TXBT" ) ) TXBT  blobTexture;
+        else if( match( "TXFN" ) ) TXFN  fileNames;
+        else if( match( "TXMD" ) ) TXMD  mipData;
+        else SKIPCHUNKR unk; 
+    }
+};
+
+TEX tex;

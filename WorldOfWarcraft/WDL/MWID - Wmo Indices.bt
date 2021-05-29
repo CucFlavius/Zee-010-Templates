@@ -1,0 +1,11 @@
+//------------------------------------------------
+// MWID - Wmo Indices
+//------------------------------------------------
+
+// List of indexes into the MWMO chunk.
+
+struct MWID
+{
+    CHUNK hdr;
+    uint32 indices[hdr.size / 4];
+};

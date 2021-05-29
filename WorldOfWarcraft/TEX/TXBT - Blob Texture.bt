@@ -1,0 +1,24 @@
+//------------------------------------------------
+// TXBT - Blob Texture
+//------------------------------------------------
+
+struct SBlobTexture 
+{
+    uint fileID;                        // #if ≥ Battle 8.1.5 (28939) [TXVR:Version >= 1] uint32_t filenameOffset;  // offset within TXFN chunk
+    uint txmdOffset;                    // TXMD chunk offset relative to end of TXFN chunk (or TXBT chunk for TXVR:Version=1 >8.1.5 as the TXFN chunk was removed)
+    unsigned byte sizex;                // 64,32,16,8
+    unsigned byte sizey;                // 64,32,16,8 (sizex, sizey can have different sizes) [special case: sizex = sizey * 6]
+    unsigned byte numLevels     : 7;    // mipmaps (<= 7 as it limits to 64x64)
+    unsigned byte loaded        : 1;
+    unsigned byte dxt_type      : 4;    // 0  = DXT1, 1 = DXT3, 2 = DXT5
+    unsigned byte alpha_dxt1    : 1;    // DXT1 with alpha (for dxt_type = DXT1, prefer argb1555 over rgb565, when DXT1 unavailable)
+    unsigned byte _             : 1;
+    unsigned byte unknown_dxt3  : 1;    // seems to be only set for DXT3 
+    unsigned byte unknown       : 1;    // seems to be only set for DXT3, DXT5
+};
+
+struct TXBT
+{
+    CHUNK hdr;
+    SBlobTexture blobTextures[hdr.size / 12];
+};

@@ -1,6 +1,7 @@
 //------------------------------------------------
-// Doodad References
-// One 16-bit integer per light reference.
+// The MD21 chunk contains the not yet chunked data, just like in the old format. 
+// The content literally is an pre legion file, starting with the MD20 magic. 
+// This also implies that all offsets inside this chunk are relative to the chunk, not the file.
 //------------------------------------------------
 
 typedef struct
@@ -32,17 +33,17 @@ typedef struct
 
 struct MD21
 {
-    CHUNK hdr;
+    CHUNK hdr;      // MD20
     
     local int startPos = FTell();
 
     CHUNKID magic;      // "MD20"
     uint32 version;
-    M2ARRAY name;       // should be globally unique, used to reload by name in internal clients
+    M2Array name (T_char, startPos);
     GLOBALFLAGS globalFlags;
     M2ARRAY globalLoops;
     M2ARRAY sequences;
-    M2ARRAY sequenceIdxHashByID;
+    M2Array sequenceIdxHashByID(T_int16_t, startPos);
     M2ARRAY bones;
     M2ARRAY boneIndicesByID;
     M2ARRAY vertices;

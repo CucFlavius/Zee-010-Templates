@@ -1,0 +1,87 @@
+//------------------------------------------------
+// D2R Vertex Datas
+//------------------------------------------------
+
+struct Vertices
+{
+    int VertexCount;
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    // This isn't really byte, it's a struct formed based on the data definitions in mesh,
+    // well if the vertex data is read from mesh otherwise le shrug
+    unsigned byte vertex[VertexCount]<optimize=false>;
+
+    FSeek(save);
+};
+
+struct VertexComponentNames
+{
+    int VertexComponentNameCount;
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    local int i;
+    for (i = 0; i < VertexComponentNameCount; i++)
+    {
+        FSeek(skeletonPtrs[i]);
+        ReadStringPTR("VertexComponentName");
+        //Skeleton skeleton<optimize=false>;
+    }
+
+    FSeek(save);
+};
+
+struct VertexAnnotationSet
+{
+    ReadStringPTR("Name");
+    DataTypeDefinition VertexAnnotationType;
+    int VertexAnnotationCount;
+    int64 ptrVertexAnnotations;                         // TODO
+    int IndicesMapFromVertexToAnnotation;
+    int VertexAnnotationIndexCount;
+    int64 ptrVertexAnnotationIndices;                   // TODO
+};
+
+struct VertexAnnotationSets
+{
+    int VertexAnnotationSetCount;
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if (VertexAnnotationSetCount > 0)
+        VertexAnnotationSet set[VertexAnnotationSetCount];
+
+    FSeek(save); 
+};
+
+struct VertexData
+{
+    DataTypeDefinition VertexType;
+    Vertices vertices;
+    VertexComponentNames vertexComponentNames;      // Unused ?
+    VertexAnnotationSets vertexAnnotationSets;      // Unused ?
+};
+
+struct VertexDatas
+{
+    int vertexDatasCount;
+    int64 position;
+    local long save = FTell();
+    FSeek(position);
+
+    if(vertexDatasCount > 0)
+    {
+        int64 vertexDataPtrs[vertexDatasCount]<bgcolor=cYellow>;
+        local int i;
+        for (i = 0; i < vertexDatasCount; i++)
+        {
+            FSeek(vertexDataPtrs[i]);
+            VertexData vertexData<optimize=false>;
+        }
+    }
+    FSeek(save);
+};

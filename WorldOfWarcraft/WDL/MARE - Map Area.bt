@@ -1,0 +1,16 @@
+//------------------------------------------------
+// MARE - Map Area
+//------------------------------------------------
+
+// WoD (cata?): if neither MAHO nor MARE present: CMapAreaLow::CreateOceanInstance()
+
+// Heightmap for one map tile. Contains 17*17 + 16*16 = 545 signed 16-bit integers.
+// So a 17 by 17 grid of height values is given, with additional height values in between grid points.
+// Here, the "outer" 17x17 points are listed (in the usual row major order), followed by 16x16 "inner" points.
+// The height values are on the same scale as those used in the regular height maps.
+
+struct MARE
+{
+    CHUNK hdr;
+    int16 heightMap[17*17 + 16*16];
+};

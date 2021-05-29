@@ -1,0 +1,44 @@
+//------------------------------------------------
+// D2R Fixup Data
+//------------------------------------------------
+struct FixupDATA
+{
+    int compressedSize;
+    byte data[compressedSize];
+};
+
+// How I do the pointer fixup, this is guess work but it works, maybe sdk does this differently
+// Need to keep track of where each section starts after merging the decompressed sections
+// Marching function is similar, just you also read a count of how much data to move, never implemented tho, didn't need to
+/*
+ParseFixupData(byte[] input, uint count, byte[] output, int currentSectionIndex)
+{
+    for (int i = 0; i < count; i++)
+    {
+        uint to = input.ReadUInt32()
+        int sectionIndex = input.ReadInt32()
+        uint from = input.ReadUInt32()
+
+        if (sectionIndex == currentSectionIndex)
+        {
+            // converting :from: to long, then into byte[8], and then placing it in the correct spot
+            long ptr = from;
+            byte[] ptrData = BitConverter.GetBytes(ptr);
+            for (int j = 0; j < 8; j++)
+            {
+                output[j + to] = ptrData[j]
+            }
+        }
+        else
+        {
+            // converting :from: to long, then into byte[8], and then placing it in the correct spot
+            long ptr = from + sectionStart[sectionIndex]
+            byte[] ptrData = BitConverter.GetBytes(ptr)
+            for (int j = 0; j < 8; j++)
+            {
+                output[j + to] = ptrData[j]
+            }
+        }
+    }
+}
+*/

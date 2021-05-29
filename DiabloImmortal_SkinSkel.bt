@@ -47,10 +47,19 @@ struct Bone
     //float unk1;
     //byte similar3[5];
     //byte data5[12];
-byte data[48];
+
+//////////////////
+QUATERNION quat;
+QUATERNION quat;
+QUATERNION quat;
+//VECTOR3 vector;
+//byte data[48 - 16 - 16 - 12];
+
+/////////////////////
+//byte data[48];
 /////////////////////
     //Printf( "%d P(%f, %f, %f) R(%f, %f, %f, %f)\n", index, position.x,position.y,position.z, rotation.x, rotation.y, rotation.z, rotation.w );
-    STRINGc boneName(nameLength);
+    STRINGc boneName(nameLength)<bgcolor=cGreen>;
 index++;
     //Printf( "'%s' \n", boneName.s);
 };
@@ -61,4 +70,4 @@ uint one;
 uint unk0;
 ushort zero0;
 ushort boneCount;
-Bone bones[boneCount]<optimize=false>;
+Bone bones[boneCount]<optimize=false, bgcolor=cLtBlue>;

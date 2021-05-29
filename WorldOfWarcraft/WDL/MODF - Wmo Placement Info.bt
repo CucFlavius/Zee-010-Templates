@@ -1,0 +1,24 @@
+//------------------------------------------------
+// MODF - Wmo Placement Info
+//------------------------------------------------
+
+// Placement information for the WMO. 64 bytes.
+
+struct MapObjDef
+{
+    uint nameId <comment = "ID -- unused, always uses MWMO's content instead">;
+    uint uniqueId <comment = "unique identifier for this instance -- unused, generates uid dynamically">;
+    VECTOR3 pos <comment = "Position (X,Y,Z)">;
+    VECTOR3 rot <comment = "Orientation (A,B,C)">;
+    BOUNDINGBOX extents <comment = "Bounding Box">;
+    uint16 flags <comment = "Flags">;
+    uint16 doodadSet <comment = "Doodad set index">;
+    uint16 nameSet <comment = "Name set?">;
+    uint16 pad <comment = "Padding">;
+};
+
+struct MODF
+{
+    CHUNK hdr;
+    MapObjDef defs[hdr.size / 64];
+};
