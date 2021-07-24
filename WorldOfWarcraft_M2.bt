@@ -74,7 +74,7 @@ struct M2
         else if( matchr( "PFDC" ) ) PFDC physics;
         else if( matchr( "EDGF" ) ) EDGF edgeFade;
         else if( matchr( "NERF" ) ) NERF unknown;
-        else if( matchr( "DETL" ) ) DETL unknown;
+        else if( matchr( "DETL" ) ) DETL detailLights(header.lights.count);
         else SKIPCHUNK unk; 
     }
 };

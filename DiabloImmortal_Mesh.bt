@@ -65,6 +65,10 @@ struct VERTEX_BUFFER(char description[], int size)
     {
         VECTOR3 position;
     }
+    else if( bufferMatch( "P3H", description, 3, size ) )
+    {
+        VECTOR4H position;
+    }
     else if( bufferMatch( "Q4H_T2H", description, 7, size ) )
     {
         VECTOR4H tangentAsQuat;
@@ -73,6 +77,7 @@ struct VERTEX_BUFFER(char description[], int size)
     else
     {
         // Idk
+        Printf("Unknown Buffer Format");
     }
 };
 

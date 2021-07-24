@@ -41,7 +41,8 @@ struct MD21
     uint32 version;
     M2Array name (T_char, startPos);
     GLOBALFLAGS globalFlags;
-    M2ARRAY globalLoops;
+    //M2ARRAY globalLoops;
+    M2Array globalLoops(T_uint32_t, startPos);
     M2ARRAY sequences;
     M2Array sequenceIdxHashByID(T_int16_t, startPos);
     M2ARRAY bones;

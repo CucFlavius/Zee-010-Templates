@@ -6,7 +6,7 @@
 //  Category: DiabloImmortal
 //------------------------------------------------
 #include "Lib/Common.bt"
-
+#include "DiabloImmortal/AnimationKeyframe.bt"
 
 struct Header
 {
@@ -31,188 +31,175 @@ struct Header
     FSeek(0);
 };
 
-struct KeyframeVec3
+struct Unk0x8Type
 {
-    short timeStamp;
-    VECTOR3 value;
+    char unk[14];
 };
 
-
-typedef struct 
+struct Unk0x8Type2
 {
-    short timeStamp;
-    unsigned byte value[5];
-} Keyframe5Bdebug;
-
-__int64 ldexpf(float arg, int exp)
-{
-    return arg * Pow(2, exp);
+    char unk[16];
 };
-
-string QuaternionDequantize(unsigned int64 inputData, unsigned int bitCount)
-{
-    unsigned __int64 inputData_1; // x23
-    char bitCount_1; // w24
-    float z; // x20
-    float y; // x21
-    float x; // x22
-    float w; // x19
-    unsigned __int64 v12; // x8
-    signed __int64 v13; // x9
-    float v14; // s0
-    float v15; // s2
-    float v16; // s1
-    float v17; // s0
-    float v18; // s1
-    float v19; // s2
-    float v20; // s2
-    float v21; // s2
-    float v22; // s1
-    float v23; // s2
-    float result; // s0
-
-    inputData_1 = inputData;
-    bitCount_1 = bitCount;
-
-    v12 = (unsigned __int64)(float)(((ldexpf(1.0, bitCount))) + -1.0);
-    v13 = (inputData_1 >> 3 * bitCount_1) & 3;
-    v14 = (float)v12 * 0.70711;
-    if (v13 == 1)
-    {
-        v18 = (float)((float)(v12 & inputData_1) / v14) + -0.70711;
-        y = (float)((float)((inputData_1 >> 2 * bitCount_1) & v12) / v14) + -0.70711;
-        z = (float)((float)((inputData_1 >> bitCount_1) & v12) / v14) + -0.70711;
-        w = v18;
-        v17 = (float)(1.0 - (float)(v18 * v18)) - (float)(y * y);
-        v16 = z * z;
-        w = x;
-    }
-    else if (v13)
-    {
-        v19 = (float)((float)((inputData_1 >> 2 * bitCount_1) & v12) / v14) + -0.70711;
-        if (v13 == 2)
-        {
-            z = v19;
-            v20 = (float)((float)(v12 & inputData_1) / v14) + -0.70711;
-            w = (float)((float)((inputData_1 >> bitCount_1) & v12) / v14) + -0.70711;
-            x = v20;
-            v17 = (float)(1.0 - (float)(v20 * v20)) - (float)(w * w);
-            v16 = z * z;
-            w = y;
-        }
-        else
-        {
-            w = v19;
-            v21 = (float)((float)(v12 & inputData_1) / v14) + -0.70711;
-            x = (float)((float)((inputData_1 >> bitCount_1) & v12) / v14) + -0.70711;
-            y = v21;
-            v22 = v21 * v21;
-            v23 = w;
-            w = z;
-            v17 = (float)(1.0 - (float)(x * x)) - v22;
-            v16 = v23 * v23;
-        }
-    }
-    else
-    {
-        v15 = (float)(v12 & inputData_1) / v14;
-        x = (float)((float)((inputData_1 >> 2 * bitCount_1) & v12) / v14) + -0.70711;
-        y = (float)((float)((inputData_1 >> bitCount_1) & v12) / v14) + -0.70711;
-        z = v15 + -0.70711;
-        v16 = (float)(v15 + -0.70711) * (float)(v15 + -0.70711);
-        v17 = (float)(1.0 - (float)(x * x)) - (float)(y * y);
-    }
-    result = Sqrt(v17 - v16);
-    w = result;
-
-    local string xstr;
-    SPrintf( xstr, "%f", x);
-
-    local string ystr;
-    SPrintf( ystr, "%f", y);
-
-    local string zstr;
-    SPrintf( zstr, "%f", z);
-
-    local string wstr;
-    SPrintf( wstr, "%f", w);
-
-    return "Quat (" + xstr + ", " + ystr + ", " + zstr + ", " + wstr + ")";
-}
-
-typedef struct 
-{
-    short timeStamp;
-    local long save = FTell();
-    __int64 data : 40<name = Quat5BStr>;
-    FSeek(save + 5);
-
-} Keyframe5B;
-
-string Quat5BStr(__int64 data)
-{
-    return QuaternionDequantize(data, 12);    // Can also be packed to 15 bit need to find where
-}
 
 struct Track
 {
     short keyframeCount;
-    byte type;
-
-    if (type == 0)
+    if (keyframeCount != 0)
     {
-        byte unk;
-        KeyframeVec3 keyframes[keyframeCount];
-    }    
-    else if (type == 50)
-    {
-        Keyframe5B keyframes[keyframeCount]<optimize=false>;
+        byte compression;
+    
+        if (compression == 0)
+        {
+            byte unk;
+            KeyframeVec3 keyframes[keyframeCount];
+        }    
+        else if (compression == 50)
+        {
+            Keyframe5B keyframes[keyframeCount]<optimize=false>;
+        }
     }
 };
 
-struct BONE(byte type)
+struct Track2
+{
+    short keyframeCount;
+    byte compression;
+    byte unk;
+    short unk;
+    byte data[6];
+};
+
+typedef enum <byte>{ 
+	hasScaleTrack = 0x01,
+	hasPositionTrack = 0x02, 
+	hasPositionTrackB = 0x04,
+	unk0x8 = 0x08,
+} ANIM_FLAGS <read=read_ANIM_FLAGS>;
+
+string read_ANIM_FLAGS (local ANIM_FLAGS &af) {
+	local string s = "";
+	local ANIM_FLAGS i = 1;
+
+	SPrintf (s, "%d: ", af);  
+
+    
+    s += IntToBinaryStr(af);
+    s += " ";
+
+    for( i = 0; i < 10; i++ )
+	{
+		if (af & i)
+		{
+			s = s + EnumToString(i);
+            s = s + " ";
+		}
+	}
+	return s;
+}
+
+struct BONE(ANIM_FLAGS &flags)
+{
+    byte nameLength;
+    char name[nameLength];
+    short parent;               // Bone parent
+
+    local int t = 1;            // Rotation track always exists
+    if (flags & 0x1) { t++; }
+    if (flags & 0x2 || flags & 0x4) { t++; }
+
+    local int i;
+    for (i = 0; i < t; i++)
+    {
+        Track track;
+        if (track.keyframeCount == 0 && i != t - 1)
+        {
+            short skip;     // Padding ?
+        }
+    }
+};
+
+struct BONE2(ANIM_FLAGS &flags)
+{
+    byte nameLength;
+    char name[nameLength];
+    uint parent;             // Bone parent
+
+    local int i;
+    Track2 track;
+};
+
+struct BONE_B
 {
     byte nameLength;
     char name[nameLength];
     short parent;             // could be bone parent
-    
-    local int i;
-    local int t = 3;
-    if (type == 6 || type == 2)
-        t = 2;
-    else if (type == 7 || type == 3)
-        t = 3;
-    else
-        Printf("shit");
-
-    for (i = 0; i < t; i++)
-    {
-        short test;
-        if (test != 0)
-        {
-            FSeek(FTell() - 2);
-            Track track;
-        }
-        else
-        {
-            if (i != t - 1)
-                short skip;
-        }
-    }
 };
 
-Header header;
-char locale[2];
-uchar marker;
-char bcharAnim[11];
-short unk;                  // 2 or 3, if type == 4 { v15 = 3; } else { v15 = 2; }
-int boneCount;
-int animationLength;
-byte unk;
-byte type;
-byte unk;
-int v20;
-byte padding;
-int padding;
+struct BONEHIERARCHY
+{
+    short boneCount;
+    BONE_B bone[boneCount]<optimize=false>;
+};
 
-BONE bone(type)[boneCount]<optimize=false>;
+//Header header;
+
+// Test animation file format
+char formatTest[4]<hidden=true>;
+FSeek(0);
+
+if (formatTest[0] == 78)
+{
+    // Header V1
+    char magic[4];
+    int chunkSize;
+    int64 padding;
+}
+else
+{
+    // Header V2
+    char magic[4];
+}
+char CHARANIM[10];
+short someType;         // 2 or 3, if input parameter (animFormat == 4) { someType = 3; } else { someType = 2; }
+short boneCount;        // total number of bones
+short zero;
+uint animationLength;   // animation length in miliseconds
+byte animFormat;        // animation format: 0, 1, 2, 4
+if (animFormat == 4)
+{
+    // Anim V1
+    ANIM_FLAGS flags;       // if(inData + 17 != 0) then 1 |= 4 else 1
+                            // if anim format is 4 then only 0x1 is ever set and probably doesn't mean scale, even though the game can also write 0x4 here
+    time_t createTime;      // animation file creation time
+    byte zero;              // always 0
+    char a4;                // unknown parameter of AnimationCore::SerializeHeaderAndCharAnim()
+    float a5;               // unknown parameter of AnimationCore::SerializeHeaderAndCharAnim()
+    BONEHIERARCHY hierarchy;
+    // bone data, NYI
+    byte unk[53];
+    int unk;
+    int unk;
+    int unk;
+    int unk;
+    float test[100];
+}
+else
+{
+    // Anim V2
+    ANIM_FLAGS flags;       // |= 1, if (inData + 17 != 0) then |= 4, if (a5 >= 1) then |= 2
+    time_t createTime;      // animation file creation time
+    byte a5;                // parameter of AnimationCore::SerializeHeaderAndCharAnim()
+    byte zero;              // = 0
+    uint zero;              // = 0
+    if (flags & 0x8)
+    {
+        Printf("Flag 0x8 not implemented bone type");
+        // Only 40 animations have this, can ignore for now
+
+        //BONE2 bone(flags)[boneCount]<optimize=false>;
+    }
+    else
+    {
+        BONE bone(flags)[boneCount]<optimize=false>;
+    }
+}

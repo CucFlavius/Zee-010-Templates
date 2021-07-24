@@ -1,0 +1,125 @@
+//------------------------------------------------
+//  Diablo Immortal - Animation - Keyframe
+//------------------------------------------------
+
+struct KeyframeVec3
+{
+    short timeStamp;
+    VECTOR3 value;
+};
+
+typedef struct 
+{
+    short timeStamp;
+    unsigned byte value[5];
+} Keyframe5Bdebug;
+
+__int64 ldexpf(float arg, int exp)
+{
+    return arg * Pow(2, exp);
+};
+
+string QuaternionDequantize(unsigned int64 inputData, unsigned int bitCount)
+{
+    unsigned __int64 inputData_1; // x23
+    char bitCount_1; // w24
+    float z; // x20
+    float y; // x21
+    float x; // x22
+    float w; // x19
+    unsigned __int64 v12; // x8
+    signed __int64 v13; // x9
+    float v14; // s0
+    float v15; // s2
+    float v16; // s1
+    float v17; // s0
+    float v18; // s1
+    float v19; // s2
+    float v20; // s2
+    float v21; // s2
+    float v22; // s1
+    float v23; // s2
+    float result; // s0
+
+    inputData_1 = inputData;
+    bitCount_1 = bitCount;
+
+    v12 = (unsigned __int64)(float)(((ldexpf(1.0, bitCount))) + -1.0);
+    v13 = (inputData_1 >> 3 * bitCount_1) & 3;
+    v14 = (float)v12 * 0.70711;
+    if (v13 == 1)
+    {
+        v18 = (float)((float)(v12 & inputData_1) / v14) + -0.70711;
+        y = (float)((float)((inputData_1 >> 2 * bitCount_1) & v12) / v14) + -0.70711;
+        z = (float)((float)((inputData_1 >> bitCount_1) & v12) / v14) + -0.70711;
+        w = v18;
+        v17 = (float)(1.0 - (float)(v18 * v18)) - (float)(y * y);
+        v16 = z * z;
+        w = x;
+    }
+    else if (v13)
+    {
+        v19 = (float)((float)((inputData_1 >> 2 * bitCount_1) & v12) / v14) + -0.70711;
+        if (v13 == 2)
+        {
+            z = v19;
+            v20 = (float)((float)(v12 & inputData_1) / v14) + -0.70711;
+            w = (float)((float)((inputData_1 >> bitCount_1) & v12) / v14) + -0.70711;
+            x = v20;
+            v17 = (float)(1.0 - (float)(v20 * v20)) - (float)(w * w);
+            v16 = z * z;
+            w = y;
+        }
+        else
+        {
+            w = v19;
+            v21 = (float)((float)(v12 & inputData_1) / v14) + -0.70711;
+            x = (float)((float)((inputData_1 >> bitCount_1) & v12) / v14) + -0.70711;
+            y = v21;
+            v22 = v21 * v21;
+            v23 = w;
+            w = z;
+            v17 = (float)(1.0 - (float)(x * x)) - v22;
+            v16 = v23 * v23;
+        }
+    }
+    else
+    {
+        v15 = (float)(v12 & inputData_1) / v14;
+        x = (float)((float)((inputData_1 >> 2 * bitCount_1) & v12) / v14) + -0.70711;
+        y = (float)((float)((inputData_1 >> bitCount_1) & v12) / v14) + -0.70711;
+        z = v15 + -0.70711;
+        v16 = (float)(v15 + -0.70711) * (float)(v15 + -0.70711);
+        v17 = (float)(1.0 - (float)(x * x)) - (float)(y * y);
+    }
+    result = Sqrt(v17 - v16);
+    w = result;
+
+    local string xstr;
+    SPrintf( xstr, "%f", x);
+
+    local string ystr;
+    SPrintf( ystr, "%f", y);
+
+    local string zstr;
+    SPrintf( zstr, "%f", z);
+
+    local string wstr;
+    SPrintf( wstr, "%f", w);
+
+    return "Quat (" + xstr + ", " + ystr + ", " + zstr + ", " + wstr + ")";
+}
+
+typedef struct 
+{
+    short timeStamp;
+    local long save = FTell();
+    __int64 data : 40<name = Quat5BStr>;
+    FSeek(save + 5);
+
+} Keyframe5B;
+
+string Quat5BStr(__int64 data)
+{
+    return QuaternionDequantize(data, 12);    // Can also be packed to 15 bit need to find where
+}

@@ -5,6 +5,11 @@
 //   Purpose: Reading the skeleton from Diablo Immortal (Messiah Engine)
 //  Category: DiabloImmortal
 //------------------------------------------------
+
+// The format is basicly a compressed tree structure
+// The hierarchy is harder to explain, basicly the data is read in order based on child count but in depth order,
+// so you read the root (level 0), then the child elements (level 1), then each of the child element of those childs (level 2) etc
+
 #include "Lib/Common.bt"
 
 typedef struct
@@ -12,19 +17,30 @@ typedef struct
     byte zero;
     byte type;       // Data type ? 
 
+    if (type == 0)
+    {
+        // Element
+    }
     if (type == 1)
     {
+        // String
         string s;
     }
-    else if (type == 2 || type == 4 || type == 5)
+    else if (type == 2 || type == 4)
     {
+        // Number
         ushort u;
         ushort unk;
     }
+    else if (type == 5)
+    {
+        // Float
+        float f;
+    }
     else if (type == 3)
     {
+        // Boolean
         byte u;
-        byte unk;
     }
     else if (type == 6)
     {
@@ -35,109 +51,117 @@ typedef struct
         string s;
     }
 
-} CELL <name = CellName>;
+} Element <name = ElementName, bgcolor = cLtYellow>;
 
 
-string CellName(CELL &cell)
+string ElementName(Element &e)
 {
-    if (cell.type == 1)
+    if (e.type == 0)
     {
-        if (Strlen(cell.s) > 0)
-            return "String : " + cell.s;
+        return "Element";
+        // unused
+    }
+    else if (e.type == 1)
+    {
+        if (Strlen(e.s) > 0)
+            return "String : " + e.s;
         else
             return "String : ";
     }
-    else if (cell.type == 2 || cell.type == 4 || cell.type == 5)
+    else if (e.type == 2 || e.type == 4)
     {
         local string s;
-        SPrintf( s, "%d", cell.u );
+        SPrintf( s, "%d", e.u );
         return "Uint : " + s;
     }
-    else if (cell.type == 3)
+    else if (e.type == 5)
     {
         local string s;
-        SPrintf( s, "%d", cell.u );
-        return "Uint : " + s;
+        SPrintf( s, "%f", e.f );
+        return "Float : " + s;
+    }
+    else if (e.type == 3)
+    {
+        local string s;
+        SPrintf( s, "%d", e.u );
+        return "Bool : " + s;
     }
     else
     {
         return "";
     }
-
 }
 
-struct COLUMN_NAME (int count)
+struct Dictionary (int count)
 {
-    STRING dataType[count]<optimize=false>;
+    STRING entries[count]<optimize=false>;
 };
 
+typedef byte Name <read=DictionaryName>;
+
+string DictionaryName(Name &name)
+{
+    return dictionary.entries[name].s;
+};
+
+typedef struct
+{
+    byte inData[4]<hidden=true>;
+    FSeek(FTell() - 4);
+
+    if (!(inData[0] & 128))
+    {
+        FSeek(FTell() + 1);
+        local uint value = inData[0];
+    }
+    else
+    {
+        FSeek(FTell() + 2);
+        local uint value = inData[0] & 127 | ((inData[1] & 127) << 7);
+    }
+}cValue<read=cValueRead>;
+
+string cValueRead(cValue &v)
+{
+    local string s;
+    SPrintf( s, "%u", v.value );
+    return s;
+}
+
+typedef struct
+{
+    Name name<bgcolor=cRed>;
+    cValue arraySize<bgcolor=cLtRed>;
+}Descriptor<read=DescriptorRead>;
+
+string DescriptorRead(Descriptor &descriptor)
+{
+    local string s;
+    SPrintf( s, "%u", descriptor.arraySize.value );
+    //return descriptor.name + s;
+    return dictionary.entries[descriptor.name].s + " " + s;
+};
+
+struct DESCRIPTORS(int count)
+{
+    Descriptor descriptors[count]<optimize=false>;
+};
+
+struct ELEMENTS(int count)
+{
+    Element elements[count]<optimize=false>;
+};
 
 char magic[4]<bgcolor=cBlue>;
 int fileSize<bgcolor=cLtPurple>;
 int zero0;
-local uint startPos = FTell();
-ubyte columnCount<bgcolor=0x32a8a6>;
-COLUMN_NAME columnNames(columnCount)<bgcolor=0x32a8a6>;
+ubyte dictEntryCount<bgcolor=0x32a8a6>;
+Dictionary dictionary(dictEntryCount)<bgcolor=0x32a8a6>;
+byte zero<hidden=true>;
 
+uint dataStartOffset;
+uint zero;
 
-byte zero1;
-uint position0;
-uint zero2;
-short position1;
-//unsigned byte unk;
-//byte unk;
-byte unk;
-short sunk;
-byte unk;
-byte unk;
-byte unk;
-byte unk;
-byte unk;
-byte unk;
-short sunk;
-byte unk;
-byte unk;
-byte unk;
-byte unk;
-short sunk;
-short sunk;
-short sunk;
-short sunk;
-short sunk;
-short sunk;
-short sunk;
-short sunk;
-short sunk;
-short sunk;
-short sunk;
-byte unk;
-byte unk;
-short sunk;
-short sunk;
-short sunk;
-short sunk;
-//unsigned byte counts[count0];
-
-//short pos2;
-// Unknown data here, skipping
-//byte zero1a;
-//short zero1b;
-//BigEndian();
-
-//ushort position1;
-//ushort unk1;
-//ushort unk2;
-//ubyte unks[count0 * 2];
-//ushort unknowns[10];
-
-FSeek(startPos + position0);
-
-//LittleEndian();
-CELL cells[position1 / 2]<optimize=false, bgcolor=cLtBlue>;
-//CELL cells0[2]<optimize=false, bgcolor=cLtGreen>;
-//CELL cells1[count0]<optimize=false, bgcolor=cGreen>;
-//CELL cells2[counts[4]]<optimize=false, bgcolor=cLtBlue>;
-//STRINGc columnMajor(12);
-//byte zero3;
-//unkDataType data[countUnknown0 - 1];
-
+cValue elementCount;
+DESCRIPTORS descriptors(elementCount.value);
+ELEMENTS elements(elementCount.value);

@@ -92,6 +92,13 @@ typedef struct
 {
     short x;
     short y;
+    short z;
+} VECTOR3H <name = Vector3HString>;
+
+typedef struct
+{
+    short x;
+    short y;
 } VECTOR2H <name = Vector2HString>;
 
 string Vector4HString(VECTOR4H &v)
@@ -105,6 +112,17 @@ string Vector4HString(VECTOR4H &v)
     local string w;
     SPrintf( w, "%f", v.w / 32767.0f );
     return "Vector4 (" + x + ", " + y + ", " + z + ", " + w + ")";
+}
+
+string Vector3HString(VECTOR3H &v)
+{
+    local string x;
+    SPrintf( x, "%f", v.x / 32767.0f );
+    local string y;
+    SPrintf( y, "%f", v.y / 32767.0f );
+    local string z;
+    SPrintf( z, "%f", v.z / 32767.0f );
+    return "Vector3 (" + x + ", " + y + ", " + z + ")";
 }
 
 string Vector2HString(VECTOR2H &v)

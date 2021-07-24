@@ -16,9 +16,29 @@ struct MATERIAL
     STRINGc properties(sizeOfProperties);
 };
 
+struct MATERIALb
+{
+    time_t creationTime;
+    STRING materialName;
+    STRING fileName;
+    STRING shaderName;
+    ushort unk1;
+    byte unk2;
+    ushort sizeOfProperties;
+    STRINGc properties(sizeOfProperties);
+};
+
 byte version;                                       // Probably version, always 46 ?
 STRINGc messiah(7);                                 // MESSIAH
 uint one;
 ushort zero;
-byte numberOfMaterials;
-MATERIAL materials[numberOfMaterials]<optimize=false>;
+if (zero == 0)
+{
+    byte numberOfMaterials;
+    MATERIAL materials[numberOfMaterials]<optimize=false>;
+}
+else
+{
+    FSeek(FTell() - 2);
+    MATERIALb material;
+}
