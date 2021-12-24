@@ -5,15 +5,18 @@
 struct ExporterInfo
 {
     int64 position;
-    local long save = FTell();
-    FSeek(position);
-
-    ReadStringPTR("ExporterName");
-    int ExporterMajorRevision;
-    int ExporterMinorRevision;
-    int ExporterCustomization;
-    int ExporterBuildNumber;
-    Extended ExtendedData;
-
-    FSeek(save);
+    if (position != 0)
+    {
+        local long save = FTell();
+        FSeek(position);
+    
+        ReadStringPTR("ExporterName");
+        int ExporterMajorRevision;
+        int ExporterMinorRevision;
+        int ExporterCustomization;
+        int ExporterBuildNumber;
+        Extended ExtendedData;
+    
+        FSeek(save);
+    }
 };

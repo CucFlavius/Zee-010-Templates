@@ -11,32 +11,38 @@
 //   History: 
 //------------------------------------------------
 
+local long bonesEndPos;
+
+struct BoneUnk010A
+{
+    int unk;
+};
+
 struct BONE // 352
 {
-    int32 gap_000;      // This number seems to be equal between a character bone and an item bone if both are 'at the same place', maybe this number acts as a kind of bind value
-                        // for items or it binds a bone to something else (for example: this is a finger bone)
-                        // Except -1, contains no number twice.
-                        // In some cases this number becomes bigger than max(BIT_16), so it is probably not 1, but 2 numbers, each 16_BIT
-    int16 parentId;     // A value of -1 indicates this bone has no parent
-    byte gap_006[2];
-    byte gap_008[4];    // Are the {@link #gap_000} values of two bones from two m3 equal, so are their {@link #gap_008} values.
+    short boneID;           // Entry in ModelBone.tbl
+    short flags;            // Maybe
+    int16 parentId;         // A value of -1 indicates this bone has no parent
+    short unk2;             // MAYBE submesh id
+    byte boneNameCRC[4];    // Maybe
+    //Printf ("%u \n", flags);
+    //byte gap_008[4];    // Are the {@link #gap_000} values of two bones from two m3 equal, so are their {@link #gap_008} values.
                         // In case of two bones with {@link #gap_000} = -1, {@link #gap_008} can still be equal to each other <br>
                         // Good chance that {@link #gap_008} controls which bones 'go together', but it's not clear how its value is generated
     int32 padding_00C;
-    M3DOUBLEARRAY unk_block_010[4];    // unk_block_010[2] is related to parent.unk_block_010[0]. Both pointer have (mostly) always the same amount of elements
-                                    // Those values seem to be 0, for leaf bones
-    M3DOUBLEARRAY bone_animation[2];
-    M3DOUBLEARRAY unk_block_0A0[2];
+
+    Track scale(TVector3HF, bonesEndPos)[4]<optimize=true>;    // unk_block_010[2] is related to parent.unk_block_010[0]. Both pointer have (mostly) always the same amount of elements,  Those values seem to be 0, for leaf bones
+    Track rotation(TQuaternionS, bonesEndPos)[2]<optimize=true>;
+    Track position(TVector3, bonesEndPos)[2]<optimize=true>;
 
     MATRIX4x4 matrix_0D0;           // Looks like a column-major transformation matrix
     MATRIX4x4 matrix_110;           // Looks like the inverse column-major transformation matrix
-    float x;
-    float y;
-    float z;
+    VECTOR3 pivot;
     int32 padding_15C;
 };
 
 struct BONES (HEADER &header)
 {
-    BONE bone[header.bones.elements];
+    bonesEndPos = headerSize + header.bones.offset + (header.bones.elements * 352);
+    BONE bone[header.bones.elements]<optimize=false>;
 };

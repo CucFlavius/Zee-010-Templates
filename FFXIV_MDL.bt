@@ -1,0 +1,80 @@
+//------------------------------------------------
+//      File: FFXIV_MDL
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: FFXIV Model
+//  Category: FFXIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct DX9VertexElement
+{
+    byte stream;
+    byte offset;
+    byte dataType;
+    byte usage;
+    byte padding[4];
+};
+
+struct Mesh(int elementCount)
+{
+    DX9VertexElement element[elementCount]<optimize=false>;
+};
+
+struct Elements
+{
+    local int elementCounts[100];
+    local int i;
+    local int j;
+    for (i = 0; i < totalMeshes; i++)
+    {
+        FSeek(68 + (136 * i));
+        while (true)
+        {
+            byte test<hidden = true>;
+            if (test == -1)
+                break;
+            elementCounts[i]++;
+            FSeek(FTell() + 7);
+        }
+    }
+    
+    for (i = 0; i < totalMeshes; i++)
+    {
+        FSeek(68 + (136 * i));
+        Mesh mesh(elementCounts[i])<optimize=false>;
+    }
+};
+
+struct Strings
+{
+    int numStrings;
+    int stringBlockSize;
+    local int save = FTell();
+    STRING str[numStrings]<optimize=false>;
+    FSeek(save + stringBlockSize);  // Strings appear padded at the end, so after reding, skip stringBlockSize
+};
+
+short totalMeshes;
+short totalMaterials;
+Elements elements;
+FSeek(68 + (136 * totalMeshes));
+Strings strings;
+int unk;
+short numMeshes;
+short numAtrStrings;
+short numParts;
+short numMaterialStrings;
+short numBoneStrings;
+short unkCount4;
+short unkCount5;
+short unkCount6;
+short unkCount7;
+short unkCount8;
+short unkCount1;
+byte unkCount2;     // unkCount2 & 0xFF
+byte unk;
+byte padding0[10];
+short unkCount3;
+byte padding1[16];

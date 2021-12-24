@@ -1,0 +1,81 @@
+//------------------------------------------------
+//      File: FFXIV_Index
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: FFXIV Archive browsing
+//  Category: FFXIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct SqPackHeader
+{
+    char signature[6];      // SqPack
+    byte padding[6];
+    int headerLength;
+    int unk;                // Unknown but repeated in other header
+    enum<int> Type { SQDB = 0, Data = 1, Index = 2 } sqPackType;
+    byte padding2[8];
+    int unk;
+    byte padding3[924];
+    byte headerSha[20];     // SHA-1 of bytes 0x000-0x3BF, starts 64bytes before end of header
+    FSeek(headerLength);    // padding till headerLength
+};
+
+struct Segment
+{
+    int count;              // For segment 2 it's the number of dats for this archive (dat0, dat1, etc), for others unknown.
+    int segmentOffset;      // Offset to the segment
+    int segmentSize;        // How large a segment is
+    byte segmentSha[20];    // Hash of the segment... [Segment Offset] to [Segment Offset] + [Segment Size]
+    byte padding[40];
+};
+
+struct SegmentHeader
+{
+    local int save = FTell();
+    int headerLength;
+    Segment segment1<bgcolor=cBlue>;
+    byte padding[4];
+    Segment segment2<bgcolor=cLtBlue>;
+    Segment segment3<bgcolor=cRed>;
+    Segment segment4<bgcolor=cLtRed>;
+    FSeek(save + headerLength);
+};
+
+typedef struct
+{
+    int fileID1Hash;        // Hash to the file name
+    int fileID2Hash;        // Hash to the file path
+    int fileDataOffset;     // Multiply by 0x08, points to compressed data in .dat file
+    byte padding[4]<hidden=true>;
+}File<bgcolor=cYellow>;
+
+typedef struct
+{
+    int folderIDHash;       // Hash to the folder name
+    int filesOffset;        // Offset to file list in segment 1.
+    int totalFilesSize;     // Total size of all file segments for this folder. To find # files, divide by 0x10 (16).
+    byte padding[4]<hidden=true>;
+
+    local int save = FTell();
+    FSeek(filesOffset);
+    File files[totalFilesSize / 16];
+    FSeek(save);
+
+}Folder<bgcolor=cGreen>;
+
+SqPackHeader header;
+SegmentHeader segmentHeader;
+if (segmentHeader.segment4.segmentOffset != 0)
+{
+    // Folders
+    FSeek(segmentHeader.segment4.segmentOffset);
+    Folder folders[segmentHeader.segment4.segmentSize / 16]<optimize=false>;
+}
+else
+{
+    // All files in Root
+    FSeek(segmentHeader.segment1.segmentOffset);
+    File allFiles[segmentHeader.segment1.segmentSize / 16];
+}

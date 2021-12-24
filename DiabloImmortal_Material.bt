@@ -18,12 +18,13 @@ struct MATERIAL
 
 struct MATERIALb
 {
-    time_t creationTime;
-    STRING materialName;
-    STRING fileName;
-    STRING shaderName;
+    //time_t creationTime;
+    STRINGd materialName;
+    byte unk;
+    STRINGd fileName;
+    STRINGd shaderName;
     ushort unk1;
-    byte unk2;
+    ushort unk2;
     ushort sizeOfProperties;
     STRINGc properties(sizeOfProperties);
 };
@@ -32,6 +33,7 @@ byte version;                                       // Probably version, always 
 STRINGc messiah(7);                                 // MESSIAH
 uint one;
 ushort zero;
+
 if (zero == 0)
 {
     byte numberOfMaterials;
@@ -41,4 +43,5 @@ else
 {
     FSeek(FTell() - 2);
     MATERIALb material;
+    //MATERIAL material;
 }

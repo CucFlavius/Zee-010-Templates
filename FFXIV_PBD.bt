@@ -1,0 +1,14 @@
+//------------------------------------------------
+//      File: FFXIV_PBD
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: FFXIV Bone Deformer
+//  Category: FFXIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+int unk1;
+int unk2;
+float unksf[unk1 * 3 - 1];
+short unksh[unk2 - 1];

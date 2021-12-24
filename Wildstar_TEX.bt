@@ -1,13 +1,58 @@
 //------------------------------------------------
-//--- 010 Editor v9.0.1 Binary Template
-//
-//      File: 
-//   Authors: 
-//   Version: 
-//   Purpose: 
-//  Category: 
-// File Mask: 
-//  ID Bytes: 
-//   History: 
+//      File: Wildstar_TEX.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the wildstar texture format
+//  Category: Wildstar
 //------------------------------------------------
-https://wildstaronline-archive.fandom.com/wiki/TEX_file
+//https://wildstaronline-archive.fandom.com/wiki/TEX_file
+
+struct LayerInfo
+{
+    byte quality;
+    byte hasReplacement;
+    byte replacement;
+};
+
+struct MipJpeg
+{
+   byte mipData[header.imageSizes[i]]; 
+};
+
+
+struct HeaderV2
+{
+    char signature[4];
+    uint version;
+    uint width;
+    uint height;
+    uint depth;
+    uint sides;
+    uint mipMaps;
+    uint format;
+    uint isCompressed;
+    uint compressionFormat;
+    LayerInfo layerInfos[4];
+    uint imageSizesCount;
+    if (imageSizesCount > 0)
+        uint imageSizes[imageSizesCount];
+    int unk_06C;
+    byte wtf[8];
+};
+
+HeaderV2 header;
+
+FSeek(112);
+
+local int i;
+if (header.format == 0)
+{
+    for(i = 0; i < header.imageSizesCount; i++)
+    {
+        MipJpeg mip;
+    }
+}
+else
+{
+    
+}

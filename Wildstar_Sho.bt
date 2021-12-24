@@ -1,0 +1,50 @@
+//------------------------------------------------
+//      File: Wildstar_Sho.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the wildstar shader files
+//  Category: Wildstar
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+local int HeaderSize = 80;
+local int ArraySize = 16;
+
+struct Header
+{
+    uint magic;             // TGTS 0x54475453
+    uint version;
+    M3ARRAY variants;
+    M3ARRAY unk0;
+    M3ARRAY unk1;
+    M3ARRAY unk2;
+    uint64 unk3;
+};
+
+struct Variant
+{
+    M3ARRAY array;
+    local long save = FTell();
+    if (array.elements > 0)
+    {
+        FSeek(HeaderSize + header.variants.offset + (header.variants.elements * ArraySize) + array.offset);
+        byte data[array.elements];
+    }
+    FSeek(save);
+};
+
+struct Variants
+{
+    Variant variants[header.variants.elements]<optimize=false>;
+};
+
+Header header;
+FSeek(HeaderSize + header.variants.offset);
+Variants variants;
+FSeek(HeaderSize + header.unk0.offset);
+int test;
+FSeek(HeaderSize + header.unk1.offset);
+int test;
+FSeek(HeaderSize + header.unk2.offset);
+int test;

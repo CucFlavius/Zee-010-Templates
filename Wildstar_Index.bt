@@ -1,0 +1,26 @@
+//------------------------------------------------
+//      File: Wildstar_Index.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the wildstar archive index file format
+//  Category: Wildstar
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct Header
+{
+    char magic[4];              // PACK
+    int version;
+    byte padding[512];          // Padding or unknown, always empty
+    uint64 fileSize;
+    uint64 unk0;
+    uint64 offsetBlockTable;
+    int numberOfBlocks;
+    int unk1;
+    uint64 packRootIdx;
+    uint64 unk2;
+    uint64 unk3;
+};
+
+Header header;

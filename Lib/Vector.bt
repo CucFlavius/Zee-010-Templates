@@ -37,7 +37,7 @@ typedef struct
     float x;
     float y;
     float z;
-} VECTOR3 <name = Vector3String>;
+} VECTOR3 <read = Vector3String>;
 
 // Vector 3 (three floats x,y,z)
 typedef struct
@@ -49,10 +49,31 @@ typedef struct
 
 typedef struct
 {
-    uint16 x;
-    uint16 y;
-    uint16 z;
-} VECTOR3SHORT;
+    short x;
+    short y;
+    short z;
+} VECTOR3SHORT<read=readVECTOR3SHORT>;;
+
+string readVECTOR3SHORT (VECTOR3SHORT& a)
+{
+    string s; 
+    SPrintf (s, "Vector3( %i, %i, %i )", a.x, a.y, a.z);
+    return s;
+}
+
+typedef struct
+{
+    hfloat x;
+    hfloat y;
+    hfloat z;
+} VECTOR3HF<read=readVECTOR3HF>;;
+
+string readVECTOR3HF (VECTOR3HF& a)
+{
+    string s; 
+    SPrintf (s, "Vector3( %f, %f, %f )", a.x, a.y, a.z);
+    return s;
+}
 
 // Vector 3 (three bytes x,y,z)
 typedef struct
@@ -69,7 +90,22 @@ typedef struct
     float y;
     float z;
     float w;
-} VECTOR4;
+} VECTOR4 <name = Vector4String>;
+
+typedef struct
+{
+    short x;
+    short y;
+    short z;
+    short w;
+} VECTOR4SHORT<read=readVECTOR4SHORT>;
+
+string readVECTOR4SHORT (VECTOR4SHORT& a)
+{
+    string s; 
+    SPrintf (s, "Vector4( %i, %i, %i, %i )", a.x, a.y, a.z, a.w);
+    return s;
+}
 
 typedef struct
 {
@@ -154,6 +190,20 @@ string Vector3ShortString(VECTOR3SHORT &v)
     local string z;
     SPrintf( z, "%f", v.z / 32767 );
     return "Vector3 (" + x + ", " + y + ", " + z + ")";
+}
+
+
+string Vector4String(VECTOR4 &v)
+{
+    local string x;
+    SPrintf( x, "%f", v.x );
+    local string y;
+    SPrintf( y, "%f", v.y );
+    local string z;
+    SPrintf( z, "%f", v.z );
+    local string w;
+    SPrintf( w, "%f", v.w );
+    return "Vector4 (" + x + ", " + y + ", " + z + ", " + w + ")";
 }
 
 string Vector4SString(VECTOR4SMALL &v)
@@ -243,6 +293,29 @@ string QuaternionString(QUATERNION &v)
     local string w;
     SPrintf( w, "%f", v.w );
     return "Quaternion (" + x + ", " + y + ", " + z + ", " + w + ")";
+}
+
+
+typedef struct
+{
+    int16 x;
+    int16 y;
+    int16 z;
+    int16 w;
+} QUATERNIONSHORT<read=readQUATERNIONSHORT>;
+
+string readQUATERNIONSHORT (QUATERNIONSHORT& t)
+{
+    string s; 
+
+    float x = (t.x < 0 ? t.x + 16384.0 : t.x - 16384.0) / 16384.0 + 1.0;
+    float y = (t.y < 0 ? t.y + 16384.0 : t.y - 16384.0) / 16384.0 + 1.0;
+    float z = (t.z < 0 ? t.z + 16384.0 : t.z - 16384.0) / 16384.0 + 1.0;
+    float w = (t.w < 0 ? t.w + 16384.0 : t.w - 16384.0) / 16384.0 + 1.0;
+
+    SPrintf (s, "Quaternion( %f, %f, %f, %f )", x, y, z, w);
+    //SPrintf (s, "Quaternion( %f, %f, %f, %f )", t.x, t.y, t.z, t.w);
+    return s;
 }
 
 string vector3RotConvert (float &val)

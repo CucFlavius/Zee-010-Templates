@@ -1,0 +1,60 @@
+//------------------------------------------------
+// MPHD - Header
+//------------------------------------------------
+/*
+enum<uint> Flags
+{
+    wdt_uses_global_map_obj               = 0x0001, // Use global map object definition.
+    adt_has_mccv                          = 0x0002, // ≥ Wrath adds color: ADT.MCNK.MCCV. with this flag every ADT in the map _must_ have MCCV chunk at least with default values, else only base texture layer is rendered on such ADTs.
+    adt_has_big_alpha                     = 0x0004, // shader = 2. Decides whether to use _env terrain shaders or not: funky and if MCAL has 4096 instead of 2048(?)
+    adt_has_doodadrefs_sorted_by_size_cat = 0x0008, // if enabled, the ADT's MCRF(m2 only)/MCRD chunks need to be sorted by size category
+    FLAG_LIGHTINGVERTICES                 = 0x0010, // ≥ Cata adds second color: ADT.MCNK.MCLV -- This appears to be deprecated and forbidden in 8.x?
+    adt_has_upside_down_ground            = 0x0020, // ≥ Cata Flips the ground display upside down to create a ceiling
+    unk_0x0040                            = 0x0040, // ≥ Mists ??? -- Only found on Firelands2.wdt (but only since MoP) before Legion
+    adt_has_height_texturing              = 0x0080, // ≥ Mists shader = 6. Decides whether to influence alpha maps by _h+MTXP: (without with)
+                                                    // also changes MCAL size to 4096 for uncompressed entries
+    unk_0x0100                            = 0x0100, // ≥ Legion implicitly sets 0x8000
+    wdt_has_maid                          = 0x0200, // ≥ Battle (8.1.0.28294) client will load ADT using FileDataID instead of filename formatted with "%s\\%s_%d_%d.adt"
+    unk_0x0400                            = 0x0400,
+    unk_0x0800                            = 0x0800,
+    unk_0x1000                            = 0x1000,
+    unk_0x2000                            = 0x2000,
+    unk_0x4000                            = 0x4000,
+    unk_0x8000                            = 0x8000, // ≥ Legion implicitly set for map ids 0, 1, 571, 870, 1116 (continents). Affects the rendering of _lod.adt. If set, or if implicitly set by 0x100, maptextures and LOD are required, or else textures further than ~533 yards will not render.
+    
+    //mask_vertex_buffer_format             = adt_has_mccv | adt_has_mclv,                    // CMap::LoadWdt
+    //mask_render_chunk_something           = adt_has_height_texturing | adt_has_big_alpha,   // CMapArea::PrepareRenderChunk, CMapChunk::ProcessIffChunks
+};
+*/
+typedef struct {
+    //ubyte length <hidden = true>;
+    uint wdt_uses_global_map_obj : 1;
+    uint adt_has_mccv : 1;
+    uint adt_has_big_alpha : 1;
+    uint adt_has_doodadrefs_sorted_by_size_cat : 1;
+    uint FLAG_LIGHTINGVERTICES : 1;
+    uint adt_has_upside_down_ground : 1;
+    uint unk_0x0040 : 1;
+    uint adt_has_height_texturing : 1;
+    uint unk_0x0100 : 1;
+    uint wdt_has_maid : 1;
+    uint unk_0x0400 : 1;
+    uint unk_0x0800 : 1;
+    uint unk_0x1000 : 1;
+    uint unk_0x2000 : 1;
+    uint unk_0x4000 : 1;
+    uint unk_0x8000 : 1;
+} HeaderFLAGS <name = "MPHDFlags", size = 4>;
+
+struct MPHD
+{
+    CHUNK hdr;
+    HeaderFLAGS flags;
+    uint32 lgtFileDataID;
+    uint32 occFileDataID;
+    uint32 fogsFileDataID;
+    uint32 mpvFileDataID;
+    uint32 texFileDataID;
+    uint32 wdlFileDataID;
+    uint32 pd4FileDataID;  // PD4
+};

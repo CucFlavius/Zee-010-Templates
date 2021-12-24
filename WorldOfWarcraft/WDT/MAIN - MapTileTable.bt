@@ -1,0 +1,20 @@
+//------------------------------------------------
+// MAIN - Map Tile Table
+// Needs to contain 64x64 = 4096 entries of sizeof(SMAreaInfo) ( 8 ) bytes each.
+//------------------------------------------------
+
+typedef struct {
+    uint hasADT : 1;
+    uint allWater : 1;
+    uint loaded : 1;
+} AreaInfoFLAGS <name = "MapAreaInfoFlags", size = 4>;
+
+struct MAIN
+{
+    CHUNK hdr;
+    struct SMAreaInfo     // -> CMapAreaTableEntry
+    {
+        AreaInfoFLAGS flags;
+        uint32 asyncId;
+    } mapAreaInfo[64*64];
+};

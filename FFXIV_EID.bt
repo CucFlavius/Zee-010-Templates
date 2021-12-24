@@ -1,0 +1,22 @@
+//------------------------------------------------
+//      File: FFXIV_EID
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: FFXIV EID file..
+//  Category: FFXIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct Entry
+{
+    char name[32];
+    int index;
+    VECTOR3 unkVec1;
+    VECTOR3 unkVec2;
+    int unk2;
+};
+
+char magic[4];
+char unk[12];
+Entry entry[48];

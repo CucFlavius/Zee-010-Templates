@@ -106,3 +106,22 @@ string SkipChunkNameReversed(SKIPCHUNKR &str)
         return "";
     }
 }
+
+typedef struct {
+    char ID[4];
+    int size;
+    FSeek(FTell() + (size - 8));
+} SKIPCHUNKR2 <name = SkipChunkNameReversed2>;
+
+// Helper function for displaying the string instead of the variable name
+string SkipChunkNameReversed2(SKIPCHUNKR2 &str)
+{
+    if (Strlen(str.ID) > 0)
+    {
+        return ("Skip : " + str.ID[3] + str.ID[2] + str.ID[1] + str.ID[0]);
+    }
+    else
+    {
+        return "";
+    }
+}

@@ -1,0 +1,279 @@
+//------------------------------------------------
+//      File: Wildstar_Area.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the wildstar area map chunk
+//  Category: Wildstar
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct Header
+{
+    CHUNKID chunkID;
+    uint version;
+};
+
+struct HeightMap
+{
+    ushort map[19 * 19];
+};
+
+struct TextureIDs
+{
+    uint IDs[4];
+};
+
+struct BlendMap
+{
+    ushort data[65 * 65];
+};
+
+struct ColorMap
+{
+    ushort data[65 * 65];
+};
+
+struct UnkMap
+{
+    uint data[65 * 65];
+};
+
+struct ShadowMap
+{
+    // 4225 bytes
+    byte data[65 * 65];
+};
+
+struct LoDHeightMap
+{
+    ushort data[33 * 33];
+};
+
+struct LoDHeightRange
+{
+    ushort min;
+    ushort max;
+};
+
+struct ColorMapDXT
+{
+    // DXT5 65x65 texture, no mips, clamp
+    byte data[4624];
+};
+
+struct ZoneBounds
+{
+    byte data[64 * 64];
+};
+
+struct BlendMapDXT
+{
+    // DXT1 65x65 texture, no mips, clamp
+    byte data[2312];
+};
+
+struct UnkMapDXT
+{
+    // DXT1 65x65 texture, no mips, clamp
+    byte data[2312];
+};
+
+struct ZoneIDs
+{
+    uint ids[4];
+};
+
+struct UnkColors
+{
+    // This looks like 4 colors, and last byte is alpha, since always 255
+    // One color per texture layer
+    RGBA32 colors[4];
+};
+
+struct UnkLayerData
+{
+    int layerData0[4];
+    int layerData1[4];
+    int layerData2[4];
+    int layerData3[4];
+};
+
+typedef struct {
+    uint hasHeightmap : 1 <name = "Heightmap">;
+    uint hasTextureIDs : 1 <name = "Texture IDs">;
+    uint hasBlendMapRaw : 1 <name = "Blend Map Raw">;
+    uint hasColorMapRaw : 1 <name = "Color Map Raw">;
+    uint unkMap : 1 <name = "Unk Map Raw">;
+    uint unk1 : 1 <name = "unk1">;
+    uint hasUnkLayerData : 1 <name = "Unk Layer Data">;
+    uint hasUnkLayerColors : 1 <name = "Unk Per Layer Color">;
+    uint hasShadowMap : 1 <name = "Shadow Map">;
+    uint hasLoDHeightMap : 1 <name = "LoD Height Map">;
+    uint hasLoDHeightRange : 1 <name = "LoD Height Range">;
+    uint unk6 : 1 <name = "unk6">;
+    uint unk7 : 1 <name = "unk7">;
+    uint hasColorMapDXT : 1 <name = "Color Map DXT">;
+    uint unkMap0 : 1 <name = "Unk Map 0 DXT">;
+    uint unk9 : 1 <name = "unk9">;
+    uint hasZoneBounds : 1 <name = "World Zone Bounds">;
+    uint hasBlendMapDXT : 1 <name = "Blend Map DXT">;
+    uint hasUnkMap1 : 1 <name = "Unk Map 1 DXT">;
+    uint hasUnkMap2 : 1 <name = "Unk Map 2 DXT">;
+    uint hasUnkMap3 : 1 <name = "Unk Map 3 DXT">;
+    uint unk14 : 1 <name = "unk14">;
+    uint unk15 : 1 <name = "unk15">;
+    uint unk16 : 1 <name = "unk16">;
+    uint unk17 : 1 <name = "unk17">;
+    uint unk18 : 1 <name = "unk18">;
+    uint unk19 : 1 <name = "unk19">;
+    uint unk20 : 1 <name = "unk20">;
+    uint hasZoneIDs : 1 <name = "World Zone IDs">;
+    uint unk22 : 1 <name = "unk22">;
+    uint unk23 : 1 <name = "unk23">;
+    uint hasUnkMap4 : 1 <name = "Unk Map 4 DXT">;
+} SubchunkFlags <name = "SubchunkFlags", size = 4>;
+
+struct SUBCHUNK
+{
+    uint size;
+    if (size > FileSize())  // This needs a better interpretation, sometimes the chunk size is a short sometimes an int
+    {
+        FSkip(-4);
+        ushort size;
+        ushort unk;
+    }
+
+    local long save = FTell();
+    SubchunkFlags flags;
+    
+    if(flags.hasHeightmap)
+        HeightMap heightMap;
+    if(flags.hasTextureIDs)
+        TextureIDs textureIDs;
+    if(flags.hasBlendMapRaw)
+        BlendMap blendMap;
+    if(flags.hasColorMapRaw)
+        ColorMap colorMap;
+    if(flags.unkMap)
+        UnkMap unkMap;
+    if(flags.unk1)
+        byte unks1[4];
+    if(flags.hasUnkLayerData)
+        UnkLayerData unkData;
+    if(flags.hasUnkLayerColors)
+        UnkColors unkColors;
+    if(flags.hasShadowMap)
+        ShadowMap shadowMap;
+    if(flags.hasLoDHeightMap)
+        LoDHeightMap heightMap;
+    if(flags.hasLoDHeightRange)
+        LoDHeightRange heightRange;
+    if(flags.unk6)
+        byte unks6[578];
+    if(flags.unk7)
+        byte unk7;
+    if(flags.hasColorMapDXT)
+        ColorMapDXT colorMap;
+    if(flags.unkMap0)
+        UnkMapDXT unkMap0;
+    if(flags.unk9)
+        byte unks9[8450];
+    if(flags.hasZoneBounds)
+        ZoneBounds zoneBounds;
+    if(flags.hasBlendMapDXT)
+        BlendMapDXT blendMap;
+    if(flags.hasUnkMap1)
+        UnkMapDXT unkMap1;
+    if(flags.hasUnkMap2)
+        UnkMapDXT unkMap2;
+    if(flags.hasUnkMap3)
+        UnkMapDXT unkMap3;
+    if(flags.unk14)
+        byte unk14;
+    if(flags.unk15)
+        int unks15[4];
+    if(flags.unk16)
+        byte unks16[16900];
+    if(flags.unk17)
+        byte unks17[8];
+    if(flags.unk18)
+        byte unks18[8450];
+    if(flags.unk19)
+        byte unks19[21316];
+    if(flags.unk20)
+        byte unks20[4096];
+    if(flags.hasZoneIDs)
+        ZoneIDs zoneIDs;            // MapZoneHex.tbl ??
+    if(flags.unk22)
+        byte unks22[8450];
+    if(flags.unk23)
+        byte unks23[8450];
+    if(flags.hasUnkMap4)
+        UnkMapDXT unkMap4;
+};
+
+struct PROP
+{
+    CHUNK chunk;
+    uint entries[chunk.size / 4];
+};
+
+struct CHNK
+{
+    CHUNK chunk;
+    local long save = FTell();
+    while(FTell() < save + chunk.size)
+    {
+        SUBCHUNK subChunk;
+        while (FTell() < subChunk.save + subChunk.size - 1)
+        {
+            // Extra chunks
+            if     ( match( "PROP" ) ) PROP props;
+            else SKIPCHUNKR unk; 
+        }
+    }
+};
+
+struct PropInfo
+{
+    int64 uniqueID;     // used in PROP chunks as references for collision/etc.
+    int unk0;
+    int unk1;
+    int unk2;
+    int nameOffset;
+    int unkOffset;
+    float scale;
+    QUATERNION rotation;
+    VECTOR3 position;
+    short unk3;
+    short unk4;
+    short unk5;
+    short unk6;
+    int unk7;
+    int unk8;
+    int unk9;
+    int color0;         // typically 7f7f7fff so just a multiplier shading color
+    int color1;
+    int unk10;
+    int unk11;
+    int color2;
+    int unk12;
+};
+
+struct PROp
+{
+    CHUNK chunk;
+    local long save = FTell();
+    int propCount;
+    PropInfo props[propCount];
+    FSeek(save + chunk.size);   // Skipping strings
+};
+
+Header header;
+while( ! FEof() )
+{
+    if     ( match( "CHNK" ) ) CHNK chnk;
+    else if( match( "PROp" ) ) PROp props;
+    else SKIPCHUNKR unk; 
+}

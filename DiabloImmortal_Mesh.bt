@@ -74,6 +74,12 @@ struct VERTEX_BUFFER(char description[], int size)
         VECTOR4H tangentAsQuat;
         VECTOR2H uv;
     }
+    else if( bufferMatch( "C4B_Q4H_T2H", description, 11, size ) )
+    {
+        RGBA32 color;
+        VECTOR4H tangentAsQuat;
+        VECTOR2H uv;
+    }
     else
     {
         // Idk

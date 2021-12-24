@@ -1,0 +1,171 @@
+//------------------------------------------------
+//      File: DXBC.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reversing DirectX Shader Byte code
+//  Category: General
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+local int i;
+
+struct Header
+{
+    char DXBC[4];           // Always the string “DXBC”
+    byte checksum[16];      // Checksum; the HLSL compiler uses a private algorithm to compute this
+    int one;                // Always the number “1” - I don’t know why this exists, perhaps as a sanity check
+    int totalSize;          // Total size, in bytes, of the compiled shader, including the header
+    int chunkCount;         // Chunk Count
+    int chunkOffsets[chunkCount];
+};
+
+struct Element(int start)
+{
+    int offset;
+    local int save = FTell();
+    FSeek(start + offset);
+    string name;
+    FSeek(save);
+    int semanticIndex;
+    int systemValueType;
+    int componentType;          // 3 = float
+    int register;
+    byte mask;                  // Mask. “7” means XYZ, which means this is a 3-component vector.
+    byte readWriteMask;         // This is the same as the mask, but it is also possible for not all components to actually be used by the shader.
+    byte pad[2];
+};
+
+struct ISGN
+{
+    // ISGN chunks define the input signature for a shader.
+    CHUNK chunk;
+    local int start = FTell();
+    int elementCount;
+    int unk;            // 8
+    Element elements(start)[elementCount]<optimize=false>;
+};
+
+struct OSGN
+{
+    // OSGN chunks define the output signature for a shader.
+    CHUNK chunk;
+    local int start = FTell();
+    int elementCount;
+    int unk;            // 8
+    Element elements(start)[elementCount];
+};
+
+struct Instruction
+{
+    int Type : 10;
+    int pad : 14;
+    int Length : 6;
+    int Extended : 1;
+};
+
+struct SHDR
+{
+    // Shader SM4/PS_04
+    CHUNK chunk;
+    byte version;
+    FSkip(1);
+    short programType;      // 1 = vertex shader
+    int dwordCount;
+    //Instruction instructions[dwordCount];
+};
+
+struct VariableType
+{
+    int class;      // D3D10_SHADER_VARIABLE_CLASS.
+    int type;       // D3D10_SHADER_VARIABLE_TYPE.
+    //int rows;     // only for matrix vars
+    //int columns;  // only for matrix vars
+    //int elements; // only for array type
+    //int members;  // only for structure type
+    int offsetToFirstMember;
+};
+
+struct ConstantVariable(int start)
+{
+    int nameOffset;
+    int constantBufferStartOffset;
+    int variableSize;
+    int flags;          // https://docs.microsoft.com/en-us/windows/desktop/api/d3dcommon/ne-d3dcommon-_d3d_shader_variable_flags?redirectedfrom=MSDN
+    int variableTypeOffset;
+    int defaultValueOffset;
+
+    local int save = FTell();
+    FSeek(start + nameOffset);
+    string name;
+    FSeek(start + variableTypeOffset);
+    VariableType variableType;
+    FSeek(save);
+};
+
+struct ConstantBuffer(int start)
+{
+    int nameOffset;
+    int variableCount;
+    int variableOffset;
+    int size;
+    int flags;          // https://docs.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_shader_cbuffer_flags?redirectedfrom=MSDN
+    int type;           // https://docs.microsoft.com/en-us/previous-versions/windows/desktop/legacy/ff476097(v=vs.85)?redirectedfrom=MSDN
+    local int save = FTell();
+    FSeek(start + nameOffset);
+    string name;
+    FSeek(start + variableOffset);
+    ConstantVariable variables(start)[variableCount];
+    FSeek(save);
+};
+
+struct ResourceBinding(int start)
+{
+    int nameOffset;
+    int inputType;
+    int returnType;
+    int viewDimension;
+    int sampleCount;
+    int bindPoint;
+    int bindCount;
+    int shaderInputFlags;
+    local int save = FTell();
+    FSeek(start + nameOffset);
+    string name;
+    FSeek(save);
+};
+
+struct RDEF
+{
+    CHUNK chunk;
+    local int start = FTell();
+    int constantBufferCount;
+    int constantBufferOffset;
+    int resourceBindingCount;
+    int resourceBindingOffset;
+    byte minorVersion;
+    byte majorVersion;
+    short programType;      // 0xFFFE = vertex shader
+    int flags;
+    int stringOffset;
+
+    FSeek(start + constantBufferOffset);
+    ConstantBuffer constantBuffer(start)[constantBufferCount];
+
+    FSeek(start + resourceBindingOffset);
+    ResourceBinding resourceBinding(start)[resourceBindingCount];
+
+    FSeek(start + stringOffset);
+    string creator;
+};
+
+Header header;
+for(i = 0; i < header.chunkCount; i++)
+{
+    FSeek(header.chunkOffsets[i]);
+    if     ( matchr( "ISGN" ) ) ISGN inputSignature;
+    else if( matchr( "OSGN" ) ) OSGN outputSignature;
+    else if( matchr( "SHDR" ) ) SHDR shader;
+    else if( matchr( "RDEF" ) ) RDEF resourceDefinitions;
+    else SKIPCHUNK unk; 
+}

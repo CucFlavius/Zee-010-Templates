@@ -1,0 +1,339 @@
+//------------------------------------------------
+//      File: Wildstar_Sky.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the wildstar sky definition file
+//  Category: Wildstar
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+local int dOfs = 1216;  // Data Offset
+
+typedef struct(int len)
+{
+    local int padLen = 16 - ((len * 2) % 16);
+    if (len == 1)
+        byte padding[15];
+    else
+        byte padding[padLen]<optimize=false>;
+}PAD<hidden=true>;
+
+void PAD16()
+{
+    local int padLen = (FTell() % 16);
+    FSkip(padLen);  
+}
+
+struct sub_1407D0F30
+{
+    int64 unkOne;         // Always 1
+    M3ARRAY colorBlockArray;       // ptr + 8
+    M3ARRAY unk1;       // ptr + 24
+    M3ARRAY unk2;       // ptr + 40
+    M3ARRAY unk3;       // ptr + 56
+    M3ARRAY unk4;       // ptr + 72
+    M3ARRAY unk7;       // ptr + 88
+    M3DOUBLEARRAY unk5; // ptr + 104
+    M3DOUBLEARRAY unk6; // ptr + 128
+};
+
+struct ColorBlock(M3DOUBLEARRAY &array, int offs)
+{
+    FSeek(offs + array.offsetA);
+    int unks[array.elements]<bgcolor=0x00D7FF>;
+    FSeek(offs + array.offsetB);
+    RGBA color[array.elements]<bgcolor=cYellow>;
+};
+
+struct UnkColorSubBlock1
+{
+    float unkFloats[4];
+    RGBA color<bgcolor=cYellow>;
+};
+
+struct UnkColorBlock1(M3DOUBLEARRAY &array, int offs)
+{
+    FSeek(offs + array.offsetA);
+    int unks[array.elements]<bgcolor=0x00D7FF>;
+    FSeek(offs + array.offsetB);
+    UnkColorSubBlock1 colorUnk[array.elements];
+};
+
+struct UnkColorSubBlock2
+{
+    float unkFloats[4];
+    RGBA colorA<bgcolor=cYellow>;
+    RGBA colorB<bgcolor=cYellow>;
+};
+
+struct UnkColorBlock2(M3DOUBLEARRAY &array, int offs)
+{
+    FSeek(offs + array.offsetA);
+    int unks[array.elements]<bgcolor=0x00D7FF>;
+    FSeek(offs + array.offsetB);
+    UnkColorSubBlock2 colorUnk[array.elements];
+};
+
+struct UnkColorSubBlock3
+{
+    float unkFloats0[4];
+    RGBA colorA<bgcolor=cYellow>;
+    float unkFloats1[4];
+};
+
+struct UnkColorBlock3(M3DOUBLEARRAY &array, int offs)
+{
+    FSeek(offs + array.offsetA);
+    int unks[array.elements]<bgcolor=0x00D7FF>;
+    FSeek(offs + array.offsetB);
+    UnkColorSubBlock3 colorUnk[array.elements];
+};
+
+struct UnkColorBlock4
+{
+    byte paddingMaybe[16];
+    RGBA colors[16]<bgcolor=0x00D7FF>;
+};
+
+struct UnkColorSubBlock5
+{
+    RGBA colors[6]<bgcolor=0x00D7FF>;   // This is probably wrong, but first one definitely looks like color
+};
+
+struct UnkColorBlock5(M3DOUBLEARRAY &array, int offs)
+{
+    FSeek(offs + array.offsetA);
+    int unks[array.elements]<bgcolor=0x00D7FF>;
+    FSeek(offs + array.offsetB);
+    UnkColorSubBlock5 colorUnk[array.elements];
+};
+
+struct UnkColorSubBlock6
+{
+    RGBA colorA<bgcolor=0x00D7FF>;
+    RGBA colorB<bgcolor=0x00D7FF>;
+};
+
+struct UnkColorBlock6(M3DOUBLEARRAY &array, int offs)
+{
+    FSeek(offs + array.offsetA);
+    int unks[array.elements]<bgcolor=0x00D7FF>;
+    FSeek(offs + array.offsetB);
+    UnkColorSubBlock6 colorUnk[array.elements];
+};
+
+struct DataBlock(sub_1407D0F30 &block)
+{
+    local int i;
+    local int dataOffset;
+
+    if (block.colorBlockArray.elements > 0)
+    {
+        // Array //
+        FSeek(dOfs + block.colorBlockArray.offset);
+        M3DOUBLEARRAY colorBlockArrays[block.colorBlockArray.elements];
+        PAD16();
+        
+        // Data //
+        dataOffset = FTell();
+        for(i = 0; i < block.colorBlockArray.elements; i++)
+        {
+            ColorBlock colorBlock(colorBlockArrays[i], dataOffset);
+        }
+    }
+
+    if (block.unk1.elements > 0)
+    {
+        // Array //
+        FSeek(dOfs + block.unk1.offset);
+        M3DOUBLEARRAY unks1[block.unk1.elements];
+        PAD16();
+    
+        // Data //
+        dataOffset = FTell();
+        for(i = 0; i < block.unk1.elements; i++)
+        {
+            UnkColorBlock1 unkColorBlock(unks1[i], dataOffset);
+        }
+    }
+
+    if (block.unk2.elements > 0)
+    {
+        // Array //
+        FSeek(dOfs + block.unk2.offset);
+        M3DOUBLEARRAY unks2[block.unk2.elements];
+        PAD16();
+    
+        // Data //
+        dataOffset = FTell();
+        for(i = 0; i < block.unk2.elements; i++)
+        {
+            UnkColorBlock2 unkColorBlock(unks2[i], dataOffset);
+        }
+    }
+
+    if (block.unk4.elements > 0)
+    {
+        // Array //
+        FSeek(dOfs + block.unk4.offset);
+        M3DOUBLEARRAY unks4[block.unk4.elements];
+        PAD16();
+    
+        // Data //
+        dataOffset = FTell();
+        for(i = 0; i < block.unk4.elements; i++)
+        {
+            UnkColorBlock3 unkColorBlock(unks4[i], dataOffset);
+        }
+    }
+
+    if (block.unk6.elements > 0)
+    {
+        // Data //
+        FSeek(dOfs + block.unk6.offsetA);
+        int unks[block.unk6.elements]<bgcolor=0x00D7FF>;
+        FSeek(dOfs + block.unk6.offsetB);
+        UnkColorBlock4 colorBlock[block.unk6.elements];
+    }
+    // TODO: missing Array/Data for unk3,unk5,unk7 (so far found only 0 array so ignored)
+};
+
+struct OffsetGroup
+{
+    // 48 bytes
+    short unk0;
+    short unk1;
+    int padding;
+    M3ARRAY arrayA;
+    M3DOUBLEARRAY arrayB;
+};
+
+struct ModelInfo(OffsetGroup &ofsGrp, int dataStart)
+{
+    FSeek(dataStart + ofsGrp.arrayA.offset);
+    wchar_t filePath[ofsGrp.arrayA.elements];
+
+    UnkColorBlock1 colorBlock(ofsGrp.arrayB, dataStart);
+};
+
+struct SkyboxModels(M3ARRAY &modelInfoArray)
+{
+    FSeek(1216 + modelInfoArray.offset);
+    
+    OffsetGroup ofsGroups[modelInfoArray.elements];
+    local int i;
+    local int dataStart = FTell();
+    for(i = 0; i < modelInfoArray.elements; i++)
+    {
+        ModelInfo modelInfo(ofsGroups[i], dataStart);
+    }
+};
+
+struct UnkData
+{
+    int unks[14];
+};
+
+char magic[4];      // XSKY (verified in src)
+int version;        // Has to be 16 (verified in src)
+int unk0;           // 1
+int unk1;           // 1
+float unk2;          // 0.59988
+int padding;
+M3ARRAY sourceFileArray;
+FSeek(40);
+sub_1407D0F30 dataBlockArray0;
+FSeek(192);
+sub_1407D0F30 dataBlockArray1;
+FSeek(344);
+sub_1407D0F30 dataBlockArray2;
+FSeek(496);
+sub_1407D0F30 dataBlockArray3;
+FSeek(648);
+M3DOUBLEARRAY unk3;         // offs 648 sub_1407D7800
+M3DOUBLEARRAY unk4;         // offs 672 sub_1407D7770
+M3DOUBLEARRAY unk5;         // offs 696 sub_1407D7800
+M3DOUBLEARRAY unk6;         // offs 720 sub_1407D7890
+M3ARRAY modelInfoArray;     // offs 744 sub_1407D7920
+M3DOUBLEARRAY unk8;         // offs 760 sub_1407D7A20
+M3DOUBLEARRAY unk9;         // offs 784
+M3DOUBLEARRAY unk10;        // offs 808
+M3ARRAY particulateArray;   // offs 832
+M3ARRAY envMapArray;        // offs 848
+M3DOUBLEARRAY unk13;        // offs 864
+M3ARRAY unk14;              // offs 880
+M3ARRAY unk15;              // offs 896
+M3ARRAY unk16;              // offs 912
+M3ARRAY unk17;              // offs 928
+M3DOUBLEARRAY unk18;        // offs 944 sub_1407D7800
+M3DOUBLEARRAY unk19;        // offs 968 sub_1407D7800
+M3ARRAY unk20;
+M3DOUBLEARRAY unk21;        // offs 992 sub_1407D7770, reads this in a loop until m3 array is 0, only found 0 so far so ignoring
+M3DOUBLEARRAY unk22;
+FSeek(1184);                // Skip past the loop above, since it's just 0's
+M3ARRAY unk23;              // offs 944 sub_1407D7AB0
+M3ARRAY unk24;              // offs 944 ReadAString
+
+// READ DATA //
+FSeek(1216 + sourceFileArray.offset);
+wchar_t sourcePath[sourceFileArray.elements];
+
+DataBlock block(dataBlockArray0);
+DataBlock block(dataBlockArray1);
+DataBlock block(dataBlockArray2);
+DataBlock block(dataBlockArray3);
+
+ColorBlock colorBlock0(unk3, dOfs);
+UnkColorBlock1 colorBlock1(unk4, dOfs);
+
+// skipping unk5 found no data
+// skipping unk6 found no data
+
+SkyboxModels models(modelInfoArray);
+
+UnkColorBlock5 colorBlock2(unk8, dOfs);
+
+FSeek(1216 + unk9.offsetA);
+int unkData0[8];
+
+// skipping unk10 empty
+FSeek(1216 + particulateArray.offset);     // Particulates model (rain)
+M3ARRAY array0;
+wchar_t particulatesModelPath[array0.elements];
+
+FSeek(1216 + envMapArray.offset);     // Environment cube map
+wchar_t environmentMapPath[envMapArray.elements];
+
+ColorBlock colorBlock3(unk13, dOfs);
+
+FSeek(1216 + unk14.offset);
+wchar_t sunGlareModelPathA[unk14.elements];
+
+FSeek(1216 + unk15.offset);
+wchar_t sunGlareModelPathB[unk15.elements];
+
+// skipping unk16 empty
+// skipping unk17 empty
+// skipping unk18 empty
+// skipping unk19 empty
+// skipping unk20 empty
+
+if (unk21.elements > 0)
+{
+    UnkColorBlock6 colorBlock4(unk21, dOfs);
+}
+if (unk22.elements > 0)
+{
+    UnkColorBlock6 colorBlock5(unk22, dOfs);
+}
+if (unk23.elements > 0)
+{
+    FSeek(1216 + unk23.offset);
+    UnkData unkData1[unk23.elements];
+}
+if (unk24.elements > 0)
+{
+    FSeek(1216 + unk24.offset);
+    byte unkData2[16];              // All 0's so far
+}

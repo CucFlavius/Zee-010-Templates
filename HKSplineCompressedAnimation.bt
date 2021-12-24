@@ -1,0 +1,389 @@
+//////////////////////////////////////////////
+//     Havok spline compressed animation    //
+//////////////////////////////////////////////
+
+// Import Common lib for Vectors and Strings
+#include "Lib/Common.bt"
+
+// loop iterator
+local int i;
+
+// Alignment needs to be done to the animation buffer itself not the file 
+// And using dataPosition of the buffer we can get relative offset which is then padded
+// Normally you would work directly with buffers but this is 010 editor
+local int dataPosition = 0;
+void Align(int alignment)
+{
+    local int dataOffset = dataPosition % alignment;
+    local int loc = FTell() - dataOffset;
+    local int pad = (alignment - (loc % alignment));
+    if (pad != 0 && pad < alignment)
+    {
+        FSkip(pad);
+    }
+};
+
+enum<unsigned byte> FlagOffset
+{
+    staticX,
+    staticY,
+    staticZ,
+    staticW,
+    splineX,
+    splineY,
+    splineZ,
+    splineW 
+};
+
+enum<unsigned byte> QuantizationType
+{
+    QT_8bit,
+    QT_16bit,
+    QT_32bit,
+    QT_40bit,
+    QT_48bit,
+};
+
+enum<unsigned byte> SplineTrackType
+{ 
+    STT_DYNAMIC,
+    STT_STATIC, 
+    STT_IDENTITY
+};
+
+enum<unsigned byte> TransformType
+{
+    ttPosX,
+    ttPosY,
+    ttPosZ,
+    ttRotation,
+    ttScaleX,
+    ttScaleY,
+    ttScaleZ
+};
+
+struct TransformMask
+{
+    unsigned byte quantizationTypes;
+    FlagOffset positionTypes;
+    unsigned byte rotationTypes;
+    FlagOffset scaleTypes;
+
+    local QuantizationType posQuantizationType = quantizationTypes & 3;
+    local QuantizationType rotQuantizationType = ((quantizationTypes >> 2) & 0xf) + 2;
+    local QuantizationType scaleQuantizationType = (quantizationTypes >> 6) & 3;
+};
+
+struct TrackBBOX
+{
+    float min;
+    float max;
+};
+
+typedef struct 
+{
+    unsigned byte val;
+} POINT8<read = POINT8Read>;
+
+
+string POINT8Read(POINT8 &v)
+{
+    local float fractal = 1.0f / 255.0f;
+    local float dVar = (float)v.val * fractal;
+    // extremes[id].min + (extremes[id].max - extremes[id].min) * dVar;
+
+    local string var;
+    SPrintf( var, "%f", dVar );
+    return "Point8 : " + var;
+}
+
+struct Point8XYZ(TransformMask &mask, int pos)
+{
+    if (pos)
+    {
+        if (mask.positionTypes & 0x10)
+            POINT8 x;
+    
+        if (mask.positionTypes & 0x20)
+            POINT8 y;
+    
+        if (mask.positionTypes & 0x40)
+            POINT8 z;
+    }
+    else
+    {
+        if (mask.scaleTypes & 0x10)
+            POINT8 x;
+    
+        if (mask.scaleTypes & 0x20)
+            POINT8 y;
+    
+        if (mask.scaleTypes & 0x40)
+            POINT8 z;
+    }
+};
+
+struct POINT16
+{
+    local float fractal = 1.0f / 0xffff;
+    uint16 val;
+    local float dVar = (float)val * fractal;
+    // extremes[id].min + (extremes[id].max - extremes[id].min) * dVar;
+};
+
+struct Point16XYZ(TransformMask &mask, int pos)
+{
+    if (pos)
+    {
+        if (mask.positionTypes & 0x10)
+            POINT16 x;
+    
+        if (mask.positionTypes & 0x20)
+            POINT16 y;
+    
+        if (mask.positionTypes & 0x40)
+            POINT16 z;
+    }
+    else
+    {
+        if (mask.scaleTypes & 0x10)
+            POINT16 x;
+    
+        if (mask.scaleTypes & 0x20)
+            POINT16 y;
+    
+        if (mask.scaleTypes & 0x40)
+            POINT16 z;
+    }
+};
+
+struct SplineDynamicTrackVector(TransformMask &mask, int pos)
+{
+    // Spline
+    unsigned byte numItems;
+    byte skip;
+    byte degree;
+    unsigned byte knots[numItems + degree + 2]<optimize=false, bgcolor=cYellow>;
+    Align(4);
+    if (pos)
+    {
+        if (mask.positionTypes & 0x10)
+            TrackBBOX boxX;
+        else if (mask.positionTypes & 0x1)
+            float staticX;
+    
+        if (mask.positionTypes & 0x20)
+            TrackBBOX boxY;
+        else if (mask.positionTypes & 0x2)
+            float staticY;
+    
+        if (mask.positionTypes & 0x40)
+            TrackBBOX boxZ;
+        else if (mask.positionTypes & 0x4)
+            float staticZ;
+    
+        if(mask.posQuantizationType == QT_8bit)
+        {
+            Point8XYZ points(mask, pos)[numItems + 1]<optimize=false, bgcolor=cRed>;
+        }
+        else
+        {
+            Point16XYZ points(mask, pos)[numItems + 1]<optimize=false, bgcolor=cRed>;
+        }
+    }
+    else
+    {
+        if (mask.scaleTypes & 0x10)
+            TrackBBOX boxX;
+        else if (mask.scaleTypes & 0x1)
+            float staticX;
+    
+        if (mask.scaleTypes & 0x20)
+            TrackBBOX boxY;
+        else if (mask.scaleTypes & 0x2)
+            float staticY;
+    
+        if (mask.scaleTypes & 0x40)
+            TrackBBOX boxZ;
+        else if (mask.scaleTypes & 0x4)
+            float staticZ;
+    
+        if(mask.scaleQuantizationType == QT_8bit)
+        {
+            Point8XYZ points(mask, pos)[numItems + 1]<optimize=false, bgcolor=cRed>;
+        }
+        else
+        {
+            Point16XYZ points(mask, pos)[numItems + 1]<optimize=false, bgcolor=cRed>;
+        }
+    }
+
+};
+
+struct Quat32
+{
+    // Too lazy to write dequantization code here
+    byte compressed[4];
+};
+
+typedef struct
+{
+    byte compressed[5];
+    // Too lazy to write dequantization code here
+    //byte compressed[5];
+/*
+    local float fractal = 0.000345436f;
+    unsigned long cVal0;
+    FSkip(-3);
+
+    local uint cVal1 = (uint)(cVal0 >> 24);
+
+    local ushort x = (ushort)((cVal0 * (1 << 20)) >> 20);
+    local ushort y = (ushort)((cVal0 * (1 << 8)) >> 20);
+    local ushort z = (ushort)((cVal1 * (1 << 20)) >> 20);
+
+    local short x1 = (short)(x - (1 << 11) - 1);
+    local short y1 = (short)(y - (1 << 11) - 1);
+    local short z1 = (short)(z - (1 << 11) - 1);
+
+    //BitConverter.ToSingle(BitConverter.GetBytes(x1), 0)
+
+    local float x2 = (float)(x1 * fractal);
+    local float y2 = (float)(y1 * fractal);
+    local float z2 = (float)(z1 * fractal);
+
+    if(x2 * x2 + y2 * y2 + z2 * z2 > 1)
+        local float w2 = 0;
+    else
+        local float w2 = Sqrt(1 - (x2 * x2 + y2 * y2 + z2 * z2));
+
+    //if ((cVal0 >> 38) & 1)
+    //    w2 = -w2;
+*/
+    //local ulong resultShift = (cVal0 >> 36) & 3;
+/*
+    Quaternion retVal = new Quaternion(x2, y2, z2, w2);
+
+    switch (resultShift)
+    {
+        case 0:
+            return new Quaternion(retVal[2], retVal[1], retVal[0], retVal[3]);
+        case 1:
+            return new Quaternion(retVal[2], retVal[1], retVal[3], retVal[0]);
+        case 2:
+            return new Quaternion(retVal[2], retVal[3], retVal[1], retVal[0]);
+        default:
+            return retVal;
+    }
+*/
+}Quat40 <read = Quat40Read>;
+
+string Quat40Read(Quat40 &q)
+{
+    local string x;
+    SPrintf( x, "%f", q.x2 );
+    local string y;
+    SPrintf( y, "%f", q.y2 );
+    local string z;
+    SPrintf( z, "%f", q.z2 );
+    local string w;
+    SPrintf( w, "%f", q.w2 );
+    return "Quaternion (" + x + ", " + y + ", " + z + ", " + w + ")";
+}
+
+struct Quat48
+{
+    // Too lazy to write dequantization code here
+    byte compressed[6];
+};
+
+struct Quat(QuantizationType $quantization)
+{
+    switch (quantization)
+    {
+        case QT_32bit:
+            Quat32 rotation;
+            break;
+        case QT_40bit:
+            Quat40 rotation;
+            break;
+        case QT_48bit:
+            Quat48 rotation;
+            break;
+        default:
+            PrintF("Wrong rotation quantization");
+            break;
+    }
+};
+
+struct SplineDynamicTrackQuat(QuantizationType $quantization)
+{
+    unsigned byte numItems;
+    byte skip;
+    byte degree;
+    unsigned byte knots[numItems + degree + 2]<optimize=false, bgcolor=cYellow>;
+
+    if (quantization == QT_48bit)
+        Align(2);
+    else if (quantization == QT_32bit)
+        Align(4);
+
+    Quat quaternions(quantization)[numItems + 1]<optimize=false, bgcolor=cLtRed>;
+};
+
+struct HKSplineCompressedAnimation(int numTracks, int _dataPosition)
+{
+    dataPosition = _dataPosition;
+    TransformMask masks[numTracks]<optimize=false, bgcolor=cPurple>;
+    for(i = 0; i < numTracks; i++)
+    {
+        byte MASK; // only for debug so I can see which mask index is currently being read in template results
+        FSkip(-1);
+        if (masks[i].positionTypes & 0x10 || masks[i].positionTypes & 0x20 || masks[i].positionTypes & 0x40)
+        {
+            SplineDynamicTrackVector position(masks[i], 1);
+            Align(4);
+        }
+        else if (masks[i].positionTypes & 0x1 || masks[i].positionTypes & 0x2 || masks[i].positionTypes & 0x4)
+        {
+            if (masks[i].positionTypes & 0x1)
+                float positionX;
+            if (masks[i].positionTypes & 0x2)
+                float positionY;
+            if (masks[i].positionTypes & 0x4)
+                float positionZ;
+            Align(4);
+        }
+    
+        if (masks[i].rotationTypes & 0xf0)
+        {
+            SplineDynamicTrackQuat rotation(masks[i].rotQuantizationType);
+            Align(4);
+        }
+        else if (masks[i].rotationTypes & 0x0f)
+        {
+            Quat rotation(masks[i].rotQuantizationType)<bgcolor=cLtRed>;
+            Align(4);
+        }
+        //else
+        //{
+        //    local int defaultRotation = 1; // for debug
+        //}
+    
+        if (masks[i].scaleTypes & 0x10 || masks[i].scaleTypes & 0x20 || masks[i].scaleTypes & 0x40)
+        {
+            SplineDynamicTrackVector scale(masks[i], 0);
+            Align(4);
+        }
+        else if (masks[i].scaleTypes & 0x1 || masks[i].scaleTypes & 0x2 || masks[i].scaleTypes & 0x4)
+        {
+            if (masks[i].scaleTypes & 0x1)
+                float scaleX;
+            if (masks[i].scaleTypes & 0x2)
+                float scaleY;
+            if (masks[i].scaleTypes & 0x4)
+                float scaleZ;
+            Align(4);
+        }
+    }
+};

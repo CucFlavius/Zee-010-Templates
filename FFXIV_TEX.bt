@@ -1,0 +1,28 @@
+//------------------------------------------------
+//      File: FFXIV_TEX
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: FFXIV Texture
+//  Category: FFXIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+int unk;
+short compressionType;  // 0x3420 = DXT1
+                        // 0x3430 = DXT3
+                        // 0x3431 = DXT5
+                        // 0x1130 & 0x1131 = RGB 8 bit
+                        // 0x1440 = RGBA 4444
+                        // 0x1441 = RGBA 5551
+                        // 0x1450 & 0x1451 = RGBA
+                        // 0x2460 = RGBAF
+byte unk;
+byte unk;
+short width;
+short height;
+short unk;
+short mipMapCount;
+byte padding[12];
+
+int mipMapOffsets[mipMapCount];

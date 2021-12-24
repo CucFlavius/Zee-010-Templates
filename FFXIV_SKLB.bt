@@ -1,0 +1,35 @@
+//------------------------------------------------
+//      File: FFXIV_SKLB
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: FFXIV Skeleton
+//  Category: FFXIV
+//------------------------------------------------
+
+#include "Havok_HKX.bt"
+
+struct Header
+{
+    char magic[4];      // BLKS
+    int version;
+    short hplaOffset;
+    short hkxOffset;
+    short unk0;
+    short unk1;
+};
+
+struct HPLA
+{
+    char name[4];       // hpla
+    short count;        // ?
+    short data[count];
+};
+
+Header header;
+FSeek(header.hplaOffset);
+HPLA hpla;
+if (header.hkxOffset == 0)
+    FSeek(header.unk0);
+else
+    FSeek(header.hkxOffset);
+HKX havokData<bgcolor=cGreen>;

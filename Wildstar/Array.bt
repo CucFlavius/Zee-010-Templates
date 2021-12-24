@@ -1,0 +1,193 @@
+//------------------------------------------------
+// Wildstar Array
+//------------------------------------------------
+
+enum
+{
+    TByte,
+    TSByte,
+    TChar,
+    TChar16,
+    TInt16,
+    TInt32,
+    TInt64,
+    TUInt16,
+    TUInt32,
+    TUInt64,
+    TFloat,
+    TVector2,
+    TVector3,
+    TVector3S,
+    TVector3HF,
+    TVector4,
+    TVector4S,
+    TQuaternion,
+    TQuaternionS,
+    TMatrix4x4,
+    T_extra_begin,
+};
+
+void TWS_resolve (int t,  int s)
+{
+    switch (t)
+    {
+        case TByte : unsigned byte values[s]; break;
+        case TSByte : byte values[s]; break;
+        case TChar: char values[s]; break;
+        case TChar16: wchar_t values[s]; break;
+        case TInt16: int16 values[s]; break;
+        case TInt32: int32 values[s]; break;
+        case TInt64: int64 values[s]; break;
+        case TUInt16: uint16 values[s]; break;
+        case TUInt32: uint32 values[s]; break;
+        case TUInt64: uint64 values[s]; break;
+        case TUInt64: uint64 values[s]; break;
+        case TFloat : float values[s]; break;
+        case TVector2: VECTOR2 values[s]; break;
+        case TVector3: VECTOR3 values[s]; break;
+        case TVector3S: VECTOR3SHORT values[s]; break;
+        case TVector3HF: VECTOR3HF values[s]; break;
+        case TVector4: VECTOR3 values[s]; break;
+        case TVector4S: VECTOR4SHORT values[s]; break;
+        case TQuaternion: QUATERNION values[s]; break;
+        case TQuaternionS: QUATERNIONSHORT values[s]; break;
+        case TMatrix4x4: MATRIX4x4 values[s]; break;
+        //default: T_resolve_extra (t); break;
+    }
+}
+
+typedef struct
+{
+    ushort time;
+    ushort animID;
+}Timestamp<read=readTimestamp>;
+
+string readTimestamp(Timestamp& t)
+{
+    string s; 
+    SPrintf (s, "Time: %u  AnimID: %u", t.time, t.animID);
+    return s;
+}
+
+typedef struct (int T, int startPos_)
+{
+    uint elements<hidden=true>;
+    uint unused<hidden=true>;
+    unsigned int64 timestampOffs<hidden=true>;
+    unsigned int64 valueOffs<hidden=true>;
+
+    local int _T = T;
+    local int c = FTell();
+    local int startPos = startPos_;
+    local uint32 i;
+
+    if (elements > 0)
+    {
+        FSeek(timestampOffs + startPos);
+        Timestamp timestamps[elements]<optimize=true>;
+        FSeek (valueOffs + startPos);
+        TWS_resolve(T, elements);
+        FSeek(c);
+    }
+}Track;
+
+string ArrayRead (int t, int size, int offset)
+{
+    switch (t)
+    {
+        case TChar: 
+        {
+            return ReadString (offset, size); break;
+        }
+        case TChar16:
+        {
+            return ReadWString(offset, size); break;
+        }
+        case TUInt32:
+        {
+          int i;
+          string s;
+          if (size != 0)
+          {
+            SPrintf (s, "%s%u", s, ReadUInt (offset));
+          }
+          for (i = 1; i < size; ++i)
+          {
+            SPrintf (s, "%s, %u", s, ReadUInt (offset + i * 4));
+          }
+          return s;
+        }
+        case TUInt16:
+        {
+            int i;
+            string s;
+            if (size != 0)
+            {
+                SPrintf (s, "%s%u", s, ReadUShort (offset));
+            }
+            for (i = 1; i < size; ++i)
+            {
+                SPrintf (s, "%s, %u", s, ReadUShort (offset + i * 2));
+            }
+            return s;
+        }
+        case TInt16:
+        {
+          int i;
+          string s;
+          if (size != 0)
+          {
+            SPrintf (s, "%s%i", s, ReadShort (offset));
+          }
+          for (i = 1; i < size; ++i)
+          {
+            SPrintf (s, "%s, %i", s, ReadShort (offset + i * 2));
+          }
+          return s;
+        }
+/*
+        case T_float:
+        {
+          int i;
+          string s;
+          if (size != 0)
+          {
+            SPrintf (s, "%s%f", s, ReadFloat (offset));
+          }
+          for (i = 1; i < size; ++i)
+          {
+            SPrintf (s, "%s, %f", s, ReadFloat (offset + i * 4));
+          }
+          return s;
+        }
+*/
+    }
+
+    //return "<" + T_print (t) + ">";
+}
+
+typedef struct (int T, int startPos_)
+{
+    uint elements<hidden=true>;
+    uint unused<hidden=true>;
+    unsigned int64 offset<hidden=true>;
+
+    local int _T = T;
+    local int c = FTell();
+    local int startPos = startPos_;
+    local uint32 i;
+
+    if (elements > 0)
+    {
+        FSeek (offset + startPos);
+        TWS_resolve(T, elements);
+        FSeek(c);
+    }
+}Array<read=readWSArray>;
+
+string readWSArray (Array& a)
+{
+    string s;
+    SPrintf (s, "%u [%s]", a.elements, ArrayRead(a._T, a.elements, a.offset + a.startPos));
+    return s;
+}

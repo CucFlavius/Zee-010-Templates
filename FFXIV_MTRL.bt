@@ -1,0 +1,166 @@
+//------------------------------------------------
+//      File: FFXIV_MTRL
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: FFXIV Material
+//  Category: FFXIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct Header
+{
+    uint version;
+    ushort fileSize;
+    ushort dataSetSize;
+    ushort stringTableSize;
+    ushort shaderOffset;
+    byte textureCount;
+    byte uvSetCount;
+    byte colorSetCount;
+    byte additionalDataSize;
+};
+
+struct TextureOffset
+{
+    ushort offset;
+    ushort flags;       // always 32768 (0x8000)
+};
+
+struct UvColorSet
+{
+    ushort nameOffset;
+    ushort index;
+};
+
+unsigned long createRGB(int r, int g, int b)
+{   
+    return ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
+}
+
+struct Strings(Header &header)
+{
+    TextureOffset textureOffsets[header.textureCount];
+    UvColorSet uvSetOffsets[header.uvSetCount];
+    int colorSetOffsets[header.colorSetCount];
+    local long stringsStart = FTell();
+    local int i;
+    for(i = 0; i < header.textureCount; i++)
+    {
+        FSeek(stringsStart + textureOffsets[i].offset);
+        STRING textureString;
+    }
+    for(i = 0; i < header.uvSetCount; i++)
+    {
+        FSeek(stringsStart + uvSetOffsets[i].nameOffset);
+        STRING mapString;
+    }
+    for(i = 0; i < header.colorSetCount; i++)
+    {
+        FSeek(stringsStart + colorSetOffsets[i]);
+        STRING dataSetString;
+    }
+    FSeek(stringsStart + header.shaderOffset);
+    STRING shader;
+    FSeek(stringsStart + header.stringTableSize);
+};
+
+struct MaterialHeader 
+{
+    ushort shaderValueListSize;
+    ushort shaderKeyCount;
+    ushort constantCount;
+    ushort samplerCount;
+    ushort unk0;
+    ushort unk1;
+};
+
+struct Color16
+{
+    ushort R;
+    ushort G;
+    ushort B;
+    ushort A;
+};
+
+struct ColorRow
+{
+    Color16 diffuse;
+    Color16 specular;
+    Color16 emissive;
+    Color16 flags;
+};
+
+struct ColorSetInfo
+{
+    ColorRow row[16];
+    //ushort data[256];
+};
+
+struct ColorSetDyeInfo
+{
+    ushort data[16];
+};
+
+struct ShaderKey
+{
+    uint category;
+    uint value;
+};
+
+struct ShaderConstant
+{
+    uint constantID;
+    ushort valueOffset;
+    ushort valueSize;
+};
+
+enum<uint> TextureUsage
+{
+    Sampler = 0x88408C04,               // Diffuse
+    Sampler0 = 0x213CB439,              // Diffuse
+    Sampler1 = 0x563B84AF,              // Diffuse
+    SamplerCatchlight = 0xFEA0F3D2,     // Catch Light
+    SamplerColorMap0 = 0x1E6FEF9C,      // Diffuse
+    SamplerColorMap1 = 0x6968DF0A,      // Diffuse
+    SamplerDiffuse = 0x115306BE,        // Diffuse
+    SamplerEnvMap = 0xF8D7957A,         // Envmap
+    SamplerMask = 0x8A4E82B6,           // Mask
+    SamplerNormal = 0x0C5EC1F1,         // Normal
+    SamplerNormalMap0 = 0xAAB4D9E9,     // Normal
+    SamplerNormalMap1 = 0xDDB3E97F,     // Normal
+    SamplerReflection = 0x87F6474D,     // Reflection
+    SamplerSpecular = 0x2B99E025,       // Specular
+    SamplerSpecularMap0 = 0x1BBC2F12,   // Specular
+    SamplerSpecularMap1 = 0x6CBB1F84,   // Specular
+    SamplerWaveMap = 0xE6321AFC,        // Wave
+    SamplerWaveletMap0 = 0x574E22D6,    // Wave
+    SamplerWaveletMap1 = 0x20491240,    // Wave
+    SamplerWhitecapMap = 0x95E1F64D     // Whitecap
+};
+
+
+struct ShaderSampler
+{
+    TextureUsage samplerID;
+    uint flags;
+    byte textureIndex;
+    byte padding[3];
+};
+
+Header header;
+Strings strings(header);
+byte unkData[header.additionalDataSize];
+if (header.dataSetSize > 0)
+{
+    ColorSetInfo colorSetInfo;
+    if (header.dataSetSize > 512)
+    {
+        ColorSetDyeInfo colorSetDyeInfo;
+    }
+}
+MaterialHeader materialHeader;
+ShaderKey shaderKeys[materialHeader.shaderKeyCount];                // ??
+ShaderConstant shaderConstants[materialHeader.constantCount];       // Constant values float/color/int
+ShaderSampler shaderSamplers[materialHeader.samplerCount];          // Textures
+float shaderValues[materialHeader.shaderValueListSize / 4];

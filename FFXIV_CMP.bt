@@ -1,0 +1,168 @@
+//------------------------------------------------
+//      File: FFXIV_CMP
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: FFXIV Color Map
+//  Category: FFXIV
+//------------------------------------------------
+
+typedef struct
+{
+    byte r;
+    byte g;
+    byte b;
+    byte a;
+} Color <read = ReadColor>;
+
+string ReadColor(Color &c)
+{
+    local string r;
+    SPrintf(r, "%u", c.r & 0xFF);
+    local string g;
+    SPrintf(g, "%u", c.g & 0xFF);
+    local string b;
+    SPrintf(b, "%u", c.b & 0xFF);
+    local string a;
+    SPrintf(a, "%u", c.a & 0xFF);
+    return "Color(" + r + ", " + g + ", " + b + ", " + a + ")";
+};
+
+struct ColorRow
+{
+    Color colors[8]<optimize=false>;
+};
+
+struct Palette64
+{
+    ColorRow colorRows[48];
+    ColorRow unkShaderData[16];
+};
+
+struct Palette32
+{
+    ColorRow colorRows[24];
+    ColorRow unkShaderData[8];
+};
+
+struct Palette16
+{
+    ColorRow colorRows[12];
+    ColorRow unkShaderData[4];
+};
+
+struct Common
+{
+    Palette32 eyeColorL;            // Left eye color, used in UI
+    Palette32 hairColorHighlightsB; // Alternative? Haven't seen it in game, maybe the one used in material
+    Palette16 lipColorMatA;         // Used in material, alpha range 60% - 71& based on column
+    Palette16 lipColorMatB;         // Used in material, alpha range 25% - 29& based on column
+    Palette32 tattooColorA;         // Darker tattoo color, not sure what it's for
+    Palette16 facePaintColorMatA;   // Used in material, alpha range 59% - 93& based on column
+    Palette16 facePaintColorMatB;   // Used in material, alpha range 18% - 49& based on column
+
+    Palette32 eyeColorR;            // Right eye color, used in UI
+    Palette32 hairColorHighlightsA; // Hair highlights color, used in UI
+    Palette16 lipColor;             // Lip color, used in UI
+    Palette16 lipColorMatC;         // Used in material, alpha fixed 50%
+    Palette32 tattooColorB;         // Tattoo color, used in UI
+    Palette16 facePaintColor;       // Face paint color, used in UI
+    Palette16 facePaintColorMatC;   // Used in material, alpha fixed 50%
+};
+
+typedef struct(int t, int g)
+{
+    local int tribe = t;
+    local int gender = g;
+
+    Palette32 skinColorMat;         // Lighter version of skin color, likely used as texture multiplier in shader
+    Palette64 unkPalette;           // Seems to be 32x16 not 64x8 ? or compressed with 2x2 bucket?
+    Palette32 skinColor;            // Skin color, used in UI
+    Palette32 hairColor;            // Hair color, used in UI
+} Table<read=TribeGender>;
+
+string TribeGender(Table &t)
+{
+    local string tribeN;
+    local string genderN;
+
+    switch (t.gender)
+    {
+        case 0:
+            genderN = "Male";
+            break;
+        case 1:
+            genderN = "Female";
+            break;
+    }
+
+    switch(t.tribe)
+    {
+        case 1:
+            tribeN = "Midlander";
+            break;
+        case 2:
+            tribeN = "Highlander";
+            break;
+        case 3:
+            tribeN = "Wildwood";
+            break;
+        case 4:
+            tribeN = "Duskwight";
+            break;
+        case 5:
+            tribeN = "Plainsfolk";
+            break;
+        case 6:
+            tribeN = "Dunesfolk";
+            break;
+        case 7:
+            tribeN = "Seeker of the Sun";
+            break;
+        case 8:
+            tribeN = "Keeper of the Moon";
+            break;
+        case 9:
+            tribeN = "Sea Wolf";
+            break;
+        case 10:
+            tribeN = "Hellsguard";
+            break;
+        case 11:
+            tribeN = "Raen";
+            break;
+        case 12:
+            tribeN = "Xaela";
+            break;
+        case 13:
+            tribeN = "Helions";
+            break;
+        case 14:
+            tribeN = "The Lost";
+            break;
+        case 15:
+            tribeN = "Rava";
+            break;
+        case 16:
+            tribeN = "Veena";
+            break;
+        default:
+            tribeN = "Unknown Tribe";
+            break;
+    }
+
+    return tribeN + " " + genderN;
+}
+
+//////////////////////////////////////////////////////////////////////////
+// Read
+//////////////////////////////////////////////////////////////////////////
+
+Common commonColors;
+
+local int i;
+for(i = 1; i <= 16; i++)
+{
+    Table male(i, 0);
+    Table female(i, 1);
+}
+ColorRow unkTable[140];

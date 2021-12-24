@@ -1,0 +1,98 @@
+//------------------------------------------------
+//      File: FFXIV_EQP
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: FFXIV Equipment Parameters
+//  Category: FFXIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+typedef struct {
+    // Default flag set is 0x 3F E0 00 70 60 3F 00
+
+    // For FULL GEAR PIECES, they're always marked as TRUE = Show
+    // For PARTIAL GEAR PIECES, they're marked as TRUE = HIDE
+
+    //Byte 0 - Body
+    ulong EnableBodyFlags : 1;
+    ulong BodyHideWaist : 1;
+    ulong Bit2 : 1;
+    ulong BodyHideShortGloves : 1; // Bit 3 OR Bit 4 is often set on Legacy gear.
+    ulong Bit4 : 1;              // Bit 3 OR Bit 4 is often set on Legacy gear.
+    ulong BodyHideMidGloves : 1;
+    ulong BodyHideLongGloves : 1;
+    ulong BodyHideGorget : 1;
+
+    // Byte 1 - Body
+    ulong BodyShowLeg : 1;                // When turned off,  Leg hiding data is resolved from this same set, rather than the set of the equipped piece.
+    ulong BodyShowHand : 1;               // When turned off, Hand hiding data is resolved from this same set, rather than the set of the equipped piece.
+    ulong BodyShowHead : 1;              // When turned off, Head hiding data is resolved from this same set, rather than the set of the equipped piece.
+    ulong BodyShowNecklace : 1;
+    ulong BodyShowBracelet : 1;          // "Wrist[slot]" is not used in this context b/c it can be confusing with other settings.
+    ulong BodyShowTail : 1;
+    ulong BodyDisableBreastPhysics : 1;
+    ulong Bit15 : 1;
+
+    // Byte 2 - Leg
+    ulong EnableLegFlags : 1;
+    ulong LegHideKneePads : 1;           // atr_lpd
+    ulong LegHideShortBoot : 1;          // atr_leg
+    ulong LegHideHalfBoot : 1;           // atr_leg
+    ulong LegBootUnknown : 1;
+    ulong LegShowFoot : 1;
+    ulong LegShowTail : 1;
+    ulong Bit23 : 1;
+
+    // Byte 3 - Hand
+    ulong EnableHandFlags : 1;
+    ulong HandHideElbow : 1;           // Requires bit 26 on as well to work.
+    ulong HandHideForearm  : 1;        // "Wrist[anatomy]" is not used in this context b/c it can be confusing with other settings.
+    ulong Bit27 : 1;
+    ulong HandShowBracelet : 1;         // "Wrist[slot]" is not used in this context b/c it can be confusing with other settings.
+    ulong HandShowRingL : 1;
+    ulong HandShowRingR : 1;
+    ulong Bit31 : 1;
+
+    // Byte 4 - Foot
+    ulong EnableFootFlags : 1;
+    ulong FootHideKnee : 1;             // Requires bit 34 on as well to work.
+    ulong FootHideCalf : 1;
+    ulong FootHideAnkle : 1;             // Usually set to [1], the remaining bits of this byte are always [0].
+    ulong Bit36  : 1;
+    ulong Bit37 : 1;
+    ulong Bit38 : 1;
+    ulong Bit39 : 1;
+
+    // Byte 5 - Head & Hair
+    ulong EnableHeadFlags  : 1;
+    ulong HeadHideScalp : 1;          // When set alone, hides top(hat part) of hair.  When set with 42, hides everything.
+    ulong HeadHideHair : 1;             // When set with 41, hides everything neck up.  When set without, hides all hair.
+    ulong HeadShowHairOverride  : 1;    // Overrides Bit 41 & 42 When set.
+    ulong HeadHideNeck  : 1;
+    ulong HeadShowNecklace  : 1;
+    ulong Bit46 : 1;
+    ulong HeadShowEarrings : 1;        // This cannot be toggled off without enabling bit 42.
+
+    // Byte 6 - Ears/Horns/Etc.    
+    ulong HeadShowEarringsHuman  : 1;
+    ulong HeadShowEarringsAura : 1;
+    ulong HeadShowEarHuman : 1;
+    ulong HeadShowEarMiqo  : 1;
+    ulong HeadShowEarAura : 1;
+    ulong HeadShowEarViera  : 1;
+    ulong HeadUnknownHelmet1 : 1;     // Usually set on for helmets, in place of 48/49
+    ulong HeadUnknownHelmet2 : 1;     // Usually set on for helmets, in place of 48/49
+
+    // Byte 7 - Shadowbringers Race Settings
+    ulong HeadShowHrothgarHat  : 1;
+    ulong HeadShowVieraHat  : 1;
+    ulong Bit58  : 1;
+    ulong Bit59  : 1;
+    ulong Bit60  : 1;
+    ulong Bit61  : 1;
+    ulong Bit62  : 1;
+    ulong Bit63  : 1;
+} EquipmentParameters <size = 8>;
+
+EquipmentParameters eParam[FileSize() / 8];

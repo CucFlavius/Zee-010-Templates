@@ -1,0 +1,892 @@
+//------------------------------------------------
+//      File: FFXIV_PAP
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: FFXIV Animation
+//  Category: FFXIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+//#include "Havok_HKX.bt"
+//#include "HKSplineCompressedAnimation.bt"
+
+//////////////////////////////////////////////
+//                 PAP data                 //
+//////////////////////////////////////////////
+
+struct Header
+{
+    char signature[4];
+    short unk;              // always 1
+    short unk;              // always 2
+    short animationCount;
+    int unk;                // changes between models
+    int nameTableOffset;    // always 0x1A
+    int HKXFileOffset;
+    int footerOffset;
+};
+
+struct NameEntry
+{
+    char name[38]<optimize=false>;          // ASCII Name
+    short index;
+};
+
+struct Animation
+{
+    STRING name;
+    byte unk[32];
+    short unk0;
+    short unk1;
+    int unk2;
+    int unk3;
+    short unk4;
+    short unk5;
+};
+
+//////////////////////////////////////////////
+//         Havok binary tag data            //
+//////////////////////////////////////////////
+
+local int prevTag = 2;
+
+typedef struct
+{
+    byte inData[4]<hidden=true>;
+    FSeek(FTell() - 4);
+
+    if (!(inData[0] & 128))
+    {
+        FSeek(FTell() + 1);
+        local int value = inData[0] / 2;
+    }
+    else if (!(inData[1] & 128))
+    {
+        FSeek(FTell() + 2);
+        local int value = (inData[0] & 127 | ((inData[1] & 127) << 7)) / 2;
+    }
+/*
+    else if (!(inData[2] & 128))
+    {
+        FSeek(FTell() + 3);
+        local uint value = (inData[0] & 127 | (ushort)((inData[1] & 127) << 7)) & 16383 | ((inData[2] & 127) << 14) / 2;
+    }
+*/
+    else
+    {
+        FSeek(FTell() + 3);
+        local int value = (((inData[0] & 127 | (short)((inData[1] & 127) << 7)) & 16383 | ((inData[2] & 127) << 14)) & 4028628991) / 2;
+    }
+
+
+}cValue<read=cValueRead>;
+
+string cValueRead(cValue &v)
+{
+    local string s;
+    SPrintf( s, "%u", v.value );
+    return s;
+}
+
+typedef struct 
+{
+    byte v1;
+    local byte value = (v1 >> 1) & 0x7FFFFFBF;
+    local int v4 = v1 & 1;
+    local byte v24 = 6;
+    local byte v25;
+    if ((v1 & 0x80) != 0)
+    {
+        do
+        {
+            byte v32;
+            v25 = (v32 & 0x7F) << v24;
+            v24 += 7;
+            value |= v25;
+        }
+        while (v32 < 0);
+
+    }
+    if (v4 != 0)
+    {
+        value = -value;
+    }
+}fByte<read=fByteRead>;
+
+
+string fByteRead( fByte &b )
+{
+    local string s;
+    SPrintf( s, "%d", b.value);
+    return s;
+}
+
+typedef struct
+{
+    byte v1;
+    local int value = (v1 >> 1) & 0x7FFFFFBF;
+    local int v3 = v1 & 1;
+    local int v4 = 6;
+    local int v5;
+    if (v1 < 0)
+    {
+        do
+        {
+            byte v11;
+            v5 = (v11 & 0x7F) << v4;
+            v4 += 7;
+            value |= v5;
+        }
+        while (v11 < 0);
+    }
+
+    if (v3)
+    {
+        value = -value;
+    }
+}Size<read=sizeRead>;
+
+struct String
+{
+    Size size;
+    if (size.value <= 0)
+    {
+        // return (int *)streamPointer_2[10][-stringSize];
+    }
+    else
+    {
+        STRINGc value(size.value);
+    }
+};
+
+string sizeRead( Size &b )
+{
+    local string s;
+    SPrintf( s, "%d", b.value);
+    return s;
+}
+
+string SizeName(Size &v)
+{
+    local string x;
+    SPrintf( x, "%d", v.value);
+    return "Value : " + x;
+}
+
+struct hkparam
+{
+    String v20;
+
+    local int v25;
+    local int v44;
+    local int v46;
+    local int v31;
+    local int v42;
+
+    byte dataType;
+    local int v21 = (dataType >> 1) & 0x7FFFFFBF;
+    local int v22 = dataType & 1;
+    local int v23 = 6;
+    if ( dataType < 0 )
+    {
+        do
+        {
+            byte output;
+            local int v24 = (output & 0x7F) << v23;
+            v23 += 7;
+            v21 |= v24;
+        }
+        while ( output < 0 );
+    }
+    if ( v22 != 0 )
+    {
+        v25 = -v21;
+        v44 = -v21;
+    }
+    else
+    {
+        v44 = v21;
+        v25 = v21;  // LOBYTE(v25) = v21;
+    }
+
+
+    if ( v25 & 0x20 )
+    {
+        byte v41;
+        local int v26 = (v41 >> 1) & 0x7FFFFFBF;
+        local int v27 = v41 & 1;
+        local int v28 = 6;
+        if ( v41 < 0 )
+        {
+            do
+            {
+                byte v42;
+                local int v29 = (v42 & 0x7F) << v28;
+                v28 += 7;
+                v26 |= v29;
+            }
+            while ( v42 < 0 );
+        }
+        if ( v27 != 0 )
+            v26 = -v26;
+        v25 = v44;  // LOBYTE(v25) = v44;
+        v46 = v26;
+    }
+    else
+    {
+      v46 = 0;
+    }
+
+
+    local int v30 = v25 & 0xF;
+    if ( v30 == 9 || v30 == 8 )
+    {
+        v31 = v42;
+        String v32;
+        //if ( v32 )
+        //    (*(void (__stdcall **)(int))(*v31[5] + 36))(v32);
+    }
+    else
+    {
+      v31 = v42;
+      //v32 = 0;
+    }
+    //v33 = v46;
+    //(*(void (**)(void))(*v31[5] + 44))();
+    //v34 = hkTypeManager::getType(v25, v32, v33);
+    v44 += 12;
+    //*(_DWORD *)(v47 + 4) = v34;
+
+};
+
+struct Class
+{
+    String name;
+    //byte skip;
+
+    Size v4;
+
+    //byte test;
+    //if (test)
+    //   if ( *(_DWORD *)(*(int (__stdcall **)(int *))(*v8 + 24))(&v47) ) HUH?
+    {
+        Size v10;
+        //if ( v10 >= 0 && (v14 = &v42[7][v10], *v14) )
+        //  v50 = (*(int (__thiscall **)(_DWORD))(*(_DWORD *)*v14 + 8))(*v14);
+        //else
+        //  v50 = 0;
+        Size count;
+        if (count.value > 0)
+            hkparam hkParams[count.value]<optimize=false>;
+    }
+};
+
+struct BitField
+{
+    byte a2;
+    local int v4 = (a2 + 7) & 0xFFFFFFF8;
+    local int v6 = v4 / 8;
+/*
+    local unsigned byte output[v6];
+
+    for ( i = 0; i < v6; ++i )
+    {
+        uint v10 = (unsigned byte)output[i];
+        (byte)(v4 + 8 * i) = v10 & 1;
+        v10 >>= 1;
+        (byte)(v4 + 8 * i + 1) = v10 & 1;
+        v10 >>= 1;
+        (byte)(v4 + 8 * i + 2) = v10 & 1;
+        v10 >>= 1;
+        (byte)(v4 + 8 * i + 3) = v10 & 1;
+        v10 >>= 1;
+        (byte)(v4 + 8 * i + 4) = v10 & 1;
+        v10 >>= 1;
+        (byte)(v4 + 8 * i + 5) = v10 & 1;
+        v10 >>= 1;
+        (byte)(v4 + 8 * i + 6) = v10 & 1;
+        (byte)(v4 + 8 * i + 7) = (v10 >> 1) & 1;
+    }
+    v11 = a2;
+    local unsigned byte result = v3[2] & 0x3FFFFFFF;
+*/
+};
+
+struct ArrayItems;
+
+struct ArrayItems(uint a2, int a3, int hkDataRefCounted)
+{
+    local int v6 = a3 + 4;      // v6 = *(int (**)(void))(*(_DWORD *)*a3 + 4);
+    local int type = v6 - 2;    // type = *v6 - 2;
+    local int i;    
+    switch(type)
+    {
+        case 0:
+            break;
+        case 1:
+            break;
+        case 2:
+            break;
+        case 3:         // String
+            for(i = 0; i < hkDataRefCounted; i++)
+                String name;
+            break;
+        case 4:         // Nested Array Items
+            BitField bitField;
+            //Size v17;
+            byte arrayItems[3];
+/*
+            for(i = 0; i < hkDataRefCounted; i++)
+                ArrayItems arrayItems(a2, bitField.v6, hkDataRefCounted);
+*/
+            //ArrayItems arrayItems(a2, 2, hkDataRefCounted);
+            //ArrayItems arrayItems(a2, 2, hkDataRefCounted);
+            //ArrayItems arrayItems(a2, 3, hkDataRefCounted);
+            // Where does 2, 2, 3 come from ? (string, string, objIntoValue)
+            break;
+        case 5:         // ObjectIntoValue
+            for(i = 0; i < hkDataRefCounted; i++)
+                Size v6;
+            break;
+        case 6:
+            break;
+        case 7:
+            break;
+        default:
+            break;
+    }
+};
+
+struct BinaryValue
+{
+    Size v17;
+    // v20 = *(_DWORD **)(hkDataObject_Value::getType(&a2) + 4);
+    // if ( *v20 == 6 && !hkTypeManager::Type::getTypeName(v20) )
+    // Size v18;
+    // else use int from v17
+    local int v18 = 6;
+    local int output = v17.v1;
+    local int v27 = v17.value;
+
+    local uint v17a = v17.value;
+    local int hkDataRefCounted = output & 1;
+
+    if ( (output & 0x80u) != 0 )
+    {
+        do
+        {
+            //hkIArchive::readArrayGeneric((_DWORD **)v4 + 1, &v47, 1, 1);
+            byte v47;
+            local int v19 = (v47 & 0x7F) << v18;
+            v18 += 7;
+            v17 |= v19;
+        }
+        while ( v47 < 0 );
+        v16 = hkDataRefCounted;
+    }
+    hkDataRefCounted = v17a;
+
+
+    // Read array items //
+
+    local int i;
+    for(i = 0; i < hkDataRefCounted; i++)
+        ArrayItems arrayItems(v18, output, hkDataRefCounted);    // hkBinaryTagfileReader::_readArrayItems(ptr, v18, (int *)&output, v27);
+};
+
+struct Object(byte tagType, int a4)
+{
+    if (tagType == 5)
+    {
+
+    }
+    else if (tagType == 6)
+    {
+        // result = a2;
+        // *a2 = 0;
+    }
+    else
+    {
+        if (!a4)
+        {
+            Size v18;
+        }
+
+        if (tagType != 3)
+        {
+            if (tagType == 4)
+            {
+/*
+                v24 = (unsigned int)v65[15];
+                v25 = v65 + 14;
+                if ( v65[15] == (_DWORD *)((unsigned int)v65[16] & 0x3FFFFFFF) )
+                  hkArrayUtil::_reserveMore((int)hkContainerHeapAllocator::s_alloc, (int)(v65 + 14), 4);
+                v26 = (int *)(v65 + 17);
+                *(_DWORD *)(*v25 + 4 * v25[1]++) = v66;
+                v27 = hkMapBase::findKey(v26, v24);
+                if ( v27 <= (signed int)v65[19] )
+                {
+                  v28 = *(_DWORD **)(*v26 + 8 * v27 + 4);
+                  hkBinaryTagfileReader::ForwardReferences::assign(*(_DWORD **)(*v26 + 8 * v27 + 4), &v66);
+                  if ( v28 )
+                  {
+                    sub_EA6640(v28);
+                    v29 = (_DWORD **)TlsGetValue(hkMemoryRouter::s_memoryRouter);
+                    (*(void (__stdcall **)(_DWORD *, signed int))(*v29[11] + 8))(v28, 24);
+                  }
+                  hkMapBase::remove(v26, v27);
+                }
+                v23 = v66;
+*/
+            }
+            else
+            {
+/*
+                hkErrStream::hkErrStream(&v83, &v84, 512);
+                hkOstream::operatorLeftShift("corrupt file");
+                if ( hkError::messageError(1212781781, &v84, ".\\Tagfile\\Binary\\hkBinaryTagfileReader.cpp", 650) )
+                  __debugbreak();
+                hkOstream::Destructor(&v83);
+*/
+            }
+        }
+        BitField bitField;
+/*
+        if (bitField.a2 > 0)
+        {
+            BinaryValue binaryValue[bitField.a2]<optimize=false>;
+        }
+*/
+
+        if (v18.value > 0)
+        {
+            BinaryValue binaryValue[v18.value]<optimize=false>;
+        }
+    }
+};
+
+struct HKX
+{
+    int magic0;             // -894431970
+    int magic1;             // -804128050 The two magics for tagfile format that ffxiv uses
+    fByte tagType;
+    local byte tagTypeV = tagType.value;
+    if (tagType.value != -1)
+    {
+        local byte exit = 0;
+        while(exit == 0)
+        {
+            switch(tagTypeV)
+            {
+                case 0:     // TAG_NONE : Invalid tag.
+                    break;
+                case 1:     // TAG_FILE_INFO : File header info. Followed by an integer version number.
+                            // The rest of the header data is determined by the version number.
+                    fByte version;
+                    switch(version.value)
+                    {
+                        case 0:
+                            // goto LABEL_34
+                            break;
+                        case 1:
+                            fByte v13;
+                            if (v13.value != 1)
+                            {
+                                // return 0
+                            }
+                            break;
+                        case 2:
+                        case 3:
+                        case 4:
+                            if (version.value == 4)
+                            {
+                                // Read string
+                            }
+                            // goto LABEL_34
+                            break;
+                        default:
+                            exit = 1;
+                            break;
+                    }
+                    break;
+                case 2:     // TAG_METADATA : The following item is an hkGenericClass which will not be referenced again.
+                    Class class;
+                    break;
+                case 3:     // TAG_OBJECT : The following item is an hkGenericObject which will not be referenced again.
+                case 4:     // TAG_OBJECT_REMEMBER : The following item is an object which may be referenced again from TAG_OBJECT_BACKREF. The id is implicitly the count of preceding remembered objects.
+                case 5:     // TAG_OBJECT_BACKREF : Refer to a previously encountered object. Followed by the integer object index.
+                case 6:     // TAG_OBJECT_NULL : The null object pointer, only used in version 0 and 1
+                    Object object(tagTypeV, 0);
+                    break;
+                case 7:     // TAG_FILE_END : End of file marker
+                    exit = 1;
+                    break;
+                default:
+                    exit = 1;
+                    break;
+            }
+            // LABEL_34
+            fByte v22;
+            tagTypeV = v22.value;
+            if (v22.value == -1)
+            {
+                exit = 1;
+            }
+            continue;
+        }
+    }
+};
+
+struct hkClass
+{
+    if (prevTag == 1 || prevTag == 2)
+    {
+        fByte tagType;
+        prevTag = tagType.value;
+        if (tagType.value == 1)
+        {
+            fByte v4;
+        }
+        else if (tagType.value == 2)
+        {
+            String name;
+            Size v4;
+            Size v10;
+            Size count;
+            if (count.value > 0)
+                hkparam hkParams[count.value]<optimize=false>;
+        }
+    }
+};
+
+struct hkArrayItems(uint a2, int a3, int hkDataRefCounted)
+{
+    local int v6 = a3 + 4;      // v6 = *(int (**)(void))(*(_DWORD *)*a3 + 4);
+    local int type = v6 - 2;    // type = *v6 - 2;
+    local int i;    
+    switch(type)
+    {
+        case 0:
+            break;
+        case 1:
+            break;
+        case 2:
+            break;
+        case 3:         // String
+            for(i = 0; i < hkDataRefCounted; i++)
+                String name;
+            break;
+        case 4:         // Nested Array Items
+            BitField bitField;
+            //Size v17;
+            byte arrayItems[a2];
+/*
+            for(i = 0; i < hkDataRefCounted; i++)
+                ArrayItems arrayItems(a2, bitField.v6, hkDataRefCounted);
+*/
+            //ArrayItems arrayItems(a2, 2, hkDataRefCounted);
+            //ArrayItems arrayItems(a2, 2, hkDataRefCounted);
+            //ArrayItems arrayItems(a2, 3, hkDataRefCounted);
+            // Where does 2, 2, 3 come from ? (string, string, objIntoValue)
+            break;
+        case 5:         // ObjectIntoValue
+            for(i = 0; i < hkDataRefCounted; i++)
+                Size v6;
+            break;
+        case 6:
+            break;
+        case 7:
+            break;
+        default:
+            break;
+    }
+};
+
+
+struct hkBinaryValue(hkClass &class)
+{
+    Size v17;
+    local int v18 = 6;
+    local int output = v17.v1;
+    local int v27 = v17.value;
+
+    local uint v17a = v17.value;
+    local int hkDataRefCounted = output & 1;
+
+    if ( (output & 0x80u) != 0 )
+    {
+        do
+        {
+            byte v47;
+            local int v19 = (v47 & 0x7F) << v18;
+            v18 += 7;
+            v17 |= v19;
+        }
+        while ( v47 < 0 );
+        v16 = hkDataRefCounted;
+    }
+    hkDataRefCounted = v17a;
+
+    // Read array items //
+    local int i;
+    for(i = 0; i < hkDataRefCounted; i++)
+        hkArrayItems arrayItems(class.v4.value, output, hkDataRefCounted);
+/*
+    if (class.tagType.value == 1)
+        hkArrayItems arrayItems(class.v4.value, output, hkDataRefCounted);
+    else
+        for(i = 0; i < class.count.value; i++)
+            hkArrayItems arrayItems(class.v4.value, output, hkDataRefCounted);    // hkBinaryTagfileReader::_readArrayItems(ptr, v18, (int *)&output, v27);
+*/
+};
+
+struct hkObject(hkClass &class)
+{
+    cValue v18;
+    BitField bitField;
+    if (v18.value > 0)
+    {
+/*
+        if (class.tagType.value == 1)
+            hkBinaryValue binaryValue(class)<optimize=false>;
+        else
+        {
+            hkBinaryValue binaryValue(class)[class.count.value]<optimize=false>;
+        }
+*/
+        hkBinaryValue binaryValue(class)[v18.value]<optimize=false>;
+    }
+};
+
+struct hkSection(hkClass &class)
+{
+    cValue tagType;
+    //if (tagType.value == 3 || tagType.value == 4 || tagType.value == 5 || tagType.value == 6)
+    hkObject object(class); 
+};
+
+struct hkSubSection
+{
+    fByte tagType;
+    Size v18;
+    BitField bitField;
+};
+
+struct Classes
+{
+    // Using a big number 100, because I'm shit at 010 editor.
+    // Normally you just loop until the classes are over, but I need to look into the classes array when reading objects so here we are
+    hkClass classes[100]<optimize = false>;
+    FSeek(FTell() - 1);     // Going back one byte because it belongs to objects
+};
+
+struct Binary
+{
+    Size v17;
+};
+
+struct Sections(Classes &c)
+{
+    local int i;
+    local int j;
+    for(i = 0; i < 100; i++)
+    {
+/*
+        if (c.classes[i].tagType.value == 1)
+            hkSection section(c.classes[i]);
+        else
+        {
+            if (c.classes[i].name.size.value > 0)
+            {
+                if (c.classes[i].name.value.s == "hkRootLevelContainer")
+                {
+                    byte unk[4];
+                    for(j = 0; j < c.classes[i].count.value; j++)
+                    {
+                        hkSubSection subSection;
+                    }
+                }
+            }
+
+        }
+*/
+        hkSection section(c.classes[i]);  // +1 because the first one is version
+    }
+};
+
+
+struct hkArray          // type 36
+{
+    cValue numElements;
+    cValue type;        // Always 4 - int
+    cValue data[numElements.value]<optimize=false>;
+};
+
+struct hkIDArray
+{
+    cValue numElements;
+    cValue data[numElements.value]<optimize=false>;
+};
+
+struct hkByteArray      // type 34
+{
+    cValue numElements;
+    byte data[numElements.value]<bgcolor=cBlack>;
+};
+
+
+struct hkRootLevelContainer
+{
+    cValue tagType<bgcolor=cYellow>;
+    cValue unk0[7]<optimize=false>;
+    cValue tagType<bgcolor=cYellow>;
+    //cValue unk0[2]<optimize=false>;
+};
+
+struct hkaAnimationContainer
+{
+    //byte bitflags0;
+    byte bitFlags1;
+    byte bitFlags2;
+
+    if (bitFlags2 & 0x1)
+        cValue memSizeAndFlags; // SERIALIZE_IGNORED
+    if (bitFlags2 & 0x2)
+        cValue referenceCount;  // SERIALIZE_IGNORED
+    if (bitFlags2 & 0x4)
+        hkIDArray skeletons;
+    if (bitFlags2 & 0x8)
+        hkIDArray animations; // y
+    if (bitFlags2 & 0x10)
+        hkIDArray bindings;   // y
+    if (bitFlags2 & 0x20)
+        hkIDArray attachments;
+    if (bitFlags2 & 0x40)
+        hkIDArray skins;
+};
+
+struct hkaAnimationBinding
+{
+    byte bitflags0;
+    byte bitFlags1;
+    byte bitFlags2;
+
+    if (bitFlags1 & 0x1)
+        cValue memSizeAndFlags; // SERIALIZE_IGNORED
+    if (bitFlags1 & 0x2)
+        cValue referenceCount;  // SERIALIZE_IGNORED
+    if (bitFlags1 & 0x4)
+        String originalSkeletonName;
+    if (bitFlags1 & 0x8)
+       cValue animation;
+    if (bitFlags1 & 0x10)
+        hkArray transformTrackToBoneIndices;
+    if (bitFlags1 & 0x20)
+        hkArray floatTrackToFloatSlotIndices;
+    if (bitFlags1 & 0x40)
+        hkArray partitionIndices;
+    if (bitFlags2 & 0x4)
+    {
+        cValue tagType<bgcolor=cYellow>;
+        byte blendHint;
+    }
+};
+
+struct hkaSplineCompressedAnimation
+{
+    byte bitFlags0;
+    byte bitFlags1;
+    byte bitFlags2;
+
+    if (bitFlags0 & 0x1)
+        cValue memSizeAndFlags; // SERIALIZE_IGNORED
+    if (bitFlags0 & 0x2)
+        cValue referenceCount;  // SERIALIZE_IGNORED
+    if (bitFlags0 & 0x4)
+        cValue type;
+    if (bitFlags0 & 0x8)
+        float duration;
+    if (bitFlags0 & 0x10)
+        cValue numberOfTransformTracks;
+    if (bitFlags0 & 0x20)
+        cValue numberOfFloatTracks;
+    if (bitFlags0 & 0x40)
+        cValue extractedMotion;     // Data type 16, idk unless I encounter it
+    if (bitFlags0 & 0x80)
+        hkArray annotationTracks;
+    if (bitFlags1 & 0x1)
+        cValue numFrames;
+    if (bitFlags1 & 0x2)
+        cValue numBlocks;
+    if (bitFlags1 & 0x4)
+        cValue maxFramesPerBlock;
+    if (bitFlags1 & 0x8)
+        cValue maskAndQuantizationSize;
+    if (bitFlags1 & 0x10)
+        float blockDuration;
+    if (bitFlags1 & 0x20)
+        float blockInverseDuration;
+    if (bitFlags1 & 0x40)
+        float frameDuration;
+    if (bitFlags1 & 0x80)
+        hkArray blockOffsets;
+    if (bitFlags2 & 0x1)
+        hkArray floatBlockOffsets;
+    if (bitFlags2 & 0x2)
+        hkArray transformOffsets;
+    if (bitFlags2 & 0x4)
+        hkArray floatOffsets;
+    if (bitFlags2 & 0x8)
+        hkByteArray data;
+    if (bitFlags2 & 0x10)
+        cValue endian;
+    /*
+    TransformMask masks[numTracks]<optimize=true, bgcolor=cPurple>;
+    for(i = 0; i < numTracks; i++)
+    {
+        if (masks[i].positionTypes & 0x10 || masks[i].positionTypes & 0x20 || masks[i].positionTypes & 0x40)
+            SplineDynamicTrackVector position(masks[i], 1);
+        else if (masks[i].positionTypes & 0x1 || masks[i].positionTypes & 0x2 || masks[i].positionTypes & 0x4)
+            VECTOR3 position;
+        Align padding;
+        if (masks[i].rotationTypes & 0xf0)
+            SplineDynamicTrackQuat rotation(masks[i].rotQuantizationType);
+        else if (masks[i].rotationTypes & 0xf)
+            VECTOR3 rotation;  // .w == 1
+        Align padding;
+        if (masks[i].scaleTypes & 0x10 || masks[i].scaleTypes & 0x20 || masks[i].scaleTypes & 0x40)
+            SplineDynamicTrackVector scale(masks[i], 0);
+        else if (masks[i].scaleTypes & 0x1 || masks[i].scaleTypes & 0x2 || masks[i].scaleTypes & 0x4)
+            VECTOR3 scale;
+        Align padding;
+    }
+    */
+};
+
+
+struct HKXb
+{
+    int magic0;             // -894431970
+    int magic1;             // -804128050 The two magics for tagfile format that ffxiv uses
+    Classes classes;
+    //Sections sections(classes);
+    hkRootLevelContainer rootLevelContainer;
+    hkaAnimationContainer animationContainer;
+    hkaAnimationBinding animationBinding;
+    hkaSplineCompressedAnimation splineCompressedAnimation;
+};
+
+//////////////////////////////////////////////
+//              Read the data               //
+//////////////////////////////////////////////
+Header header<bgcolor=cRed>;
+//Animation anims[header.animationCount];
+FSeek(header.nameTableOffset);
+NameEntry animationNameTable[header.animationCount]<bgcolor=cLtBlue>;
+FSeek(header.HKXFileOffset);
+HKXb havokData<bgcolor=cGreen>;
+
+
+// duration
+// numberOfTransformTracks
+// numFrames

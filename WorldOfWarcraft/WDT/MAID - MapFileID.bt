@@ -1,0 +1,19 @@
+//------------------------------------------------
+// MAID - Map File IDs
+//------------------------------------------------
+
+struct MAID
+{
+    CHUNK hdr;
+    struct MapFileDataIDs
+    {
+        uint32 rootADT; // reference to fdid of mapname_xx_yy.adt
+        uint32 obj0ADT; // reference to fdid of mapname_xx_yy_obj0.adt
+        uint32 obj1ADT; // reference to fdid of mapname_xx_yy_obj1.adt
+        uint32 tex0ADT; // reference to fdid of mapname_xx_yy_tex0.adt
+        uint32 lodADT;  // reference to fdid of mapname_xx_yy_lod.adt
+        uint32 mapTexture; // reference to fdid of mapname_xx_yy.blp
+        uint32 mapTextureN; // reference to fdid of mapname_xx_yy_n.blp
+        uint32 minimapTexture; // reference to fdid of mapxx_yy.blp
+    } mapFileDataIDs[64*64];
+};

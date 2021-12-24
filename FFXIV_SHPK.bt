@@ -1,0 +1,130 @@
+//------------------------------------------------
+//      File: FFXIV_SHPK
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: FFXIV Shader
+//  Category: FFXIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct Header
+{
+    char magic[4];              // 0x6B506853
+    uint unk0;     
+    char dxmagic[4];            // 0x00395844
+    uint fileSize;
+    uint shaderDataOffset;
+    uint parameterListOffset;
+    uint vertexShaderCount;
+    uint pixelShaderCount;
+    uint matParamsSize;
+    uint matParamCount;
+    uint uniformCount;          // Scalar parameter
+    uint samplerCount;          // Resource parameter
+    uint unk1;                  // Padding ?
+    uint unknown_a_count;
+    uint unknown_b_count;
+    uint unknown_c_count;
+    uint record_type1_count;
+    uint record_type2_count;
+    
+};
+
+struct Register
+{
+    uint32 id;
+    uint32 stringOffset;
+    uint32 stringSize;
+    uint16 register;
+    uint16 size;
+
+    local int save = FTell();
+    FSeek(stringsOffset + stringOffset);
+    char name[stringSize];
+    FSeek(save);
+};
+
+struct Shader(int VSPS, Header &header)
+{
+    uint dataOffset;
+    uint dataLength;
+    short uniformCount;
+    short samplerCount;
+    int padding;    // probably
+    if (uniformCount > 0)
+        Register uniforms[uniformCount]<optimize=false>;
+    if (samplerCount > 0)
+        Register samplers[samplerCount]<optimize=false>;
+
+    local int save = FTell();
+    FSeek(header.shaderDataOffset + dataOffset);
+    if (VSPS == 1)
+    {
+        ubyte unk0;
+        ubyte unk1;
+        short padding;
+    }
+    byte shaderData[dataLength]<bgcolor=cRed>;
+    FSeek(save);
+};
+
+struct Shaders(int VSPS, Header &header)
+{
+    if (VSPS == 1)
+        Shader shaders(VSPS, header)[header.vertexShaderCount]<optimize=false>;
+    else if (VSPS == 2)
+        Shader shaders(VSPS, header)[header.pixelShaderCount]<optimize=false>;
+};
+
+struct MatParam
+{
+    uint32 id;
+    uint16 offset;
+    uint16 size;
+};
+
+struct SubRecordType1
+{
+    uint32 unknown1;
+    uint32 unknown2;
+    uint32 unknown3;
+};
+
+struct RecordType1(Header &header)
+{
+    uint32 count;
+    byte indices[16];
+    uint skip[3];
+    if (header.unknown_a_count > 0)
+        uint skipa[header.unknown_a_count];
+    if (header.unknown_b_count > 0)
+        uint skipb[header.unknown_b_count];
+    if (header.unknown_c_count > 0)
+        uint skipc[header.unknown_c_count];
+    SubRecordType1 sub_records[count];
+};
+
+struct RecordType2
+{
+    uint32 id;
+    uint32 hash;
+};
+
+Header header;
+local int stringsOffset = header.parameterListOffset;
+Shaders vertexShaders(1, header);
+Shaders pixelShaders(2, header);
+MatParam matParams[header.matParamCount];
+Register uniforms[header.uniformCount]<optimize=false>;
+Register samplers[header.samplerCount]<optimize=false>;
+
+uint skip[3];
+if (header.unknown_a_count > 0)
+    uint skipa[header.unknown_a_count * 2];
+if (header.unknown_b_count > 0)
+    uint skipb[header.unknown_b_count * 2];
+if (header.unknown_c_count > 0)
+    uint skipc[header.unknown_c_count * 2];
+RecordType1 records_1(header)[header.record_type1_count]<optimize=false>;
+RecordType2 records_2[header.record_type2_count];

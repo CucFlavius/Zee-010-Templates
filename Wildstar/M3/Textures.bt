@@ -11,30 +11,31 @@
 //   History: 
 //------------------------------------------------
 
-struct TEXTURE (int index)
+struct TEXTURE (int index, long texturesEndPos)
 {
-    byte unk_gap_000[2];    // -1, -1 -> not set? 
+    short unk0;             // -1, -1 -> not set? 
                             // 1, 0 - > ?
                             // 2, 0 -> ?
                             // 5, 0 -> ?
                             // 6, 0 -> ?
     byte textureType;       // This may actually be a reference to assetTextureXY, found in model2display.tbl.
                             // 0 - diffuse, 1 - normal, 2 - FX(?)
-    byte unk_003;
-    int32 unk_value_004;    // type?
-    byte unk_gap_008[8];    // some sort of hash
-    M3ARRAY texturePathArray;    // in characters, name is in wchar16 (2byte Unicode characters)
-
-    FSeek(headerSize + header.textures.offset + (header.textures.elements * 32) + texturePathArray.offset);
-    wchar_t texturePath[texturePathArray.elements];
-    FSeek(headerSize + header.textures.offset + ((index + 1)* 32));
+    byte unk1;
+    int32 unk2;             // type?
+    float unk3;
+    byte unks[4];
+    
+    Array texturePath(TChar16, texturesEndPos);
 };
 
 struct TEXTURES (HEADER &header)
 {
     local int i;
+    local long texturesEndPos = headerSize + header.textures.offset + (header.textures.elements * 32);
+    local long test = headerSize + (header.textures.elements * 32);
+    Printf("%u", test);
     for( i = 0; i < header.textures.elements; i++ )
     {
-        TEXTURE texture(i);
+        TEXTURE texture(i, texturesEndPos);
     }
 };

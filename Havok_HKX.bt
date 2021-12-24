@@ -1,0 +1,639 @@
+//////////////////////////////////////////////
+//         Havok binary tag data            //
+//////////////////////////////////////////////
+
+#include "HKSplineCompressedAnimation.bt"
+
+//local int i;            // loop iterator
+// enums are even numbers because of compressed value, normally do val / 2 to get real value
+
+enum<byte> BlendHint
+{
+	NORMAL = 0,
+	ADDITIVE = 2
+};
+
+enum<byte> AnimationType
+{
+	HK_UNKNOWN_ANIMATION = 0,                   // Should never be used
+	HK_INTERLEAVED_ANIMATION = 2,               // Interleaved
+	HK_MIRRORED_ANIMATION = 4,                  // Mirrored
+	HK_SPLINE_COMPRESSED_ANIMATION = 6,         // Spline
+	HK_QUANTIZED_COMPRESSED_ANIMATION = 8,      // Quantized
+	HK_PREDICTIVE_COMPRESSED_ANIMATION = 10,    // Predictive
+	HK_REFERENCE_POSE_ANIMATION = 12,           // Reference Pose
+};
+
+enum<byte> MappingType
+{
+    // Ragdoll mapping
+	HK_RAGDOLL_MAPPING = 0,
+
+	// Animation retargeting mapping
+	HK_RETARGETING_MAPPING = 2
+};
+
+// VLQ
+// https://en.m.wikipedia.org/wiki/Variable-length_quantity
+// Poorly written
+typedef struct
+{
+    byte inData[4]<hidden=true>;
+    FSeek(FTell() - 4);
+
+    if (!(inData[0] & 128))
+    {
+        FSeek(FTell() + 1);
+        local int value = inData[0] / 2;
+    }
+    else if (!(inData[1] & 128))
+    {
+        FSeek(FTell() + 2);
+        local int value = (inData[0] & 127 | ((inData[1] & 127) << 7)) / 2;
+    }
+    else
+    {
+        FSeek(FTell() + 3);
+        local int value = (((inData[0] & 127 | (short)((inData[1] & 127) << 7)) & 16383 | ((inData[2] & 127) << 14)) & 4028628991) / 2;
+    }
+} cValue<read=cValueRead>;
+
+string cValueRead(cValue &v)
+{
+    local string s;
+    SPrintf( s, "%u", v.value );
+    return s;
+}
+
+// Signed VLQ similar to Unreal Engine Compact Indices
+// https://en.m.wikipedia.org/wiki/Variable-length_quantity
+// Poorly written
+typedef struct
+{
+    byte v1;    // unsigned byte (important)
+    local int value = (v1 >> 1) & 0x7FFFFFBF;
+    local int v3 = v1 & 1;
+    local short v4 = 6;
+    local short v5;
+
+    if (v1 < 0)
+    {
+        do
+        {
+            char v11;
+            v5 = (v11 & 0x7F) << v4;
+            v4 += 7;
+            value |= v5;
+        }
+        while (v11 < 0);
+        value -= 0x7FFFFF80;
+    }
+    if (v3)
+    {
+        value = -value;
+    }
+} cValueSigned<read=cValSRead>;
+
+string cValSRead( cValueSigned &b )
+{
+    local string s;
+    SPrintf( s, "%d", b.value);
+    return s;
+}
+
+typedef struct
+{
+    cValueSigned size;
+    if (size.value > 0)
+    {
+        char name[size.value];
+    }
+}String <read = StringRead>;
+
+string StringRead(String &s)
+{
+    if (s.size.value > 0)
+    {
+        return s.name;
+    }
+    else
+    {
+        local string sVal;
+        SPrintf( sVal, "%d", s.size.value );
+        return sVal;
+    }
+};
+
+struct hkParam
+{
+    String v20;
+
+    local int v25;
+    local int v44;
+    local int v46;
+    local int v31;
+    local int v42;
+
+    byte dataType;
+    local int v21 = (dataType >> 1) & 0x7FFFFFBF;
+    local int v22 = dataType & 1;
+    local int v23 = 6;
+    if ( dataType < 0 )
+    {
+        do
+        {
+            byte output;
+            local int v24 = (output & 0x7F) << v23;
+            v23 += 7;
+            v21 |= v24;
+        }
+        while ( output < 0 );
+    }
+    if ( v22 != 0 )
+    {
+        v25 = -v21;
+        v44 = -v21;
+    }
+    else
+    {
+        v44 = v21;
+        v25 = v21;  // LOBYTE(v25) = v21;
+    }
+
+    if ( v25 & 0x20 )
+    {
+        byte v41;
+        local int v26 = (v41 >> 1) & 0x7FFFFFBF;
+        local int v27 = v41 & 1;
+        local int v28 = 6;
+        if ( v41 < 0 )
+        {
+            do
+            {
+                byte v42;
+                local int v29 = (v42 & 0x7F) << v28;
+                v28 += 7;
+                v26 |= v29;
+            }
+            while ( v42 < 0 );
+        }
+        if ( v27 != 0 )
+            v26 = -v26;
+        v25 = v44;  // LOBYTE(v25) = v44;
+        v46 = v26;
+    }
+    else
+    {
+      v46 = 0;
+    }
+
+
+    local int v30 = v25 & 0xF;
+    if ( v30 == 9 || v30 == 8 )
+    {
+        v31 = v42;
+        String v32;
+    }
+    else
+    {
+      v31 = v42;
+    }
+
+    v44 += 12;
+};
+
+struct hkClass(int tagType)
+{
+    if (tagType == 1 || tagType == 2)
+    {
+        if (tagType == 1)       // Version
+        {
+            cValue v4;
+        }
+        else if (tagType == 2)  // Class description
+        {
+            String name;
+            cValue v4;
+            cValue v10;
+            cValue count;       // hkParam count
+            if (count.value > 0)
+                hkParam hkParams[count.value]<optimize=false>;
+        }
+    }
+};
+
+struct Classes
+{
+    // Using a big number 1000, because I'm afraid of while loops
+    // Looping over all the type descriptions until reaching data
+    // This info is mainly used for asset interchangeability, and isn't really necessary for reading the data,
+    // since all the structures used by havok are hard coded really
+    for(i = 0; i < 1000; i++)
+    {
+        cValue tagType;
+        if (tagType.value == 2 || tagType.value == 1)
+        {
+            hkClass class(tagType.value);
+        }
+        else
+        {
+            FSeek(FTell() - 1);     // Going back one byte because it belongs to data
+            break;
+        }
+    }
+};
+
+struct hkArray          // type 36
+{
+    cValue numElements;
+    cValue type;        // Always 4 - int
+    cValueSigned data[numElements.value]<optimize=false>;
+};
+
+struct hkFixedArray(int num)
+{
+    cValue type;        // Always 4 - int
+    cValueSigned data[num]<optimize=false>;
+};
+
+struct hkArrayU          // type 36
+{
+    cValue numElements;
+    cValue type;        // Always 4 - int
+    cValue data[numElements.value]<optimize=false>;
+};
+
+struct hkIDArray
+{
+    cValue numElements;
+    cValue data[numElements.value]<optimize=false>;
+};
+
+struct hkByteArray      // type 34
+{
+    cValue numElements;
+    byte data[numElements.value]<bgcolor=cBlack>;
+};
+
+struct hkNamedVariant(byte bitField)
+{
+    if (bitField & 0x1)
+        cValue name;
+    if (bitField & 0x2)
+        cValue className;
+    if (bitField & 0x4)
+        cValue variant;
+};
+
+struct hkRootLevelContainer
+{
+    cValue dataType;
+    byte bitField0;
+    byte bitField1;
+
+    if (bitField1 & 0x1)
+    {
+        cValue numElements;
+        if (numElements.value == 1)
+        {
+            byte bitField2;
+            hkNamedVariant namedVariant(bitField2);
+        }
+        else if (numElements.value > 1)
+        {   
+            byte bitField2;
+            local int nameCount = (numElements.value - 1) / 2;
+            hkNamedVariant namedVariantsN(bitField2)[nameCount]<optimize=false>;
+
+            byte bitField3;
+            local int dataCount = (numElements.value - 1);
+            hkNamedVariant namedVariantsD(bitField3)[dataCount]<optimize=false>;
+
+            byte bitField4;
+            hkNamedVariant namedVariantsD(bitField4)[numElements.value]<optimize=false>;
+        }
+    }
+};
+
+struct hkaAnimationContainer
+{
+    cValue dataType; 
+    byte bitField1;
+    byte bitField2;
+
+    if (bitField2 & 0x1)
+        cValue memSizeAndFlags; // SERIALIZE_IGNORED
+    if (bitField2 & 0x2)
+        cValue referenceCount;  // SERIALIZE_IGNORED
+    if (bitField2 & 0x4)
+        hkIDArray skeletons;
+    if (bitField2 & 0x8)
+        hkIDArray animations;
+    if (bitField2 & 0x10)
+        hkIDArray bindings;
+    if (bitField2 & 0x20)
+        hkIDArray attachments;
+    if (bitField2 & 0x40)
+        hkIDArray skins;
+};
+
+struct hkaAnimationBinding
+{
+    cValue dataType; 
+    byte bitField1;
+    byte bitField2;
+
+    if (bitField1 & 0x1)
+        cValue memSizeAndFlags;                 // SERIALIZE_IGNORED
+    if (bitField1 & 0x2)
+        cValue referenceCount;                  // SERIALIZE_IGNORED
+    if (bitField1 & 0x4)
+        String originalSkeletonName;            // (Optional) The name of the skeleton from which the binding was constructed.   
+    if (bitField1 & 0x8)
+        cValue animation;                        // hkRefPtr<hkaAnimation> - A handle to the animation bound to the skeleton.
+    if (bitField1 & 0x10)
+        hkArray transformTrackToBoneIndices;    // int16 - A mapping from animation track indices to bone indices.
+    if (bitField1 & 0x20)
+        hkArray floatTrackToFloatSlotIndices;   // int16 - A mapping from animation float track indices to float slot indices.
+    if (bitField1 & 0x40)
+        hkArray partitionIndices;               // int16 - (Optional) A list of the partitions used to sample the animation
+    //if (bitField2 & 0x8)
+    //    BlendHint blendHint;
+
+    // I was too lazy to figure it out properly
+    byte test<hidden = true>;
+    FSkip(-1);
+    if (test != 8)
+        BlendHint blendHint;
+};
+
+struct hkaAnimation
+{
+    cValue dataType; 
+    byte unknown;
+    byte bitField0;
+    byte bitField1;
+    byte bitField2;
+
+    if (bitField0 & 0x1)
+        cValue memSizeAndFlags;         // SERIALIZE_IGNORED
+    if (bitField0 & 0x2)
+        cValue referenceCount;          // SERIALIZE_IGNORED
+    if (bitField0 & 0x4)
+        AnimationType type;
+    if (bitField0 & 0x8)
+        float duration;
+    if (bitField0 & 0x10)
+        cValue numberOfTransformTracks;
+    if (bitField0 & 0x20)
+        cValue numberOfFloatTracks;
+    if (bitField0 & 0x40)
+        cValue extractedMotion;         // TODO : Data type 16 & 1, idk unless I encounter it
+    if (bitField0 & 0x80)
+        hkArray annotationTracks;       // TODO
+    if (bitField1 & 0x1)
+        cValue numFrames;
+    if (bitField1 & 0x2)
+        cValue numBlocks;
+    if (bitField1 & 0x4)
+        cValue maxFramesPerBlock;
+    if (bitField1 & 0x8)
+        cValue maskAndQuantizationSize; // For delta decompression ?
+    if (bitField1 & 0x10)
+        float blockDuration;
+    if (bitField1 & 0x20)
+        float blockInverseDuration;
+    if (bitField1 & 0x40)
+        float frameDuration;
+    if (bitField1 & 0x80)
+        hkArrayU blockOffsets;
+    if (bitField2 & 0x1)
+        hkArrayU floatBlockOffsets;
+    if (bitField2 & 0x2)
+        hkArrayU transformOffsets;       // TODO
+    if (bitField2 & 0x4)
+        hkArrayU floatOffsets;           // TODO
+    if (bitField2 & 0x8)
+    {
+        if (type == HK_SPLINE_COMPRESSED_ANIMATION)
+        {
+            cValue numElements;
+            local int dataStart = FTell();
+            local int v;
+            for(v = 0; v < numBlocks.value; v++)
+            {
+                FSeek(dataStart + blockOffsets.data[v].value);
+                HKSplineCompressedAnimation splineAnimation(numberOfTransformTracks.value, dataStart + blockOffsets.data[v].value);
+            }
+            FSeek(dataStart + numElements.value);   // Skipping to end of spline data, just in case in not reading all of it
+        }
+        else
+        {
+            hkByteArray animationData;
+            Printf("Unsupported animation type");
+        }
+    }
+    if (bitField2 & 0x10)
+        cValue endian;
+};
+
+struct hkBone(byte bitField)
+{
+    if (bitField & 0x1)
+        String name;            // The name of the bone from the toolchain
+    if (bitField & 0x2)
+        byte lockTranslation;   // Whether or not this bone can move relative to its parent
+};
+
+struct Bones
+{
+    cValue numElements;
+    byte bitField;
+    hkBone bones(bitField)[numElements.value]<optimize=false>;
+};
+
+struct hkQsTransform
+{
+    VECTOR4 position;
+    VECTOR4 rotation;
+    VECTOR4 scale;
+};
+
+struct ReferencePoses
+{
+    cValue numElements;
+    hkQsTransform referencePose[numElements.value]<optimize=false>;
+};
+
+struct ReferenceFloats
+{
+    cValue numElements;
+    float referenceFloat[numElements.value]<optimize=false>;
+};
+
+struct hkaSkeleton
+{
+    cValue dataType; 
+
+    byte unk;
+    byte bitField1;
+    byte bitField2;
+
+    if (bitField1 & 0x1)
+        cValue memSizeAndFlags; // SERIALIZE_IGNORED
+    if (bitField1 & 0x2)
+        cValue referenceCount;  // SERIALIZE_IGNORED
+    if (bitField1 & 0x4)
+        cValue name;
+    if (bitField1 & 0x8)
+        hkArray parentIndices;
+    if (bitField1 & 0x10)
+        Bones bones;
+    if (bitField1 & 0x20)
+        ReferencePoses referencePoses;
+    if (bitField1 & 0x40)
+        ReferenceFloats referenceFloats;    // TO Verify
+    if (bitField1 & 0x80)
+        hkArray floatSlots;                 // TODO
+    if (bitField2 & 0x1)
+        hkArray localFrames;                // TODO
+    if (bitField2 & 0x2)
+        hkArray partitions;                 // TODO
+};
+
+struct AFromBTransforms(int numElements)
+{
+    hkQsTransform aFromBTransform[numElements]<optimize=false>;
+};
+
+struct SimpleMapping
+{
+    cValue numElements;
+    byte bitField;
+    if (bitField & 0x1)
+        hkFixedArray boneA(numElements.value);
+    if (bitField & 0x2)
+        hkFixedArray boneB(numElements.value);
+    if (bitField & 0x4)
+        AFromBTransforms aFromBTransform(numElements.value);
+};
+
+struct ChainMapping
+{
+/*
+		/// The start bone of the chain in A
+	hkInt16 m_startBoneA;
+	
+		/// The end bone of the chain in A
+	hkInt16 m_endBoneA;
+	
+		/// The start bone of the chain in B
+	hkInt16 m_startBoneB;
+	
+		/// The end bone of the chain in B
+	hkInt16 m_endBoneB;
+	
+		/// The transformation from the start bone in B to the start bone in A
+	hkQsTransform m_startAFromBTransform;
+	
+		/// The transformation from the end bone in B to the start bone in A
+	hkQsTransform m_endAFromBTransform;
+*/
+};
+
+struct hkaSkeletonMapperData
+{
+    byte bitField;
+    
+    if (bitField & 0x1)
+        cValue skeletonA;                       // hkaSkeleton, The first skeleton
+    if (bitField & 0x2)
+        cValue skeletonB;                       // hkaSkeleton, The second skeleton
+    //hkArray partitionMap;                 // TODO, hkInt16[], The mappings between partitions in A and B
+    //hkArray simpleMappingPartitionRanges; // TODO, struct PartitionMappingRange, The mapping between partitions in A to simple mappings
+    //hkArray chainMappingPartitionRanges;  // TODO, struct PartitionMappingRange, The mapping between partitions in A to chain mappings
+    if (bitField & 0x4)
+        SimpleMapping mapping;                  // struct SimpleMapping, All the simple mappings between A and B
+    //if (bitField & 0x8)
+    //    hkArray chainMappings;                // TODO, struct ChainMapping, All the chain mappings between A and B
+    if (bitField & 0x10)
+        hkArray unmappedBones;                // TODO, hkInt16[], Bones that are not driven by the input pose
+    if (bitField & 0x20)
+        hkQsTransform extractedMotionMapping;   // hkQsTransform, Local space mappings need extracted motion mappings
+    if (bitField & 0x40)
+        byte keepUnmappedLocal;                 // hkBool, If true, the local pose will be kept for the unmapped bones; if false, the world pose will be kept instead
+    if (bitField & 0x80)
+        MappingType mappingType;                // MappingType, default(0), The mapper supports different kinds of mapping. Model space mapping is used for ragdolls. Local space mapping is used for animations
+};
+
+struct hkaSkeletonMapper
+{
+    cValue dataType;
+    byte unk;
+    byte bitField1;
+    
+    if (bitField1 & 0x1)
+        cValue memSizeAndFlags; // SERIALIZE_IGNORED
+    if (bitField1 & 0x2)
+        cValue referenceCount;  // SERIALIZE_IGNORED
+    if (bitField1 & 0x4)
+        hkaSkeletonMapperData mapping;
+};
+
+struct HKX
+{
+    int magic0;             // -894431970
+    int magic1;             // -804128050 The two magics for tagfile format that ffxiv uses
+
+    // Types //
+    Classes classes;
+
+    // Data //
+    hkRootLevelContainer rootLevelContainer;
+    hkaAnimationContainer animationContainer;
+
+    // Skeleton //
+    if (animationContainer.bitField2 & 0x4)
+    {
+        if (rootLevelContainer.numElements.value == 1)
+        {
+            hkaSkeleton skeleton;
+        }
+        else if (rootLevelContainer.numElements.value > 1)
+        {
+            local int i;
+            // I don't really know how these are sorted so just reading till end f it
+            for(i = 0; i < 100; i++)
+            {
+                cValueSigned dataType<hidden=true>;
+                if (dataType.value == 7)  // Exit marker
+                {
+                    FSkip(-1);
+                    break;
+                }
+                byte test<hidden=true>;
+                FSkip(-2);
+                if (test == 64)
+                    hkaSkeletonMapper skeletonMapper;
+                else
+                    hkaSkeleton skeleton;
+            }
+        }
+    }
+
+    // Animations //
+    if (animationContainer.bitField2 & 0x8)
+    {
+        local int a;
+        for(a = 0; a < animationContainer.bindings.numElements.value; a++)
+        {
+            if (animationContainer.bitField2 & 0x10)
+                hkaAnimationBinding animationBinding;
+            if (animationContainer.bitField2 & 0x8)
+                hkaAnimation animation;
+        }
+    }
+
+    cValueSigned end; // 7
+
+};

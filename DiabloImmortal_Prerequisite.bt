@@ -13,17 +13,31 @@ struct HASH
 
 struct File
 {
-    byte unk;
     int pathLength;
     byte path[pathLength];
-    int unk;
-    int unk;
-    short unk;
-    HASH hash;
-    HASH hash;
     byte unk;
     int unk;
+    byte unk;
+    int hashLength;
+    byte md5[hashLength];
+    byte unk;
+    int fileSize;
 };
 
 byte unk;
-File files[259]<optimize=false>;
+while(true)
+{
+    byte dataType;
+    if (dataType == 115)
+    {
+        File file;
+    }
+    else if (dataType == 48)
+    {
+        byte md5[32];
+    }
+    else
+    {
+        break;
+    }
+}

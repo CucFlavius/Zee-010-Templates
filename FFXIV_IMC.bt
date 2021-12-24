@@ -1,0 +1,56 @@
+//------------------------------------------------
+//      File: FFXIV_IMC
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: FFXIV IMC
+//  Category: FFXIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct XivImc
+{
+    byte materialSet;
+    byte decal;
+    ushort mask;
+    byte vfx;
+    byte animation;
+};
+
+struct Subset
+{
+    XivImc data[5];
+};
+
+struct XivImcM
+{
+    byte variant;
+    byte unknown;
+    ushort mask;
+    byte vfx;
+    byte animation;
+};
+
+struct SubsetM
+{
+    XivImcM data[5];
+};
+
+short subsetCount;
+enum<short> ImcType { Unknown = 0, NonSet = 1, Set = 31 } identifier;
+
+if (identifier == 1)
+{
+    // Weapons and monsters don't have variant sets
+    XivImcM defaultSubset;
+
+    SubsetM subsetList[subsetCount];
+}
+else if (identifier == 31)
+{
+    // Identifier used by equipment
+    Subset defaultSubset;
+
+    // Data for each slot in the current variant set
+    Subset subsetList[subsetCount];
+}

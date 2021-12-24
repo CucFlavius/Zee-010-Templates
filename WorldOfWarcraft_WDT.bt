@@ -1,0 +1,27 @@
+//--------------------------------------
+//      File: WorldOfWarcraft_WDT.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Wdt file
+//  Category: WoW
+//--------------------------------------
+
+#include "Lib/Common.bt"
+#include "WorldOfWarcraft/WDT/MVER - Version.bt"
+#include "WorldOfWarcraft/WDT/MPHD - Header.bt"
+#include "WorldOfWarcraft/WDT/MAIN - MapTileTable.bt"
+#include "WorldOfWarcraft/WDT/MAID - MapFileID.bt"
+
+struct WDT
+{
+    while( ! FEof() )
+    {
+        if     ( match( "MVER" ) ) MVER version;
+        else if( match( "MPHD" ) ) MPHD header;
+        else if( match( "MAIN" ) ) MAIN mapTileTable;
+        else if( match( "MAID" ) ) MAID mapFileID;
+        else SKIPCHUNKR unk;
+    }
+};
+
+WDT wdt;

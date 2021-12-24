@@ -7,6 +7,7 @@
 //------------------------------------------------
 
 #include "Lib/Common.bt"
+#include "Wildstar/Array.bt"
 #include "Wildstar/M3/Header.bt"
 #include "Wildstar/M3/Bones.bt"
 #include "Wildstar/M3/Textures.bt"
@@ -20,21 +21,119 @@
 // Altought it is tempting, M3 is not a next version of World of Warcrafts M2. 
 // While there are certain similarities (which are normal, as both describe basically the same) consider this as a completely new format.
 
+struct Unk010
+{
+    short unksh[10];
+    byte padding[12];
+    VECTOR4 vectors[4]; // It's actually vec3, w seems unused
+    M3ARRAY unkArray;
+};
+
+struct Unk080
+{
+    // Probably incorrect
+    short unks[8]; 
+    byte padding[32];
+};
+
+struct Unk0F0
+{
+    short unk[92];
+};
+
+struct Unk1E0
+{
+    byte data[152];
+};
+
+struct Unk220
+{
+    byte data[70];
+};
+
+struct Unk230
+{
+    byte data[4];
+};
+
+struct Unk240
+{
+    byte data[112];
+};
+
 HEADER header;
 
-//Printf("headerSize : (%d)", headerSize);
+if (header.unk_offset_010.elements > 0)
+{
+    FSeek(headerSize + header.unk_offset_010.offset);
+    Unk010 unk101[header.unk_offset_010.elements]<bgcolor=cYellow>;
+}
 
-FSeek(headerSize + header.bones.offset);
-BONES bones(header);
+if (header.unk_offset_080.elements > 0)
+{
+    FSeek(headerSize + header.unk_offset_080.offset);
+    Unk080 unk080[header.unk_offset_080.elements]<bgcolor=cBlue>;
+}
 
-FSeek(headerSize + header.textures.offset);
-TEXTURES textures(header);
+if (header.unk_offset_0F0.elements > 0)
+{
+    FSeek(headerSize + header.unk_offset_0F0.offset);
+    Unk0F0 unk0F0[header.unk_offset_0F0.elements]<bgcolor=cGreen>;
+}
 
-FSeek(headerSize + header.materials.offset);
-MATERIALS materials(header);
+if (header.bones.elements > 0)
+{
+    FSeek(headerSize + header.bones.offset);
+    BONES bones(header)<bgcolor=cRed>;
+}
 
-FSeek(headerSize + header.model2Display.offset);
-MODEL2DISPLAYS model2Displays(header);
+if (header.boneMapping.elements > 0)
+{
+    FSeek(headerSize + header.boneMapping.offset);
+    short boneMapping[header.boneMapping.elements]<bgcolor=cPurple>;
+}
+
+if (header.textures.elements > 0)
+{
+    FSeek(headerSize + header.textures.offset);
+    TEXTURES textures(header)<bgcolor=cLtRed>;
+}
+
+if (header.unk_offset_1E0.elements > 0)
+{
+    FSeek(headerSize + header.unk_offset_1E0.offset);
+    Unk1E0 unk1E0[header.unk_offset_1E0.elements]<bgcolor=cLtBlue>;
+}
+
+if (header.materials.elements > 0)
+{
+    FSeek(headerSize + header.materials.offset);
+    MATERIALS materials(header)<bgcolor=cLtGreen>;
+}
+
+if(header.model2Display.elements > 0)
+{
+    FSeek(headerSize + header.model2Display.offset);
+    MODEL2DISPLAYS model2Displays(header)<bgcolor=cRed>;
+}
+
+if (header.unk_offset_220.elements > 0)
+{
+    FSeek(headerSize + header.unk_offset_220.offset);
+    Unk220 unk220[header.unk_offset_220.elements]<bgcolor=cBlue>;
+}
+
+if (header.unk_offset_230.elements > 0)
+{
+    FSeek(headerSize + header.unk_offset_230.offset);
+    Unk230 unk230[header.unk_offset_230.elements]<bgcolor=cYellow>;
+}
+
+if (header.unk_offset_240.elements > 0)
+{
+    FSeek(headerSize + header.unk_offset_240.offset);
+    Unk240 unk240[header.unk_offset_240.elements]<bgcolor=cGreen>;
+}
 
 if (header.version == 82)
 {

@@ -1,0 +1,146 @@
+//------------------------------------------------
+//      File: FFXIV_EXD
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: FFXIV Database Data
+//  Category: FFXIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+BigEndian();
+
+struct Header
+{
+    char magic[4];
+    ushort version;
+    ushort unk0;
+    uint indexSize;
+    ushort unks[10];
+
+};
+
+struct DataOffset
+{
+    uint rowID;
+    uint offset;
+};
+
+struct ModelChara
+{
+    byte skip;
+    byte Type;
+    ushort Model;
+    byte Base;
+    byte Variant;
+    ushort SEPack;
+    byte unk0;
+    byte flags;
+    byte unk1;
+    signed byte unk2;
+    byte flags2;
+    byte unk3;
+    byte unk4;  // Flag 0x80
+    byte unk5;
+    float unk6;
+};
+
+struct ModelScale
+{
+    float scale;
+};
+
+struct Mount
+{
+    int singularStr;             // 0 string
+    int pluralStr;               // 4 string
+    byte adjective;             // 8
+    byte possessivePronoun;     // 9
+    byte startsWithVowel;       // 10
+    byte unk0;                  // 11
+    byte pronoun;               // 12
+    byte article;               // 13
+    byte skip[2];
+    int unk1Str;                 // 16 string
+    int unk2Str;                 // 20 string
+    int unk3Str;                 // 24 string
+    int modelChara;              // 28
+    int equipHead;               // 32
+    int equipBody;               // 36
+    int equipLeg;                // 40
+    int equipFoot;               // 44
+    ushort unk4;                 // 48
+    ushort rideBGM;              // 50
+    ushort icon;                 // 52
+    ushort mountAction;          // 54
+    short order;                 // 56
+    byte mountFlyingCondition;   // 58
+    byte unk5;                   // 59
+    byte unk6;                   // 60
+    byte unk7;                   // 61
+    byte isFlying;               // 62
+    byte unk8;                   // 63
+    byte mountCustomize;       // 64
+    byte exitMoveDist;           // 65
+    byte exitMoveSpeed;          // 66
+    byte uiPriority;             // 67
+    byte radiusRate;             // 68
+    byte baseMotionSpeed_Run;    // 69
+    byte baseMotionSpeed_Walk;   // 70
+    byte unk9;                   // 71
+    byte extraSeats;             // 72
+    byte unk10;                  // 73
+    byte unk11;                  // 74
+    byte flags;                  // 75
+};
+
+struct Race
+{
+    int masculine;
+    int feminine;
+
+    // Race spefic items that they wear at character creation (item ID)
+    int bodyM;
+    int bodyF;
+    int handsM;
+    int handsF;
+    int legsM;
+    int legsF;
+    int feetM;
+    int feetF;
+    byte unknown;    // 1, 2 or 3 maybe related to character size (the camera doesn't zoom out tho)
+    byte expansion;  // 0, 1, or 3
+};
+
+struct Lobby
+{
+    int text;
+    int text2;
+    int description;
+    uint type;
+    uint param;
+    uint link;
+};
+
+struct Row
+{
+    uint dataSize;
+    ushort rowCount;
+
+    // Raw
+    //byte data[dataSize];
+
+    //ModelChara modelChara;
+    //ModelScale modelScale;
+    //Mount mount;
+    Lobby lobby;
+};
+
+Header header;
+DataOffset offsets[header.indexSize / 8];
+local int i;
+
+for (i = 0; i < header.indexSize / 8; i++)
+{
+    FSeek(offsets[i].offset);
+    Row row;
+}

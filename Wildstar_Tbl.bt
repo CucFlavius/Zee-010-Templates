@@ -1,0 +1,114 @@
+//------------------------------------------------
+//      File: Wildstar_Tbl.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the wildstar tbl database file format
+//  Category: Wildstar
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+local int HeaderSize = 96;
+
+struct Header
+{
+    char magic[4];  // DTBL
+    int version;
+    uint tableNameLength;
+    int padding;
+    uint64 unk0;
+    uint recordSize;
+    int padding;
+    uint64 fieldCount;
+    uint64 fieldOffset;
+    uint recordCount;
+    int padding;
+    uint64 totalRecordSize;
+    uint64 recordOffset;
+    uint64 maxID;
+    uint64 lookupOffset;
+    int64 padding;
+    char name[(tableNameLength - 1) * 2];
+};
+
+struct Column
+{
+    uint nameLength;
+    uint unk0;
+    uint64 nameOffset;
+    ushort dataType;
+    ushort padding;
+    uint unk1;
+};
+
+local int recIndex = 0;
+
+typedef struct
+{
+    while(true)
+    {
+        byte peek<hidden=false>;
+        if (peek != 0)
+        {
+            FSkip(-1);
+            break;
+        }
+    }
+    wstring data;
+}WString<name="String", read=READWString>;
+
+string READWString( WString &s )
+{
+    return s.data;
+}
+
+struct Record(Header &header)
+{
+    FSeek(HeaderSize + header.recordOffset + (header.recordSize * recIndex));
+    local int i;
+    local int save;
+    for (i = 0; i < header.fieldCount; i++)
+    {
+        switch(columns[i].dataType)
+        {
+            case 3:
+                uint uInt;
+                break;
+            case 4:
+                float fLoat;
+                break;
+            case 11:
+                uint flags;
+                break;
+            case 20:
+                uint64 uLong;
+                break;
+            case 130:
+                uint num6;
+                uint num7;
+                save = FTell();
+                if (num6 != 0)
+                {
+                    FSeek(num6 + HeaderSize + header.recordOffset); 
+                }
+                else
+                {
+                    FSeek(num7 + HeaderSize + header.recordOffset);
+                }
+                WString data;
+                FSeek(save);
+
+                if (i < header.fieldCount - 1)
+                    if (num6 == 0 && columns[i + 1].dataType != 130)
+                        FSkip(4);
+                break;
+        }
+    }
+    recIndex = recIndex + 1;
+};
+
+Header header;
+FSeek(HeaderSize + header.fieldOffset);
+Column columns[header.fieldCount];
+FSeek(HeaderSize + header.recordOffset);
+Record records(header)[header.recordCount]<optimize=false>;

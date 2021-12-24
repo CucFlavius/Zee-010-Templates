@@ -23,7 +23,7 @@ struct MOGN
         currentPos = FTell();
     }
 
-    FSkip(2);
+    //FSkip(2);
 };
 
 // A contiguous block of zero-terminated strings. 

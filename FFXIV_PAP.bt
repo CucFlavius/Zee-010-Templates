@@ -1,0 +1,132 @@
+//------------------------------------------------
+//      File: FFXIV_PAP
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: FFXIV Animation
+//  Category: FFXIV
+//------------------------------------------------
+
+//#include "Lib/Common.bt"
+#include "Havok_HKX.bt"
+
+//////////////////////////////////////////////
+//                 PAP data                 //
+//////////////////////////////////////////////
+
+struct Header
+{
+    char signature[4];
+    short unk;              // always 1
+    short unk;              // always 2
+    short animationCount;
+    int unk;                // changes between models
+    int nameTableOffset;    // always 0x1A
+    int HKXFileOffset;
+    int parametersOffset;
+};
+
+struct NameEntry
+{
+    char name[34]<optimize=false>;          // ASCII Name
+    int index;
+    short unk;
+};
+
+struct Animation
+{
+    STRING name;
+    byte unk[32];
+    short unk0;
+    short unk1;
+    int unk2;
+    int unk3;
+    short unk4;
+    short unk5;
+};
+
+struct TMLB
+{
+    CHUNK hdr;
+    int unk;
+};
+
+struct TMDH
+{
+    CHUNK hdr;
+    int unk;
+    short unk;
+    short unk;
+};
+
+struct TMAL
+{
+    CHUNK hdr;
+    int unk;
+    int unk;
+};
+
+struct TMAC
+{
+    CHUNK hdr;
+    int unk;
+    int unk;
+    int unk;
+    int unk;
+    int unk;        // RTMT count ?
+};
+
+struct RTMT
+{
+    CHUNK hdr;
+    int unk;
+    int unk;
+    int unk;
+    int unk;
+};
+
+struct C009
+{
+    CHUNK hdr;
+    int unk;
+    int unk;
+    int unk;
+    int unk;
+};
+
+struct C042
+{
+    CHUNK hdr;
+    short unk;
+    short unk;
+    int unk;
+    int unk;
+    int unk;
+    int unk;
+};
+
+struct Parameters
+{
+    while( ! FEof() )
+    {
+        if     ( matchr( "TMLB" ) ) TMLB tmlb;
+        else if     ( matchr( "TMDH" ) ) TMDH tmdh;
+        else if     ( matchr( "TMAL" ) ) TMAL tmal;
+        else if     ( matchr( "TMAC" ) ) TMAC tmac;
+        else if     ( matchr( "TMTR" ) ) RTMT rtmt;
+        else if     ( matchr( "C009" ) ) C009 c009;
+        else if     ( matchr( "C042" ) ) C042 c042;
+        else SKIPCHUNKR2 unk; 
+    }
+};
+
+//////////////////////////////////////////////
+//              Read the data               //
+//////////////////////////////////////////////
+Header header<bgcolor=cRed>;
+//Animation anims[header.animationCount];
+FSeek(header.nameTableOffset);
+NameEntry animationNameTable[header.animationCount]<bgcolor=cLtBlue>;
+FSeek(header.HKXFileOffset);
+HKX havokData<bgcolor=cGreen>;
+FSeek(header.parametersOffset);
+Parameters parameters;      // Might comment this out since I never really investigated it
