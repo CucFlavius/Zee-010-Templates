@@ -28,7 +28,10 @@ typedef struct(int matDescEndPos)
     Track unkTrack048(TFloat, matDescEndPos);   // 4/4
     Track unkTrack060(TFloat, matDescEndPos);   // 4/4
     Track unkTrack078(TFloat, matDescEndPos);   // 4/4
-    Track unkTrack090(TFloat, matDescEndPos);   // 4/4
+    //Track unkTrack090(TFloat, matDescEndPos);   // 4/4
+    byte gap[12];
+    int unk;
+    byte gap2[8];
     Track unkTrack0A8(TFloat, matDescEndPos);   // 4/4
     Track unkTrack0C0(TFloat, matDescEndPos);   // 4/4
     Track unkTrack0D8(TFloat, matDescEndPos);   // 4/4

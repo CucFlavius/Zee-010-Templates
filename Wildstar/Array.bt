@@ -71,10 +71,10 @@ string readTimestamp(Timestamp& t)
 
 typedef struct (int T, int startPos_)
 {
-    uint elements<hidden=true>;
+    uint elements<hidden=false>;
     uint unused<hidden=true>;
-    unsigned int64 timestampOffs<hidden=true>;
-    unsigned int64 valueOffs<hidden=true>;
+    unsigned int64 timestampOffs<hidden=false>;
+    unsigned int64 valueOffs<hidden=false>;
 
     local int _T = T;
     local int c = FTell();

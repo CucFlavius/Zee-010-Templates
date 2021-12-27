@@ -73,6 +73,7 @@ typedef struct {
     char ID[4];
     int size;
     FSeek(FTell() + size);
+    Printf("Skipping Chunk %c%c%c%c", ID[0], ID[1], ID[2], ID[3]);
 } SKIPCHUNK <name = SkipChunkName>;
 
 // Helper function for displaying the string instead of the variable name
@@ -92,6 +93,7 @@ typedef struct {
     char ID[4];
     int size;
     FSeek(FTell() + size);
+    Printf("Skipping Chunk %c%c%c%c", ID[3], ID[2], ID[1], ID[0]);
 } SKIPCHUNKR <name = SkipChunkNameReversed>;
 
 // Helper function for displaying the string instead of the variable name

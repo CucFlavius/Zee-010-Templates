@@ -99,48 +99,52 @@ if (header.textures.elements > 0)
     TEXTURES textures(header)<bgcolor=cLtRed>;
 }
 
-if (header.unk_offset_1E0.elements > 0)
-{
-    FSeek(headerSize + header.unk_offset_1E0.offset);
-    Unk1E0 unk1E0[header.unk_offset_1E0.elements]<bgcolor=cLtBlue>;
-}
-
-if (header.materials.elements > 0)
-{
-    FSeek(headerSize + header.materials.offset);
-    MATERIALS materials(header)<bgcolor=cLtGreen>;
-}
-
-if(header.model2Display.elements > 0)
-{
-    FSeek(headerSize + header.model2Display.offset);
-    MODEL2DISPLAYS model2Displays(header)<bgcolor=cRed>;
-}
-
-if (header.unk_offset_220.elements > 0)
-{
-    FSeek(headerSize + header.unk_offset_220.offset);
-    Unk220 unk220[header.unk_offset_220.elements]<bgcolor=cBlue>;
-}
-
-if (header.unk_offset_230.elements > 0)
-{
-    FSeek(headerSize + header.unk_offset_230.offset);
-    Unk230 unk230[header.unk_offset_230.elements]<bgcolor=cYellow>;
-}
-
-if (header.unk_offset_240.elements > 0)
-{
-    FSeek(headerSize + header.unk_offset_240.offset);
-    Unk240 unk240[header.unk_offset_240.elements]<bgcolor=cGreen>;
-}
-
 if (header.version == 82)
 {
-
+    if (header.vertices.elements > 0)
+    {
+        FSeek(headerSize + header.vertices.offset);
+        VERTICESOld vertices(header.vertices.elements)<bgcolor=cRed>;
+    }
 }
 else if (header.version == 100)
 {
+    if (header.unk_offset_1E0.elements > 0)
+    {
+        FSeek(headerSize + header.unk_offset_1E0.offset);
+        Unk1E0 unk1E0[header.unk_offset_1E0.elements]<bgcolor=cLtBlue>;
+    }
+    
+    if (header.materials.elements > 0)
+    {
+        FSeek(headerSize + header.materials.offset);
+        MATERIALS materials(header)<bgcolor=cLtGreen>;
+    }
+    
+    if(header.model2Display.elements > 0)
+    {
+        FSeek(headerSize + header.model2Display.offset);
+        MODEL2DISPLAYS model2Displays(header)<bgcolor=cRed>;
+    }
+    
+    if (header.unk_offset_220.elements > 0)
+    {
+        FSeek(headerSize + header.unk_offset_220.offset);
+        Unk220 unk220[header.unk_offset_220.elements]<bgcolor=cBlue>;
+    }
+    
+    if (header.unk_offset_230.elements > 0)
+    {
+        FSeek(headerSize + header.unk_offset_230.offset);
+        Unk230 unk230[header.unk_offset_230.elements]<bgcolor=cYellow>;
+    }
+    
+    if (header.unk_offset_240.elements > 0)
+    {
+        FSeek(headerSize + header.unk_offset_240.offset);
+        Unk240 unk240[header.unk_offset_240.elements]<bgcolor=cGreen>;
+    }
+
     FSeek(headerSize + header.geometry.offset);
     GEOMETRIES geometries(header);
 }

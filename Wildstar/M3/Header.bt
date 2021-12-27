@@ -43,7 +43,7 @@ struct HEADER
         M3ARRAY bones;                  // Pointer to an array of bone elements
         M3ARRAY unk18;
         M3ARRAY unk19;
-        M3ARRAY bone_mapping;
+        M3ARRAY boneMapping;
 
         M3ARRAY textures;
         M3ARRAY unk21;
@@ -138,10 +138,18 @@ struct HEADER
         Track unk_offset_350(TFloat, headerSize);
         byte gap_368[8];
         Track unk_offset_370(TFloat, headerSize);
-        byte gap_388[264];
+        float gap_388[66];
         M3ARRAY unk_offset_490;         // ? bytes
         M3ARRAY unk_offset_4A0;         // 4 bytes
-        byte gap_4B0[96];
+        VECTOR4 unkVec0;
+        VECTOR4 unkVec1;
+        VECTOR4 unkVec2;
+        VECTOR4 unkVec3;
+        float unk0;
+        float unk1;
+        float unk2;
+        float unk3;
+        VECTOR4 boundsSize;
         M3ARRAY unk_offset_510;         // 16 bytes
         M3ARRAY unk_offset_520;         // 4 bytes
         M3ARRAY unk_offset_530;         // 4 bytes
@@ -155,6 +163,6 @@ struct HEADER
         M3ARRAY unk_offset_5A8;         // 2 bytes
         byte gap_5B8[8];
         Track unk_offset_5C0(TByte, headerSize);
-        byte gap_5D8[88];    
+        float unks[22];    
     }
 };

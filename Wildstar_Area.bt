@@ -84,19 +84,26 @@ struct ZoneIDs
     uint ids[4];
 };
 
-struct UnkColors
+struct CornerWeights
 {
-    // This looks like 4 colors, and last byte is alpha, since always 255
-    // One color per texture layer
-    RGBA32 colors[4];
+    unsigned byte skyLayerWeights[4];
 };
 
-struct UnkLayerData
+struct EnvironmentWeights
 {
-    int layerData0[4];
-    int layerData1[4];
-    int layerData2[4];
-    int layerData3[4];
+    CornerWeights corners[4];
+};
+
+struct CornerData
+{
+    // Game can blend between 4 different skyes to make a more unique one
+    uint worldSkyIDs[4];    // IDs into WorldSky.tbl   
+};
+
+struct EnvironmentData
+{
+    // It's blended between the 4 corners of the subchunk based on the player position (not camera)
+    CornerData corners[4];
 };
 
 typedef struct {
@@ -106,8 +113,8 @@ typedef struct {
     uint hasColorMapRaw : 1 <name = "Color Map Raw">;
     uint unkMap : 1 <name = "Unk Map Raw">;
     uint unk1 : 1 <name = "unk1">;
-    uint hasUnkLayerData : 1 <name = "Unk Layer Data">;
-    uint hasUnkLayerColors : 1 <name = "Unk Per Layer Color">;
+    uint hasEnvironmentData : 1 <name = "Environment Data">;
+    uint hasEnvironmentWeights : 1 <name = "Environment Weights">;
     uint hasShadowMap : 1 <name = "Shadow Map">;
     uint hasLoDHeightMap : 1 <name = "LoD Height Map">;
     uint hasLoDHeightRange : 1 <name = "LoD Height Range">;
@@ -121,7 +128,7 @@ typedef struct {
     uint hasUnkMap1 : 1 <name = "Unk Map 1 DXT">;
     uint hasUnkMap2 : 1 <name = "Unk Map 2 DXT">;
     uint hasUnkMap3 : 1 <name = "Unk Map 3 DXT">;
-    uint unk14 : 1 <name = "unk14">;
+    uint hasFlags : 1 <name = "Flags">;
     uint unk15 : 1 <name = "unk15">;
     uint unk16 : 1 <name = "unk16">;
     uint unk17 : 1 <name = "unk17">;
@@ -159,10 +166,10 @@ struct SUBCHUNK
         UnkMap unkMap;
     if(flags.unk1)
         byte unks1[4];
-    if(flags.hasUnkLayerData)
-        UnkLayerData unkData;
-    if(flags.hasUnkLayerColors)
-        UnkColors unkColors;
+    if(flags.hasEnvironmentData)
+        EnvironmentData envLayers;
+    if(flags.hasEnvironmentWeights)
+        EnvironmentWeights envWeights;
     if(flags.hasShadowMap)
         ShadowMap shadowMap;
     if(flags.hasLoDHeightMap)
@@ -189,8 +196,8 @@ struct SUBCHUNK
         UnkMapDXT unkMap2;
     if(flags.hasUnkMap3)
         UnkMapDXT unkMap3;
-    if(flags.unk14)
-        byte unk14;
+    if(flags.hasFlags)
+        unsigned byte chunkFlags;     // 0x1 = isUnderwater
     if(flags.unk15)
         int unks15[4];
     if(flags.unk16)
@@ -219,6 +226,122 @@ struct PROP
     uint entries[chunk.size / 4];
 };
 
+struct CurdGroup
+{
+    uint positionCount;
+    VECTOR3 positions[positionCount]<optimize=false>;
+};
+
+struct curD
+{
+    CHUNK chunk;
+    local long save = FTell();
+    uint groupCount;
+    CurdGroup groups[groupCount]<optimize=false>;
+};
+
+struct WaterVertex
+{
+    VECTOR3 position;
+    VECTOR3 normal;
+    VECTOR3 tangent;
+    VECTOR3 bitangent;
+    VECTOR2 uv;
+    RGBA32 color;
+    float unk;
+    uint unk;
+    RGBA32 layerBlendMask;
+};
+
+struct Water
+{
+    uint worldWaterTypeID;          // Entry in WorldWaterType tbl
+    uint waterLayerIDs[4];          // Entries in WorldWaterLayer tbl, they get blended together (vertex layer blend mask)
+    uint unk0;
+    float unk1;
+    uint unk2;
+    float unk3;
+    float unk4;
+    uint unk5;
+    uint unk6;
+    float shoreLineDistance;
+    float unk7;
+    uint shoreLineWaterLayerID;     // Entry in WorldWaterLayer tbl
+    uint unk8;
+    uint indexCount;
+    uint vertexCount;
+    uint unk9;
+    uint unk10;
+    uint indices[indexCount];
+    WaterVertex vertices[vertexCount]<optimize=false>;
+};
+
+struct WAtG
+{
+    CHUNK chunk;
+    local long save = FTell();
+    uint count;
+    Water waters[count]<optimize=false>;
+
+    FSeek(save + chunk.size);
+};
+
+struct Leaf
+{
+    VECTOR2 min;
+    VECTOR2 max;
+    uint id;
+    uint unk;
+};
+
+struct Node
+{
+    Leaf leafs[4];
+
+    // Next stuff needs work
+    uint unks[4];
+    int unks2[2];
+    VECTOR2 min;
+    VECTOR2 max;
+    uint unks3[14];
+};
+
+struct BSP
+{
+    uint unk0;
+    uint unk1;
+    uint unk2;
+    uint unk3;
+    uint unk4;
+    uint unk5;
+    float unkf;
+    uint unk;
+    float unkf;
+    float unkf;
+    uint unk;
+    uint unk;
+    float unkf;
+    float unkf;
+    uint unk;
+    uint unk;
+    uint countA;
+    uint countB;
+    uint unk;
+    uint unk;
+    Node nodes[countA];
+};
+
+struct wbsP
+{
+    CHUNK chunk;
+    local long save = FTell();
+    uint count;
+    BSP bsp;
+    //BSP bsps[count]<optimize=false>;
+
+    FSeek(save + chunk.size);
+};
+
 struct CHNK
 {
     CHUNK chunk;
@@ -230,44 +353,113 @@ struct CHNK
         {
             // Extra chunks
             if     ( match( "PROP" ) ) PROP props;
+            else if( match( "curD" ) ) curD curds;  // https://cdn.discordapp.com/attachments/487618232279105540/924871987392823327/unknown.png
+            else if( match( "WAtG" ) ) WAtG water;
+            else if( match( "wbsP" ) ) wbsP bsp;
             else SKIPCHUNKR unk; 
         }
     }
 };
 
-struct PropInfo
+enum<uint> MODELTYPE {
+    M3 = 0,
+    I3 = 1,
+    Unk0 = 2,
+    DGN = 3,
+    Unk1 = 4,
+};
+
+typedef struct (int end)
 {
-    int64 uniqueID;     // used in PROP chunks as references for collision/etc.
-    int unk0;
-    int unk1;
-    int unk2;
-    int nameOffset;
-    int unkOffset;
+    uint32 UUID;        // used in PROP chunks as references for collision/etc.
+    uint32 ParentID;
+    uint32 unk0;
+    uint32 unk1;
+    MODELTYPE modelType;
+    int pathOffset;
+    int unkOffset0;
     float scale;
     QUATERNION rotation;
     VECTOR3 position;
-    short unk3;
-    short unk4;
-    short unk5;
-    short unk6;
-    int unk7;
-    int unk8;
-    int unk9;
-    int color0;         // typically 7f7f7fff so just a multiplier shading color
-    int color1;
-    int unk10;
+    byte unk3;
+    byte unk4;
+    byte unk5;
+    byte unk6;
+    byte unk7;
+    byte unk8;
+    byte unk9;
+    byte unk10;
     int unk11;
-    int color2;
-    int unk12;
-};
+    int unk12;           // 0's
+    int unk13;
+    RGBA32 color0;      // typically 7f7f7fff so just a multiplier shading color
+    RGBA32 color1;
+    int unk14;
+    int unk15;
+    RGBA32 color2;
+    int unk16;          // 0's
+
+    local int save = FTell();
+    if (pathOffset != 0)
+    {
+        FSeek(end + pathOffset);
+        wstring filePath;
+        FSeek(save);
+    }
+    if (unkOffset0 != 0)
+    {
+        FSeek(end + unkOffset0);
+        int unks[4];
+        FSeek(save);
+    }
+}PropInfo<read=readPropInfo>;
+
+string readPropInfo(PropInfo &i)
+{
+    if (i.pathOffset == 0)
+        return "[No File Path]";
+    return i.filePath;
+}
 
 struct PROp
 {
     CHUNK chunk;
     local long save = FTell();
     int propCount;
-    PropInfo props[propCount];
-    FSeek(save + chunk.size);   // Skipping strings
+    PropInfo props(save)[propCount]<optimize=false>;
+
+    // Skip to end of chunk
+    FSeek(save + chunk.size);
+};
+
+typedef struct (int end)
+{
+    int unk0;
+    short positionCount;
+    short unk1;
+    short unk2;
+    short unk3;
+    short unk4;
+    short unk5;
+    int positionOffset;
+    int unk6;
+
+    local int save = FTell();
+    FSeek(end + positionOffset);
+    VECTOR3 positions[positionCount];
+    FSeek(save);
+}CurtInfo;
+
+struct CURT
+{
+    CHUNK chunk;
+    local long save = FTell();
+
+    int count;
+    CurtInfo infos(save)[count]<optimize=false>;
+
+    // Skip to end of chunk
+    FSeek(save + chunk.size);
 };
 
 Header header;
@@ -275,5 +467,6 @@ while( ! FEof() )
 {
     if     ( match( "CHNK" ) ) CHNK chnk;
     else if( match( "PROp" ) ) PROp props;
+    else if( match( "CURT" ) ) CURT curt;
     else SKIPCHUNKR unk; 
 }

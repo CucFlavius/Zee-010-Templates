@@ -14,17 +14,17 @@
 local long geometryEndPos;
 
 typedef struct {
-    uint16 name : 1 <name = "0x0001", comment = "(value 1 or 2)">;
-    uint16 name : 1 <name = "0x0002", comment = "(value 3)">;
-    uint16 name : 1 <name = "0x0004", comment = "(value 3)">;
-    uint16 name : 1 <name = "0x0008", comment = "(value 3)">;
-    uint16 name : 1 <name = "0x0010", comment = "(value 4), 4 small numbers, ascending, 0 seems to indicate 'not used'. Bone">;
-    uint16 name : 1 <name = "0x0020", comment = "(value 4), 4 bytes, sums always up to 255. Bone weights">;
-    uint16 name : 1 <name = "0x0040", comment = "(value 4)">;
-    uint16 name : 1 <name = "0x0080", comment = "(value 4)">;
-    uint16 name : 1 <name = "0x0100", comment = "(value 5), uv map 1">;
-    uint16 name : 1 <name = "0x0200", comment = "(value 5), uv map 2">;
-    uint16 name : 1 <name = "0x0400", comment = "(value 6)">;
+    uint16 hasPosition : 1 <name = "hasPosition">;
+    uint16 hasTangent : 1 <name = "hasTangent">;
+    uint16 hasNormal : 1 <name = "hasNormal">;
+    uint16 hasBiTangent : 1 <name = "hasBiTangent">;
+    uint16 hasBoneIndices : 1 <name = "hasBoneIndices">;
+    uint16 hasBoneWeights : 1 <name = "hasBoneWeights">;
+    uint16 hasVertexColor0 : 1 <name = "hasVertexColor0">;
+    uint16 hasVertexColor1 : 1 <name = "hasVertexColor1">;
+    uint16 hasUV0 : 1 <name = "hasUV0">;
+    uint16 hasUV1 : 1 <name = "hasUV1">;
+    uint16 hasUnknown : 1 <name = "hasUnknown">;
 } VERTEXBLOCKFLAGS <name = "VertexBlockFlags", size = 2>;
 
 enum<byte> VERTEXBLOCKFIELDTYPE {
@@ -126,6 +126,19 @@ string ReadBoneWeights (BONEWEIGHTS& b)
     return s;
 }
 
+typedef struct
+{
+    hfloat x;
+    hfloat y;
+}UV<read=ReadUVs>;
+
+string ReadUVs (UV& u)
+{
+    string s;
+    SPrintf (s, "UV(%f, %f)", u.x, u.y);
+    return s;
+}
+
 struct VERTEX (VERTEXBLOCKFIELDTYPE vertexBlockFieldType[])
 {
     local int i;
@@ -151,7 +164,7 @@ struct VERTEX (VERTEXBLOCKFIELDTYPE vertexBlockFieldType[])
                 i+=3;
                 break;
             case Vector2_16bit :
-                hfloat uv[2];
+                UV uv;
                 break;
             case Null:
                 break;
@@ -160,6 +173,25 @@ struct VERTEX (VERTEXBLOCKFIELDTYPE vertexBlockFieldType[])
                 break;
         }
     }
+};
+
+struct VERTEXOld
+{
+    VECTOR3 position;
+    unsigned byte tangent[4];
+    unsigned byte normal[4];
+    unsigned byte biTangent[4];
+    BONEINDICES boneIndices;
+    BONEWEIGHTS boneWeights;
+    unsigned byte vertexColor0[4];
+    unsigned byte vertexColor1[4];
+    UV uv0;
+    UV uv1;
+};
+
+struct VERTICESOld(int count)
+{
+    VERTEXOld vertex[count]<optimize=false>;
 };
 
 struct VERTICES (int count, VERTEXBLOCKFIELDTYPE vertexBlockFieldType[])
@@ -176,15 +208,15 @@ struct MESH
                             // The index is defined on a per vertex basis, the number of bytes which belongs to a vertex is defined by {@link StructGeometry#vertexBlockSizeInBytes}
     uint32 indexCount;
     uint32 vertexCount;
-    uint16 unk0;            // This does weird stuff to the model, it twists the tail of chua if >0
-    uint16 unk1;
+    uint16 boneMapIndex;
+    uint16 boneMapCount;
     uint16 unk2;            // index into something?
-    short materialSelector;  // {@link StructMaterial material} index, linked under {@link StructM3Header header}
+    short materialSelector; // {@link StructMaterial material} index, linked under {@link StructM3Header header}
     short unk3;             // 20 or 0, could be flags
     short unk4;             // -1
     short unk5;             // -1 or 0
     byte meshGroupId;       // Defines the group this mesh belongs to. For models without groups, this seems to be -1
-    byte unk6;           // Seems for most cases 0, if <code>meshGroupId</code> -1, then this is also -1.
+    byte unk6;              // Seems for most cases 0, if <code>meshGroupId</code> -1, then this is also -1.
     short unk7;             // 0 or 1
     BODYPART meshAnatomyId; // Seems only be used for playable race models.
                             // It seems that the used <code>IDs</code> are identical across all checked occurrences.

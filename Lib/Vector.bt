@@ -15,7 +15,7 @@ typedef struct
 {
     float x;
     float y;
-} VECTOR2;
+} VECTOR2 <read = Vector2String>;
 
 // Vector 2 Int (two ints x,y)
 typedef struct
@@ -57,7 +57,7 @@ typedef struct
 string readVECTOR3SHORT (VECTOR3SHORT& a)
 {
     string s; 
-    SPrintf (s, "Vector3( %i, %i, %i )", a.x, a.y, a.z);
+    SPrintf (s, "Vector3( %f, %f, %f )", a.x / 32767.0, a.y / 32767.0, a.z / 32767.0);
     return s;
 }
 
@@ -66,7 +66,7 @@ typedef struct
     hfloat x;
     hfloat y;
     hfloat z;
-} VECTOR3HF<read=readVECTOR3HF>;;
+} VECTOR3HF<read=readVECTOR3HF>;
 
 string readVECTOR3HF (VECTOR3HF& a)
 {
@@ -90,7 +90,7 @@ typedef struct
     float y;
     float z;
     float w;
-} VECTOR4 <name = Vector4String>;
+} VECTOR4 <read=Vector4String>;
 
 typedef struct
 {
@@ -113,7 +113,7 @@ typedef struct
     byte y;
     byte z;
     byte w;
-} VECTOR4SMALL <name = Vector4SString>;
+} VECTOR4SMALL <read=Vector4SString>;
 
 // Vector 4 (four half floats x,y,z,w)
 typedef struct
@@ -122,20 +122,20 @@ typedef struct
     short y;
     short z;
     short w;
-} VECTOR4H <name = Vector4HString>;
+} VECTOR4H <read=Vector4HString>;
 
 typedef struct
 {
     short x;
     short y;
     short z;
-} VECTOR3H <name = Vector3HString>;
+} VECTOR3H <read=Vector3HString>;
 
 typedef struct
 {
     short x;
     short y;
-} VECTOR2H <name = Vector2HString>;
+} VECTOR2H <read=Vector2HString>;
 
 string Vector4HString(VECTOR4H &v)
 {
@@ -167,6 +167,15 @@ string Vector2HString(VECTOR2H &v)
     SPrintf( x, "%f", v.x / 32767.0f );
     local string y;
     SPrintf( y, "%f", v.y / 32767.0f );
+    return "Vector2 (" + x + ", " + y + ")";
+}
+
+string Vector2String(VECTOR2 &v)
+{
+    local string x;
+    SPrintf( x, "%f", v.x );
+    local string y;
+    SPrintf( y, "%f", v.y );
     return "Vector2 (" + x + ", " + y + ")";
 }
 
@@ -280,7 +289,7 @@ typedef struct {
     float y;
     float z;
     float w;
-} QUATERNION <name = QuaternionString>;
+} QUATERNION <read=QuaternionString>;
 
 string QuaternionString(QUATERNION &v)
 {

@@ -15,13 +15,44 @@ struct BGR
     float r;
 };
 
-struct RGBA
+int ReadFloatColor()
 {
+    local int r = ReadFloat(FTell()) * 255;
+    local int g = ReadFloat(FTell() + 4) * 255;
+    local int b = ReadFloat(FTell() + 8) * 255;
+    local int a = ReadFloat(FTell() + 12) * 255;
+
+    return (a << 24) + (b << 16) + (g << 8) + (r << 0);
+}
+
+typedef struct
+{
+    local int backupBack = GetBackColor();
+    local int backupFore =  GetForeColor();
+    local int backColor = ReadFloatColor();
+    SetBackColor (backColor);
+    if (backColor >= 8388607)
+    {
+        SetForeColor (cBlack);
+    }
+    else
+    {
+        SetForeColor (cWhite);
+    }
     float r;
     float g;
     float b;
     float a;
-};
+    SetBackColor (backupBack);
+    SetForeColor (backupFore);
+}RGBA<read=ReadRGBA>;
+
+string ReadRGBA(RGBA &c)
+{
+    string s;
+    SPrintf(s, "Color(%f,%f,%f,%f)", c.r, c.g, c.b, c.a);
+    return s;
+}
 
 struct BGRA
 {
@@ -48,10 +79,21 @@ struct ARGB32
     unsigned byte b;
 };
 
-struct RGBA32
+typedef struct
 {
+    local int backup = GetBackColor();
+    if(ThemeIsDark()) ThemeAutoScaleColors (false);
+    SetBackColor (ReadInt());
     unsigned byte r;
     unsigned byte g;
     unsigned byte b;
     unsigned byte a;
-};
+    SetBackColor (backup);
+}RGBA32<read=ReadRGBA32>;
+
+string ReadRGBA32(RGBA32 &c)
+{
+    string s;
+    SPrintf(s, "Color(%u,%u,%u,%u)", c.r, c.g, c.b, c.a);
+    return s;
+}
