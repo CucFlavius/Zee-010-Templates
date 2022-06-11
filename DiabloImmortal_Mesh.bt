@@ -80,6 +80,73 @@ struct VERTEX_BUFFER(char description[], int size)
         VECTOR4H tangentAsQuat;
         VECTOR2H uv;
     }
+    else if( bufferMatch( "P3F_C4B_N4B_T2F", description, 15, size ) )
+    {
+        VECTOR3 position;
+        RGBA32 color;
+        VECTOR4SMALL normal;                                 // Packed normal 
+        VECTOR2 uv;
+    }
+    else if( bufferMatch( "Q4H_T2H_T2H", description, 11, size ) )
+    {
+        VECTOR4H tangentAsQuat;
+        VECTOR2H uv;
+        VECTOR2H texture2;
+    }
+    else if( bufferMatch( "Q4H_T2H_T4H", description, 11, size ) )
+    {
+        VECTOR4H tangentAsQuat;
+        VECTOR2H uv;
+        VECTOR4H texture4;
+    }
+    else if( bufferMatch( "C4B_Q4H_T2H_T2H", description, 15, size ) )
+    {
+        RGBA32 color;
+        VECTOR4H tangentAsQuat;
+        VECTOR2H uv;
+        VECTOR2H texture2;
+    }
+    else if( bufferMatch( "C4B_Q4H_T2H_T4H", description, 15, size ) )
+    {
+        RGBA32 color;
+        VECTOR4H tangentAsQuat;
+        VECTOR2H uv;
+        VECTOR4H texture4;
+    }
+    else if( bufferMatch( "C4B_Q4H_T2H_T2H_T4H", description, 19, size ) )
+    {
+        RGBA32 color;
+        VECTOR4H tangentAsQuat;
+        VECTOR2H uv;
+        VECTOR2H texture2;
+        VECTOR4H texture4;
+    }
+    else if( bufferMatch( "C4B_N4B_T2H_T2H", description, 15, size ) )
+    {
+        RGBA32 color;
+        VECTOR4SMALL normal;                                 // Packed normal 
+        VECTOR2H uv;
+        VECTOR2H texture2;
+    }
+    else if( bufferMatch( "Q4H_T2H_T2H_T4H", description, 15, size ) )
+    {
+        VECTOR4H tangentAsQuat;
+        VECTOR2H uv;
+        VECTOR2H texture2;
+        VECTOR4H texture4;
+    }
+    else if( bufferMatch( "N4B_T2H_T2H", description, 11, size ) )
+    {
+        VECTOR4SMALL normal;                                 // Packed normal 
+        VECTOR2H uv;
+        VECTOR2H texture2;
+    }
+    else if( bufferMatch( "N4B_T2H_T4H", description, 11, size ) )
+    {
+        VECTOR4SMALL normal;                                 // Packed normal 
+        VECTOR2H uv;
+        VECTOR4H texture4;
+    }
     else
     {
         // Idk
