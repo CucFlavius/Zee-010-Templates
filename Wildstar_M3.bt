@@ -21,29 +21,71 @@
 // Altought it is tempting, M3 is not a next version of World of Warcrafts M2. 
 // While there are certain similarities (which are normal, as both describe basically the same) consider this as a completely new format.
 
-struct Unk010
+struct BoundingBox
 {
-    short unksh[10];
-    byte padding[12];
-    VECTOR4 vectors[4]; // It's actually vec3, w seems unused
-    M3ARRAY unkArray;
+    VECTOR4 min;
+    VECTOR4 max;
 };
 
-struct Unk080
+struct Sequence(int endPos)   // 112
+{
+    short unk0;         // 45 .. 5000+
+    short unk1;         // 0 .. 31
+    short unk2;         // 0, 1, 2, 3
+    short unk3;         // 0, 1, 3, 4
+    short unk4;         // 4 .. 952
+    short unk5;         // 1 .. 10000
+    uint timestampStart;
+    uint timestampEnd;
+    float unk10;
+    short unk11;
+    short unk12;
+    short unk13;
+    short unk14;
+    BoundingBox bbA;
+    BoundingBox bbB;
+    Array name(TChar16, endPos)<bgcolor=cBlue>;
+
+//Printf("%i-%i ", unk6,unk7);
+};
+
+struct Unk080   // 48
 {
     // Probably incorrect
     short unks[8]; 
     byte padding[32];
 };
 
-struct Unk0F0
+typedef struct(int endPos)
 {
-    short unk[92];
+    short unk0;
+    short unk1;
+    int unk2;
+    Track unkTrack0(TFloat, endPos);
+    Track unkTrack1(TFloat, endPos);
+    Track unkTrack2(TByte, endPos);
+    Track unkTrack3(TByte, endPos);
+    Track unkTrack4(TByte, endPos);
+    Track unkTrack5(TByte, endPos);
+    Track unkTrack6(TFloat, endPos);
+    int padding2[2];
+}Unk0F0;
+
+struct Unk0F0s
+{
+    local int endPos = headerSize + header.unk_offset_0F0.offset + (header.unk_offset_0F0.elements * 184);
+    Unk0F0 unk0F0(endPos)[header.unk_offset_0F0.elements]<bgcolor=cLtBlue, optimize=false>;
 };
 
-struct Unk1E0
+struct Unk1E0   // 152
 {
-    byte data[152];
+    int64 unk;
+    TRACK unkTrack0TypeA;       // data size 6
+    TRACK unkTrack1TypeA;       // data size 6
+    TRACK unkTrack2TypeB;       // data size 8
+    TRACK unkTrack3TypeB;       // data size 8
+    TRACK unkVectorTrack0;
+    TRACK unkVectorTrack1;
 };
 
 struct Unk220
@@ -61,12 +103,157 @@ struct Unk240
     byte data[112];
 };
 
+struct Unk260
+{
+    short unk0; 
+    short unk1;
+};
+
+struct Unk280
+{
+    short unks[4];
+};
+
+struct Unk2B8   // 40
+{
+    int64 unk;
+    M3ARRAY array0;     // data size 32
+    M3ARRAY array1;     // data size 32
+};
+
+struct Unk2F8_A // 3792
+{
+    byte unks0[8];
+    int unks1[24];
+    TRACK track0;       // 2 byte
+    TRACK track1;       // 2 byte
+    TRACK track2;       // 4 byte
+    TRACK track3;       // 4 byte
+    TRACK track4;       // 2 byte
+    TRACK track5;       // 2 byte
+    TRACK track6;       // 4 byte
+    TRACK track7;       // 4 byte
+    TRACK track8;       // Vector3HF
+    TRACK track9;       // Vector3HF
+    TRACK track10;      // 2 byte
+    TRACK track11;      // 2 byte
+    TRACK track12;      // Vector3HF
+    TRACK track13;      // 2 byte
+    TRACK track14;      // 2 byte
+    TRACK track15;      // 2 byte
+    TRACK track16;      // 2 byte
+    TRACK track17;      // 2 byte
+    TRACK track18;      // 2 byte
+    TRACK track19;      // 2 byte
+    TRACK track20;      // 2 byte
+    TRACK track21;      // 4 byte
+    TRACK track22;      // Vector3
+    float unkf0;
+    int unk0;
+    TRACK tracksA[15];
+    __int64 unk1;
+    TRACK tracksB0[5];  // 1 byte
+    TRACK tracksB1[5];  // 1 byte
+    __int64 unk2;
+    TRACK tracksC0[5];  // 2 byte
+    TRACK tracksC1[5];  // 1 byte
+    __int64 unk3;
+    TRACK tracksD0[5];  // 2 byte
+    TRACK tracksD1[5];  // 1 byte
+    __int64 unk4;
+    TRACK tracksE0[5];  // 4 bytes
+    TRACK tracksE1[5];  // 1 byte
+    float unkf1;
+    float unkfs[30]; // maybe not all floats
+    int unk5;
+    int unk6;
+    int unk7;
+    int unk8;
+    int unk9;
+    TRACK tracksF0[5];  // 2 byte
+    TRACK tracksF1[5];  // 1 byte
+    TRACK trackF2;      // 2 byte
+    int unk10;
+    float unkf2;
+    int unk11;
+    float unkf3;
+    float unkf4;
+    float unkf5;
+    int unk12;
+    int unk13;
+    short unk14;
+    short unk15;
+    int unk16;
+    TRACK tracksG0[5];  // 2 byte
+    TRACK tracksG1[5];  // 1 byte
+    __int64 unk17;
+    TRACK tracksH0[5];  // 2 byte
+    TRACK tracksH1[5];  // 1 byte
+    __int64 unk18;
+    TRACK tracksI0[5];  // 2 byte
+    TRACK tracksI1[5];  // 1 byte
+    __int64 unk19;
+    TRACK tracksJ0[5];  // 2 byte
+    TRACK tracksJ1[5];  // 1 byte
+    __int64 unk20;
+    TRACK tracksK0[5];  // 2 byte
+    TRACK tracksK1[5];  // 1 byte
+    int unk21;
+    int unk22;
+    int unk23;
+    float unkf6;
+    float unkf7;
+    int unk24;
+    int unk25;
+    int unk26;
+    int unks[10];
+    TRACK trackJ;
+};
+
+struct Unk2F8_B // 1192
+{
+  int unk0;
+  M3ARRAY array0;       // 12 byte
+  byte unkData[24];
+  TRACK track0;         // Vector3HF
+
+    // ...many tracks...
+
+  byte data[1124];
+};
+
+struct Unk2F8(int endPos)   // 160
+{
+    byte data[56];
+    TRACK track0;
+    TRACK track1;   // 24, data size 1
+    byte data3[40];
+    int64 unkOffset0; // -1 check
+    int64 unkOffset1; // -1 check
+
+    local long save = FTell();
+
+    if (unkOffset0 != -1)
+    {
+        FSeek(endPos + unkOffset0);
+        Unk2F8_A unkA<bgcolor=cYellow>;
+    }
+
+    if (unkOffset1 != -1)
+    {
+        FSeek(endPos + unkOffset1);
+        Unk2F8_B unkB<bgcolor=cGreen>;
+    }
+    FSeek(save);
+};
+
 HEADER header;
 
-if (header.unk_offset_010.elements > 0)
+if (header.sequenceArray.elements > 0)
 {
-    FSeek(headerSize + header.unk_offset_010.offset);
-    Unk010 unk101[header.unk_offset_010.elements]<bgcolor=cYellow>;
+    FSeek(headerSize + header.sequenceArray.offset);
+    local int sequenceEndPos = headerSize + header.sequenceArray.offset + (header.sequenceArray.elements * 112);
+    Sequence sequences(sequenceEndPos)[header.sequenceArray.elements]<bgcolor=cYellow, optimize=false>;
 }
 
 if (header.unk_offset_080.elements > 0)
@@ -78,7 +265,7 @@ if (header.unk_offset_080.elements > 0)
 if (header.unk_offset_0F0.elements > 0)
 {
     FSeek(headerSize + header.unk_offset_0F0.offset);
-    Unk0F0 unk0F0[header.unk_offset_0F0.elements]<bgcolor=cGreen>;
+    Unk0F0s unk0f0s;
 }
 
 if (header.bones.elements > 0)
@@ -104,7 +291,7 @@ if (header.version == 82)
     if (header.vertices.elements > 0)
     {
         FSeek(headerSize + header.vertices.offset);
-        VERTICESOld vertices(header.vertices.elements)<bgcolor=cRed>;
+        VERTEXOld vertex[header.vertices.elements]<bgcolor=cRed, optimize=false>;
     }
 }
 else if (header.version == 100)
@@ -146,5 +333,46 @@ else if (header.version == 100)
     }
 
     FSeek(headerSize + header.geometry.offset);
-    GEOMETRIES geometries(header);
+    geometryEndPos = headerSize + header.geometry.offset + (header.geometry.elements * 208);
+    GEOMETRY geometry[header.geometry.elements]<optimize=false>;
+
+    if (header.unk_offset_260.elements > 0)
+    {
+        FSeek(headerSize + header.unk_offset_260.offset);
+        Unk260 unk260[header.unk_offset_260.elements]<bgcolor=cRed>;
+    }
+
+    if (header.unk_offset_270.elements > 0)
+    {
+        FSeek(headerSize + header.unk_offset_270.offset);
+        short unk270[header.unk_offset_270.elements]<bgcolor=cRed>;
+    }
+
+    if (header.unk_offset_280.elements > 0)
+    {
+        FSeek(headerSize + header.unk_offset_280.offset);
+        Unk280 unk280[header.unk_offset_280.elements]<bgcolor=cRed, optimize=false>;
+    }
+
+    if (header.unk_offset_2B8.elements > 0)
+    {
+        FSeek(headerSize + header.unk_offset_2B8.offset);
+        Unk2B8 unk2B8[header.unk_offset_2B8.elements]<bgcolor=cRed, optimize=false>;
+    }
+
+    if (header.unk_offset_2F8.elements > 0)
+    {
+        FSeek(headerSize + header.unk_offset_2F8.offset);
+        local int endPos2F8 = headerSize + header.unk_offset_2F8.offset + (header.unk_offset_2F8.elements * 160);
+        Unk2F8 unk2F8(endPos2F8)[header.unk_offset_2F8.elements]<optimize=false, bgcolor=cRed>;
+    }
+
+
+        ///....
+
+    if (header.unk_offset_490.elements > 0)
+    {
+        FSeek(headerSize + header.unk_offset_490.offset);
+        byte dataUnk490[header.unk_offset_490.elements]<bgcolor=cRed, optimize=false>;
+    }
 }

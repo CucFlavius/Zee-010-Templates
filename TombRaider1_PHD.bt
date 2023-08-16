@@ -1,0 +1,445 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.2 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#define int8_t signed byte
+#define int16_t signed short
+#define int32_t signed int
+#define uint8_t unsigned byte
+#define uint16_t unsigned short
+#define uint32_t unsigned int
+#define fixed unsigned int
+#define ufixed16 unsigned short
+
+struct tr_textile8    // 65536 bytes
+{
+    uint8_t Tile[256 * 256];
+};
+
+struct tr_room_info    // 16 bytes
+{
+    int32_t x;             // X-offset of room (world coordinates)
+    int32_t z;             // Z-offset of room (world coordinates)
+    int32_t yBottom;
+    int32_t yTop;
+};
+
+struct tr_vertex   // 6 bytes
+{
+    int16_t x;
+    int16_t y;
+    int16_t z;
+};
+
+struct tr_room_vertex  // 8 bytes
+{
+    tr_vertex Vertex;
+    int16_t Lighting;
+};
+
+struct tr_face4    // 12 bytes
+{
+    uint16_t Vertices[4];
+    uint16_t Texture;
+};
+
+struct tr_face3    // 8 bytes
+{
+    uint16_t Vertices[3];
+    uint16_t Texture;
+};
+
+struct tr_room_sprite  // 4 bytes
+{
+    int16_t Vertex;       // Offset into vertex list
+    int16_t Texture;      // Offset into sprite texture list
+};
+
+struct tr_room_data    // (variable length)
+{
+    int16_t NumVertices;                   // Number of vertices in the following list
+    if (NumVertices > 0)
+        tr_room_vertex Vertices[NumVertices]; // List of vertices (relative coordinates)
+
+    int16_t NumRectangles;                 // Number of textured rectangles
+    if (NumRectangles > 0)
+        tr_face4 Rectangles[NumRectangles];    // List of textured rectangles
+
+    int16_t NumTriangles;                  // Number of textured triangles
+    if (NumTriangles > 0)
+        tr_face3 Triangles[NumTriangles];      // List of textured triangles
+
+    int16_t NumSprites;                    // Number of sprites
+    if (NumSprites > 0)
+        tr_room_sprite Sprites[NumSprites];    // List of sprites
+};
+
+struct tr_room_portal  // 32 bytes
+{
+    uint16_t  AdjoiningRoom; // Which room this portal leads to
+    tr_vertex Normal;
+    tr_vertex Vertices[4];
+};
+
+struct tr_room_sector // 8 bytes
+{
+    uint16_t FDindex;    // Index into FloorData[]
+    uint16_t BoxIndex;   // Index into Boxes[] (-1 if none)
+    uint8_t  RoomBelow;  // 255 is none
+    int8_t   Floor;      // Absolute height of floor
+    uint8_t  RoomAbove;  // 255 if none
+    int8_t   Ceiling;    // Absolute height of ceiling
+};
+
+struct tr_room_light   // 18 bytes
+{
+    int32_t x, y, z;       // Position of light, in world coordinates
+    uint16_t Intensity1;    // Light intensity
+    uint32_t Fade1;         // Falloff value
+};
+
+struct tr_room_staticmesh  // 18 bytes
+{
+    uint32_t x, y, z;    // Absolute position in world coordinates
+    uint16_t Rotation;
+    uint16_t Intensity1;
+    uint16_t MeshID;     // Which StaticMesh item to draw
+};
+
+struct tr2_room_staticmesh  // 20 bytes
+{
+    uint32_t x, y, z;    // Absolute position in world coordinates
+    uint16_t Rotation;
+    uint16_t Intensity1;
+    uint16_t Intensity2; // Absent in TR1
+    uint16_t MeshID;     // Which StaticMesh item to draw
+};
+
+struct tr_room  // (variable length)
+{
+    tr_room_info info;           // Where the room exists, in world coordinates
+    uint32_t NumDataWords;       // Number of data words (uint16_t's)
+
+    tr_room_data RoomData;       // The room mesh
+
+    uint16_t NumPortals;                 // Number of visibility portals to other rooms
+    tr_room_portal Portals[NumPortals]<optimize=false>;  // List of visibility portals
+
+    uint16_t NumZsectors;                                  // ``Width'' of sector list
+    uint16_t NumXsectors;                                  // ``Height'' of sector list
+    tr_room_sector SectorList[NumXsectors * NumZsectors]<optimize=false>;  // List of sectors in this room
+
+    int16_t AmbientIntensity;
+
+    uint16_t NumLights;                 // Number of lights in this room
+    tr_room_light Lights[NumLights]<optimize=false>;    // List of lights
+
+    uint16_t NumStaticMeshes;                            // Number of static meshes
+    if (NumStaticMeshes > 0)
+        tr_room_staticmesh StaticMeshes[NumStaticMeshes]<optimize=false>;   // List of static meshes
+
+    int16_t AlternateRoom;
+    int16_t Flags;
+};
+
+struct tr_mesh // (variable length)
+{
+    tr_vertex Centre;
+    int32_t CollRadius;
+    
+    int16_t NumVertices;           // Number of vertices in this mesh
+    if (NumVertices > 0)
+        tr_vertex Vertices[NumVertices]<optimize=false>; // List of vertices (relative coordinates)
+    
+    int16_t NumNormals;
+
+    if(NumNormals > 0)
+        tr_vertex Normals[NumNormals]<optimize=false>;
+    else
+        int16_t Lights[Abs(NumNormals)]<optimize=false>;
+
+    int16_t NumTexturedRectangles; // number of textured rectangles in this mesh
+    if (NumTexturedRectangles > 0)
+        tr_face4 TexturedRectangles[NumTexturedRectangles]<optimize=false>; // list of textured rectangles
+    
+    int16_t NumTexturedTriangles;  // number of textured triangles in this mesh
+    if (NumTexturedTriangles > 0)
+        tr_face3 TexturedTriangles[NumTexturedTriangles]<optimize=false>; // list of textured triangles
+    
+    int16_t NumColouredRectangles; // number of coloured rectangles in this mesh
+    if (NumColouredRectangles > 0)
+        tr_face4 ColouredRectangles[NumColouredRectangles]<optimize=false>; // list of coloured rectangles
+    
+    int16_t NumColouredTriangles; // number of coloured triangles in this mesh
+    if (NumColouredTriangles > 0)
+        tr_face3 ColouredTriangles[NumColouredTriangles]<optimize=false>; // list of coloured triangles
+};
+
+struct tr_animation // 32 bytes
+{
+    uint32_t  FrameOffset; // Byte offset into Frames[] (divide by 2 for Frames[i])
+    uint8_t  FrameRate;   // Engine ticks per frame
+    uint8_t  FrameSize;   // Number of int16_t's in Frames[] used by this animation
+
+    uint16_t  State_ID;
+
+    fixed  Speed;
+    fixed  Accel;
+
+    uint16_t  FrameStart;  // First frame in this animation
+    uint16_t  FrameEnd;    // Last frame in this animation
+    uint16_t  NextAnimation;
+    uint16_t  NextFrame;
+
+    uint16_t  NumStateChanges;
+    uint16_t  StateChangeOffset; // Offset into StateChanges[]
+
+    uint16_t  NumAnimCommands;   // How many of them to use.
+    uint16_t  AnimCommand;       // Offset into AnimCommand[]
+};
+
+struct tr_state_change // 6 bytes
+{
+    uint16_t StateID;
+    uint16_t NumAnimDispatches; // number of ranges (seems to always be 1..5)
+    uint16_t AnimDispatch;      // Offset into AnimDispatches[]
+};
+
+struct tr_anim_dispatch    // 8 bytes
+{
+    int16_t Low;           // Lowest frame that uses this range
+    int16_t High;          // Highest frame that uses this range
+    int16_t NextAnimation; // Animation to dispatch to
+    int16_t NextFrame;     // Frame offset to dispatch to
+};
+
+struct MeshData
+{
+    uint32_t NumMeshData; // number of uint16_t's of mesh data to follow (=Meshes[]) (4 bytes)
+    local long save = FTell();
+    FSeek(save + (NumMeshData * 2));
+    uint32_t NumMeshPointers; // number of mesh pointers to follow (4 bytes)
+    uint32_t MeshPointers[NumMeshPointers]; // mesh pointer list (NumMeshPointers * 4 bytes)
+    FSeek(save);
+    local int i = 0;
+    for(i = 0; i < NumMeshPointers; i++)
+    {
+        FSeek(save + MeshPointers[i]);
+        tr_mesh Mesh;
+    };
+    FSeek(save + (NumMeshData * 2) + (NumMeshPointers * 4) + 4);
+};
+
+struct tr_anim_command // 2 bytes
+{
+    int16_t Value;
+};
+
+struct tr_meshtree_node // 4 bytes
+{
+    uint32_t Flags;
+    int32_t Offset_X;
+    int32_t Offset_Y;
+    int32_t Offset_Z;
+};
+
+struct tr_model  // 18 bytes
+{
+    uint32_t ID;           // Type Identifier (matched in Entities[])
+    uint16_t NumMeshes;    // Number of meshes in this object
+    uint16_t StartingMesh; // Stating mesh (offset into MeshPointers[])
+    uint32_t MeshTree;     // Offset into MeshTree[]
+    uint32_t FrameOffset;  // Byte offset into Frames[] (divide by 2 for Frames[i])
+    uint16_t Animation;    // Offset into Animations[]
+};
+
+struct tr_bounding_box // 12 bytes
+{
+    int16_t MinX, MaxX, MinY, MaxY, MinZ, MaxZ;
+};
+
+struct tr_staticmesh   // 32 bytes
+{
+    uint32_t        ID;   // Static Mesh Identifier
+    uint16_t        Mesh; // Mesh (offset into MeshPointers[])
+    tr_bounding_box VisibilityBox;
+    tr_bounding_box CollisionBox;
+    uint16_t        Flags;
+};
+
+struct tr_object_texture_vert // 4 bytes
+{
+    ufixed16 Xcoordinate;
+    ufixed16 Ycoordinate;
+};
+
+struct tr_object_texture  // 20 bytes
+{
+    uint16_t Attribute;
+    uint16_t TileAndFlag;
+    tr_object_texture_vert Vertices[4]; // The four corners of the texture
+};
+
+struct tr_sprite_texture   // 16 bytes
+{
+    uint16_t Tile;
+     uint8_t x;
+     uint8_t y;
+    uint16_t Width;        // (ActualWidth  * 256) + 255
+    uint16_t Height;       // (ActualHeight * 256) + 255
+     int16_t LeftSide;
+     int16_t TopSide;
+     int16_t RightSide;
+     int16_t BottomSide;
+};
+
+struct tr_sprite_sequence  // 8 bytes
+{
+    int32_t SpriteID;       // Sprite identifier
+    int16_t NegativeLength; // Negative of ``how many sprites are in this sequence''
+    int16_t Offset;         // Where (in sprite texture list) this sequence starts
+};
+
+struct tr_camera // 16 bytes
+{
+    int32_t x;
+    int32_t y;
+    int32_t z;
+    int16_t Room;
+   uint16_t Flag;
+};
+
+struct tr_sound_source // 16 bytes
+{
+     int32_t x;         // absolute X position of sound source (world coordinates)
+     int32_t y;         // absolute Y position of sound source (world coordinates)
+     int32_t z;         // absolute Z position of sound source (world coordinates)
+    uint16_t SoundID;   // internal sound index
+    uint16_t Flags;     // 0x40, 0x80, or 0xC0
+};
+
+struct tr_box   // 20 bytes
+{
+    uint32_t Zmin;          // Horizontal dimensions in global units
+    uint32_t Zmax;
+    uint32_t Xmin;
+    uint32_t Xmax;
+     int16_t TrueFloor;     // Height value in global units
+    uint16_t OverlapIndex;  // Bits 0-13 is the index into Overlaps[].
+};
+
+struct tr_entity // 22 bytes
+{
+    int16_t TypeID;     // Entity type ID (matched in Models[])
+    int16_t Room;
+    int32_t x;          // Item position in world coordinates
+    int32_t y;
+    int32_t z;
+    int16_t Angle;
+    int16_t Intensity1;
+    uint16_t Flags;
+};
+
+struct tr_colour   // 3 bytes
+{
+    uint8_t Red;        // Red component (0 -- darkest, 255 -- brightest)
+    uint8_t Green;      // Green component (0 -- darkest, 255 -- brightest)
+    uint8_t Blue;       // Blue component (0 -- darkest, 255 -- brightest)
+};
+
+struct tr_cinematic_frame // 16 bytes
+{
+    int16_t targetX; // Camera look at position about X axis,
+    int16_t targetY; // Camera look at position about Y axis
+    int16_t target2; // Camera look at position about Z axis
+    int16_t posZ;    // Camera position about Z axis
+    int16_t posY;    // Camera position relative to something (see posZ)
+    int16_t posX;    // Camera position relative to something (see posZ)
+    int16_t fov;
+    int16_t roll;    // Rotation about X axis
+};
+
+struct tr_sound_details // 8 bytes
+{
+   uint16_t Sample; // (index into SampleIndices)
+   uint16_t Volume;
+   uint16_t Chance; // If !=0 and ((rand()&0x7fff) > Chance), this sound is not played
+   uint16_t Characteristics;
+};
+
+//////////////////////////////// READ ///////////////////////////////////
+
+uint32_t Version; // version (4 bytes)
+uint32_t NumTextiles; // number of texture tiles (4 bytes)
+tr_textile8 Textile8[NumTextiles]<optimize=false>; // 8-bit (palettized) textiles (NumTextiles * 65536 bytes)
+uint32_t Unused; // 32-bit unused value (4 bytes)
+uint16_t NumRooms; // number of rooms (2 bytes)
+tr_room Rooms[NumRooms]<optimize=false>; // room list (variable length)
+uint32_t NumFloorData; // number of floor data uint16_t's to follow (4 bytes)
+uint16_t FloorData[NumFloorData]<optimize=false>; // floor data (NumFloorData * 2 bytes)
+MeshData meshData;
+uint32_t NumAnimations; // number of animations to follow (4 bytes)
+tr_animation Animations[NumAnimations]<optimize=false>; // animation list (NumAnimations * 32 bytes)
+uint32_t NumStateChanges; // number of state changes to follow (4 bytes)
+tr_state_change StateChanges[NumStateChanges]<optimize=false>; // state-change list (NumStructures * 6 bytes)
+uint32_t NumAnimDispatches; // number of animation dispatches to follow (4 bytes)
+tr_anim_dispatch AnimDispatches[NumAnimDispatches]<optimize=false>; // animation-dispatch list list (NumAnimDispatches * 8 bytes)
+uint32_t NumAnimCommands; // number of animation commands to follow (4 bytes)
+tr_anim_command AnimCommands[NumAnimCommands]<optimize=false>; // animation-command list (NumAnimCommands * 2 bytes)
+uint32_t NumMeshTrees; // number of MeshTrees to follow (4 bytes)
+tr_meshtree_node MeshTrees[NumMeshTrees / 4]<optimize=false>; // MeshTree list (NumMeshTrees * 4 bytes)
+uint32_t NumFrames; // number of words of frame data to follow (4 bytes)
+uint16_t Frames[NumFrames]<optimize=false>; // frame data (NumFrames * 2 bytes)
+uint32_t NumModels; // number of models to follow (4 bytes)
+tr_model Models[NumModels]<optimize=false>; // model list (NumModels * 18 bytes)
+uint32_t NumStaticMeshes; // number of StaticMesh data records to follow (4 bytes)
+tr_staticmesh StaticMeshes[NumStaticMeshes]<optimize=false>; // StaticMesh data (NumStaticMesh * 32 bytes)
+uint32_t NumObjectTextures; // number of object textures to follow (4 bytes) (after AnimatedTextures in TR3)
+tr_object_texture ObjectTextures[NumObjectTextures]<optimize=false>; // object texture list (NumObjectTextures * 20 bytes) (after AnimatedTextures in TR3)
+uint32_t NumSpriteTextures; // number of sprite textures to follow (4 bytes)
+tr_sprite_texture SpriteTextures[NumSpriteTextures]<optimize=false>; // sprite texture list (NumSpriteTextures * 16 bytes)
+uint32_t NumSpriteSequences; // number of sprite sequences records to follow (4 bytes)
+tr_sprite_sequence SpriteSequences[NumSpriteSequences]<optimize=false>; // sprite sequence data (NumSpriteSequences * 8 bytes)
+uint32_t NumCameras; // number of camera data records to follow (4 bytes)
+tr_camera Cameras[NumCameras]<optimize=false>; // camera data (NumCameras * 16 bytes)
+uint32_t NumSoundSources; // number of sound source data records to follow (4 bytes)
+if (NumSoundSources > 0)
+    tr_sound_source SoundSources[NumSoundSources]<optimize=false>; // sound source data (NumSoundSources * 16 bytes)
+uint32_t NumBoxes; // number of box data records to follow (4 bytes)
+tr_box Boxes[NumBoxes]; // box data (NumBoxes * 20 bytes [TR1 version])
+uint32_t NumOverlaps; // number of overlap records to follow (4 bytes)
+uint16_t Overlaps[NumOverlaps]; // overlap data (NumOverlaps * 2 bytes)
+uint16_t GroundZone[NumBoxes]; // ground zone data
+uint16_t GroundZone2[NumBoxes]; // ground zone 2 data
+uint16_t FlyZone[NumBoxes]; // fly zone data
+uint16_t GroundZoneAlt[NumBoxes]; // ground zone data (alternate rooms?)
+uint16_t GroundZoneAlt2[NumBoxes]; // ground zone 2 data (alternate rooms?)
+uint16_t FlyZoneAlt[NumBoxes]; // fly zone data (alternate rooms?)
+uint32_t NumAnimatedTextures; // number of animated texture records to follow (4 bytes)
+uint16_t AnimatedTextures[NumAnimatedTextures]<optimize=false>; // animated texture data (NumAnimatedTextures * 2 bytes)
+uint32_t NumEntities; // number of entities to follow (4 bytes)
+tr_entity Entities[NumEntities]<optimize=false>; // entity list (NumEntities * 22 bytes [TR1 version])
+uint8_t LightMap[32 * 256]; // light map (8192 bytes)
+tr_colour Palette[256]; // 8-bit palette (768 bytes)
+uint16_t NumCinematicFrames; // number of cinematic frame records to follow (2 bytes)
+if (NumCinematicFrames > 0)
+    tr_cinematic_frame CinematicFrames[NumCinematicFrames]<optimize=false>; // (NumCinematicFrames * 16 bytes)
+uint16_t NumDemoData; // number of demo data records to follow (2 bytes)
+if (NumDemoData > 0)
+    uint8_t DemoData[NumDemoData]; // demo data (NumDemoData bytes)
+int16_t SoundMap[256]; // sound map (512 bytes)
+uint32_t NumSoundDetails; // number of sound-detail records to follow (4 bytes)
+tr_sound_details SoundDetails[NumSoundDetails]<optimize=false>; // sound-detail list (NumSoundDetails * 8 bytes)
+uint32_t NumSamples; // number of uint8_t's in Samples (4 bytes)
+uint8_t Samples[NumSamples]; // array of uint8_t's -- embedded sound samples in Microsoft WAVE format (NumSamples bytes)
+uint32_t NumSampleIndices; // number of sample indices to follow (4 bytes)
+uint32_t SampleIndices[NumSampleIndices]; // sample indices (NumSampleIndices * 4 bytes)

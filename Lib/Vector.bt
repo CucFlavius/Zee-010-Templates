@@ -8,7 +8,7 @@
 //  Category: 
 //------------------------------------------------
 
-const float pi = 3.14159265359;
+const float pi<hidden=true> = 3.14159265359;
 
 // Vector 2 (two floats x,y)
 typedef struct
@@ -289,6 +289,7 @@ typedef struct {
     float y;
     float z;
     float w;
+    local float magnitude;// only calculating outside = Sqrt(x*x + y*y + z*z + w*w);
 } QUATERNION <read=QuaternionString>;
 
 string QuaternionString(QUATERNION &v)
@@ -324,6 +325,27 @@ string readQUATERNIONSHORT (QUATERNIONSHORT& t)
 
     SPrintf (s, "Quaternion( %f, %f, %f, %f )", x, y, z, w);
     //SPrintf (s, "Quaternion( %f, %f, %f, %f )", t.x, t.y, t.z, t.w);
+    return s;
+}
+
+typedef struct
+{
+    int16 x;
+    int16 y;
+    int16 z;
+    int16 w;
+} QUATERNIONSHORT2<read=readQUATERNIONSHORT2>;
+
+string readQUATERNIONSHORT2 (QUATERNIONSHORT2& t)
+{
+    string s; 
+    float x = (t.x / 32767.0);
+    float y = (t.y / 32767.0);
+    float z = (t.z / 32767.0);
+    float w = (t.w / 32767.0);
+
+    SPrintf (s, "Quaternion( %f, %f, %f, %f )", x, y, z, w);
+
     return s;
 }
 

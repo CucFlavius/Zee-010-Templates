@@ -1,0 +1,24 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+char magic[4];
+char version[4];
+int unk0;
+uint fileSize;
+short width;
+short height;
+float unk1;
+float minHeight;
+float maxHeight;
+
+uint data[(width + 1) * (height + 1)];

@@ -16,5 +16,5 @@
 struct MPVD
 {
     CHUNK hdr;
-    uchar bytes[ hdr.Size ];
+    byte bytes[ hdr.size ];
 };

@@ -20,6 +20,7 @@
 //--------------------------------------
 
 #include "Lib/Common.bt"
+#include "WorldOfWarcraft/Array.bt"
 #include "WorldOfWarcraft/M2/MD21 - Header.bt"
 #include "WorldOfWarcraft/M2/PFID - Physics FileID.bt"
 #include "WorldOfWarcraft/M2/SFID - Skin FileIDs.bt"

@@ -1,0 +1,107 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+void Align(int alignment)
+{
+    local int loc = FTell();
+    local int pad = (alignment - (loc % alignment));
+    if (pad != 0 && pad < alignment)
+    {
+        FSkip(pad);
+    }
+};
+
+int matchChunkName(char m[], char s[])
+{
+    //local char s[] = ReadString( FTell());
+    if (Strlen(s) < 4) return 0;
+    if( m[0] == s[3] && m[1] == s[2] && m[2] == s[1] && m[3] == s[0] ) 
+        return 1;
+    return 0;
+}
+
+struct Header
+{
+    char magic[4];
+    char version[4];
+    int unk0;
+    int Field0C;
+    int objectCount;
+    uint fileID;
+    uint size;
+};
+
+struct Property
+{
+    enum<uint> PropertyType
+    {
+        SByte = 0,
+        Byte = 1,
+        Int32 = 4,
+        UInt32 = 5,
+        Single = 8,
+    } Type;
+    uint valueCount;
+    uint Name<format=hex>;
+};
+
+struct Object
+{
+    char chunkID[4];
+    char chunkVersion[4];
+    uint size;
+
+    if (matchChunkName("KODI", chunkID))
+    {
+        uint Name<format=hex>;
+        uint TypeName<format=hex>;
+        uint propertyCount;
+    }
+    else if (matchChunkName("KODR", chunkID))
+    {
+        uint Name<format=hex>;
+        uint Hash2<format=hex>;
+        uint Hash3<format=hex>;
+        uint propertyCount;
+    }
+    else
+    {
+        Printf("NYI chunk ID %s", chunkID);
+        return;
+    }
+
+    Property properties[propertyCount]<optimize=false>;
+    local int i;
+    local int v;
+    for(i = 0; i < propertyCount; i++)
+    {
+        for(v = 0; v < properties[i].valueCount; v++)   // 0 no value, 1 single value, 2+ array
+        {
+            switch(properties[i].Type)
+            {
+                case SByte: signed byte value; break;
+                case Byte: unsigned byte value; break;
+                case UInt32: uint32 value<format=hex>; break;
+                case Int32: int32 value; break;
+                case Single: float value; break;
+                default: Printf("NYI property type %i\n", properties[i].Type); break;
+            }
+        }
+    }
+
+    Align(4);
+};
+
+
+Header header;
+Object obj[header.objectCount]<optimize=false>;

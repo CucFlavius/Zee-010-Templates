@@ -11,18 +11,18 @@
 //   History: 
 //------------------------------------------------
 
-typedef struct(int matDescEndPos)
+typedef struct(int matDescEndPos) // 296
 {
-    uint16 textureSelectorA;        // points to the texture containing the diffuse, etc
+    int16 textureSelectorA;        // points to the texture containing the diffuse, etc
                                     // The value 65535 indicates that no texture is set, it is also
 	                                // possible that this value is actually signed and <code>-1</code> is used to
 	                                // indicate that the value is not set
-    uint16 textureSelectorB;        // points to the texture containing the normals, etc
-    int unk0;
-    int unk1;
-    int unk2;
-    int unk3;
-    int unk4;
+    int16 textureSelectorB;        // points to the texture containing the normals, etc
+    int unk0;   // 0
+    int unk1;   // 0, 1
+    int unk2;   // 0, 1
+    int unk3;   // 0, 3, 5
+    int unk4;   // 0, 5
     Track unkTrack018(TFloat, matDescEndPos);   // 4/4
     Track unkTrack030(TFloat, matDescEndPos);   // 4/4
     Track unkTrack048(TFloat, matDescEndPos);   // 4/4
@@ -37,20 +37,20 @@ typedef struct(int matDescEndPos)
     Track unkTrack0D8(TFloat, matDescEndPos);   // 4/4
     Track unkTrack0F0(TFloat, matDescEndPos);   // 4/4
     Track unkTrack108(TVector3, matDescEndPos);   // 4/12
-    int unk5;
-    int unk6;
+    int unk5;   // 3
+    int unk6;   // 0, 2, 7
 }MATERIALDESCRIPTION;
 
-struct MATERIAL (int index)
+struct MATERIAL (int index) // 48
 {
-    int unk0;
-    int unk1;
-    int unk2;
-    int unk3;
-    int unk4;
-    int unk5;
-    int unk6;
-    int unk7;
+    int unk0;       // 0 .. 242
+    Gap g(4);
+    int unk2;       // 0, 1, 2
+    int unk3;       // 0, 1 ,2, 3, 1184, 1568 .. 65536
+    int unk4;       // 0, 1, 2, 3, 4, 5, 6, 8, 9, 10
+    int unk5;       // 0, 1, 2, 3, 4 .. 9
+    int unk6;       // 0 .. 68
+    int unk7;       // 0 .. 68
     M3ARRAY materialDescription;
     
     local int matDescEndPos = headerSize + header.materials.offset + (header.materials.elements * 48) + materialDescription.offset + (materialDescription.elements * 296);

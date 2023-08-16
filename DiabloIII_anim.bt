@@ -1,0 +1,399 @@
+//------------------------------------------------
+//--- 010 Editor v13.0beta1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct OFFSET3
+{
+    int offset;
+    int size;
+};
+
+struct Header
+{
+    int deadBeef;
+    int snoType;
+    int unk1;
+    int unk2;
+    int snoID;
+    int unk3;
+    int unk4;
+};
+
+struct BoneNames
+{
+    OFFSET3 boneNameOffs;
+
+    local long save = FTell();
+
+    if (boneNameOffs.size != 0)
+    {
+        FSeek(boneNameOffs.offset + 16);
+        STRINGc boneName(64)[boneNameOffs.size / 64]<optimize=false>;
+    }
+
+    FSeek(save);
+};
+
+struct TranslationKey
+{
+    int I0;
+    VECTOR3 location;
+};
+
+struct TranslationKeys
+{
+    OFFSET3 translationKeyOffs;
+
+    local long save = FTell();
+
+    if (translationKeyOffs.size != 0)
+    {
+        FSeek(translationKeyOffs.offset + 16);
+        TranslationKey key[translationKeyOffs.size / 16]<optimize=false>;
+    }
+
+    FSeek(save);
+};
+
+struct TranslationCurve
+{
+    int I0;
+    TranslationKeys translationKeys;
+};
+
+struct TranslationCurves
+{
+    OFFSET3 translationCurveOffs;
+
+    local long save = FTell();
+    
+    if (translationCurveOffs.size != 0)
+    {
+        FSeek(translationCurveOffs.offset + 16);
+        TranslationCurve curve[translationCurveOffs.size / 20]<optimize=false>;
+    }
+
+    FSeek(save);
+};
+
+struct RotationKey
+{
+    int I0;
+    QUATERNION rotation;
+};
+
+
+struct RotationKeys
+{
+    OFFSET3 rotationKeyOffs;
+
+    local long save = FTell();
+
+    if (rotationKeyOffs.size != 0)
+    {
+        FSeek(rotationKeyOffs.offset + 16);
+        RotationKey key[rotationKeyOffs.size / 20]<optimize=false>;
+    }
+
+    FSeek(save);
+};
+
+struct RotationCurve
+{
+    int I0;
+    RotationKeys rotationKeys;
+};
+
+struct RotationCurves
+{
+    OFFSET3 rotationCurveOffs;
+
+    local long save = FTell();
+    
+    if (rotationCurveOffs.size != 0)
+    {
+        FSeek(rotationCurveOffs.offset + 16);
+        RotationCurve curve[rotationCurveOffs.size / 20]<optimize=false>;
+    }
+
+    FSeek(save);
+};
+
+struct ScaleKey
+{
+    int I0;
+    float scale;
+};
+
+struct ScaleKeys
+{
+    OFFSET3 scaleKeyOffs;
+
+    local long save = FTell();
+
+    if (scaleKeyOffs.size != 0)
+    {
+        FSeek(scaleKeyOffs.offset + 16);
+        ScaleKey key[scaleKeyOffs.size / 8]<optimize=false>;
+    }
+
+    FSeek(save);
+};
+
+struct ScaleCurve
+{
+    int I0;
+    ScaleKeys translationKeys;
+};
+
+struct ScaleCurves
+{
+    OFFSET3 scaleCurveOffs;
+
+    local long save = FTell();
+    
+    if (scaleCurveOffs.size != 0)
+    {
+        FSeek(scaleCurveOffs.offset + 16);
+        ScaleCurve curve[scaleCurveOffs.size / 20]<optimize=false>;
+    }
+
+    FSeek(save);
+};
+
+struct TriggerConditions
+{
+    enum<uint> eMaterial
+    {
+        DEFAULT_MATERIAL = 0,
+        METAL_MATERIAL = 1,
+        WOOD_MATERIAL = 2,
+        BONE_MATERIAL = 3,
+        FLESH_MATERIAL = 4,
+        WATER_MATERIAL = 5,
+        STONE_MATERIAL = 6,
+        GLASS_MATERIAL = 7,
+        PAPER_MATERIAL = 8,
+        METAL2_MATERIAL = 9,
+        METAL3_MATERIAL = 10,
+        WOOD2_MATERIAL = 11,
+        WOOD3_MATERIAL = 12,
+        STONE2_MATERIAL = 13,
+        STONE3_MATERIAL = 14,
+        BONE2_MATERIAL = 15,
+        BONE3_MATERIAL = 16,
+        INVALID_MATERIAL = -1
+    };
+
+    byte percent;
+    FSkip(3);
+    int delayMin;
+    int delayMax;
+    int repeatTimeMin;
+    int repeatTimeDelta;
+    int impulseMin;
+    int impulseDelta;
+    eMaterial material;
+    int conditionFlags;
+};
+
+struct SNOHandle
+{
+    int group;
+    int ID;
+};
+
+struct HardPointLink
+{
+    STRINGc name(64);
+    int I0;
+};
+
+struct TriggerEvent
+{
+    enum<uint> TriggeredEventType
+    {
+        ADD_OBJECT = 0,
+        DETACH_OBJECT = 1,
+        ADD_CLOTH_DEPRECATED = 2,
+        DELETE_CLOTH_DEPRECATED = 3,
+        ADD_TRAIL = 4,
+        DELETE_TRAIL_DEPRECATED = 5,
+        MSG = 6,
+        DELETE_OBJECT = 7,
+        FOOTSTEP = 8,
+        ANIM = 9,
+        TRANSPARENCY = 10,
+        ADD_ROPE = 11,
+        DELETE_ROPE_DEPRECATED = 12,
+        CHANGE_LOOK = 13,
+        SHADOW = 14,
+        CHANGE_PHYSICS_DEPRECATED = 15,
+        ADD_EFFECT_GROUP = 16,
+        DELETE_EFFECT_GROUP_DEPRECATED = 17,
+        FROST_BREATH = 18,
+        ENABLE_RIGID_ANIMATION_ANGVEL_DEPRECATED = 19,
+        DISABLE_RIGID_ANIMATION_ANGVEL_DEPRECATED = 20,
+        ENABLE_RIGID_ANIMATION_BOB_DEPRECATED = 21,
+        DISABLE_RIGID_ANIMATION_BOB_DEPRECATED = 22,
+        MUSIC = 23,
+        CAPTURE_BY_PARTICLE_SYSTEM_DEPRECATED = 24,
+        SPAWN_OBJECT = 25,
+        OUTRO_OBJECT = 26,
+        ENABLE_RAGDOLL = 27,
+        DISABLE_CONSTRAINT = 28,
+        DISABLE_COLLISION_MESSAGES = 29,
+        ATTACH_SPAWNED_ACTOR = 30,
+        CANCEL_LOOK = 31,
+        HITFLASH = 32,
+        ENABLE_RAGDOLL_ANIMATION_OVERRIDE = 33,
+        DISABLE_RAGDOLL_ANIMATION_OVERRIDE = 34,
+        ATTACH_CAMERA = 35,
+        FRAMEOUT_ENABLE = 36,
+        FRAMEOUT_DISABLE = 37,
+        RESTORE_CAMERA = 38,
+        FADE = 39,
+        NULL = 40,
+        OUTRO_ANIMATION = 41,
+        HIDE_HELM_AND_SHOULDERS = 42    
+    };
+
+    TriggeredEventType eType;
+    TriggerConditions conditions;
+    int AttachmentType;
+    SNOHandle snoHandle;
+    int ID;
+    int pinFlags;
+    int runeType;
+    int useRuneType;
+    HardPointLink hardPointLinks[2]<optimize=false>;
+    STRINGc lookInt(64);
+    STRINGc constraintLink(64);
+    int animTag;
+    float alpha;
+    int msgPassMethod;
+    int msgKey;
+    int trigger;
+    int I8;
+    int I9;
+    float F1;
+    float F2;
+    int I10;
+    float F3;
+    int I11;
+    float velocity;
+    int I12;
+    int spawnedActorLife;
+    RGBA32 colorAdd;
+    int hitFlashAddDuration;
+    RGBA32 colorMul;
+    int hitFlashMullDuration;
+};
+
+struct KeyframedAttachment
+{
+    float keyframeIndex;
+    TriggerEvent event;
+};
+
+struct KeyframedAttachments
+{
+    OFFSET3 keyAttOffs;
+
+    local long save = FTell();
+    
+    if (keyAttOffs.size != 0)
+    {
+        FSeek(keyAttOffs.offset + 16);
+        KeyframedAttachment attachment[keyAttOffs.size / 412]<optimize=false>;
+    }
+
+    FSeek(save);
+};
+
+struct Vector3s
+{
+    OFFSET3 vecOffs;
+
+    local long save = FTell();
+    
+    if (vecOffs.size != 0)
+    {
+        FSeek(vecOffs.offset + 16);
+        VECTOR3 vectors[vecOffs.size / 12]<optimize=false>;
+    }
+
+    FSeek(save);
+};
+
+typedef struct
+{
+    int Flags;
+    STRINGc PermutationName(65);
+    FSkip(3);
+    float FrameRate;
+    float Compression;
+    float TramslationCompressionRatio;
+    float RotationComressionRatio;
+    float ScaleCompressionRatio;
+    int BlendTime;
+    int FromPermBlendTime;
+    int Weight;
+    float SpeedMultMin;
+    float SpeedMultDelta;
+    float RagdollVelocityFactor;
+    float RagdollMomentumFactor;
+    int BoneNameCount;
+    BoneNames boneNames;
+    FSkip(12);
+    int KeyframePosCount;
+    TranslationCurves translationCurves<bgcolor=cYellow>;
+    FSkip(12);
+    RotationCurves rotationCurves<bgcolor=cLtBlue>;
+    FSkip(8);
+    ScaleCurves scaleCurves<bgcolor=cLtPurple>;
+    FSkip(8);
+    float ContactKeyframe0;
+    float ContactKeyframe1;
+    float ContactKeyframe2;
+    float ContactKeyframe3;
+    VECTOR3 ContactOffset0;
+    VECTOR3 ContactOffset1;
+    VECTOR3 ContactOffset2;
+    VECTOR3 ContactOffset3;
+    float EarliestInterruptKeyFrame;
+    KeyframedAttachments KeyedAttachments;
+    int KeyedAttachmentsCount;
+    FSkip(8);
+    Vector3s KeyframePosList;
+    FSkip(8);
+    Vector3s NonlinearOffset;
+    FSkip(8);
+    VECTOR3 avgVelocity;
+    HardPointLink hardPointLink;
+    STRINGc unkStr0(256);
+    STRINGc unkStr1(256);
+}Permutation<bgcolor=cRed>;
+
+Header header;
+int flags;
+int playbackMode;
+int snoAppearance;
+OFFSET3 permutationsOffs;
+int permutationsCount;
+FSkip(12);
+time_t machineTime;
+
+FSeek(permutationsOffs.offset + 16);
+Permutation permutations[permutationsCount]<optimize=false>;

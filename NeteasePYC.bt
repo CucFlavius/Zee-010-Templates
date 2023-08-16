@@ -1,0 +1,608 @@
+//------------------------------------------------
+//--- 010 Editor v3.0.4 Binary Template
+//
+//      File: PYC.bt
+//   Authors: Kuang-che Wu
+//   Version: 1.1
+//   Purpose: Parse python bytecode .pyc and .pyo files, 
+//            support python 2.4 to 2.7. 
+//  Category: Programming
+// File Mask: *.pyc,*.pyo
+//  ID Bytes: 
+//   History: 
+//   1.1   2016-02-02 SweetScape: Updated header for repository submission.
+//   1.0   2009-04-02 K Wu: Initial release.
+//------------------------------------------------
+
+enum <uint16> MagicValue {
+	PY_24a0 = 62041,
+	PY_24a3 = 62051,
+	PY_24b1 = 62061,
+	PY_25a0_1 = 62071,
+	PY_25a0_2 = 62081,
+	PY_25a0_3 = 62091,
+	PY_25a0_4 = 62092,
+	PY_25b3_1 = 62101,
+	PY_25b3_2 = 62111,
+	PY_25c1 = 62121,
+	PY_25c2 = 62131,
+	PY_26a0 = 62151,
+	PY_26a1 = 62161,
+	PY_27a0_1 = 62171,
+	PY_27a0_2 = 62181,
+};
+
+// marshal obj type of version 2
+// version 2 is backward compatible to version 1 (for read)
+enum <char> ObjType {
+	TYPE_NULL		= '0',
+	TYPE_NONE		= 'N',
+	TYPE_FALSE		= 'F',
+	TYPE_TRUE		= 'T',
+	TYPE_STOPITER		= 'S',
+	TYPE_ELLIPSIS		= '.',
+	TYPE_INT		= 'i',
+	TYPE_INT64		= 'I',
+	TYPE_FLOAT		= 'f',
+	TYPE_BINARY_FLOAT	= 'g',
+	TYPE_COMPLEX		= 'x',
+	TYPE_BINARY_COMPLEX	= 'y',
+	TYPE_LONG		= 'l',
+	TYPE_STRING		= 's',
+	TYPE_INTERNED		= 't',
+	TYPE_STRINGREF		= 'R',
+	TYPE_TUPLE		= '(',
+	TYPE_LIST		= '[',
+	TYPE_DICT		= '{',
+	TYPE_CODE		= 'c',
+	TYPE_UNICODE		= 'u',
+	TYPE_UNKNOWN		= '?',
+	TYPE_SET		= '<',
+	TYPE_FROZENSET		= '>',
+};
+
+// Python/import.c
+struct Magic {
+	MagicValue magic1;
+	char magic2[2];
+	if (magic2 != "\x0d\x0a") {
+		Warning("bad magic");
+		return 0;
+	}
+	if (EnumToString(magic1) == "") {
+		Warning("Unknown magic version");
+		return 0;
+	}
+};
+
+// opcode.h
+// this is opname of python 2.4
+// please add new opcode in ReadInstruction()
+enum <ubyte> OpCode {
+	STOP_CODE	= 255,
+	POP_TOP		= 68,
+	ROT_TWO		= 58,
+	ROT_THREE	= 62,
+	DUP_TOP		= 84,
+	ROT_FOUR	= 56,
+	
+	UNARY_POSITIVE	= 10,
+	UNARY_NEGATIVE	= 11,
+	UNARY_NOT	= 12,
+	UNARY_CONVERT	= 13,
+	
+	UNARY_INVERT	= 15,
+	
+	LIST_APPEND	= 124,
+	BINARY_POWER	= 19,
+	
+	BINARY_MULTIPLY	= 80,
+	BINARY_DIVIDE	= 22,
+	BINARY_MODULO	= 83,
+	BINARY_ADD	= 89,
+	BINARY_SUBTRACT	= 1,
+	BINARY_SUBSCR	= 24,
+	BINARY_FLOOR_DIVIDE = 26,
+	BINARY_TRUE_DIVIDE = 27,
+	INPLACE_FLOOR_DIVIDE = 28,
+	INPLACE_TRUE_DIVIDE = 29,
+	
+	SLICE		= 30,
+/* Also uses 31-33 */
+	SLICE_a		= 31,
+	SLICE_b		= 32,
+	SLICE_c		= 33,
+
+	STORE_SLICE	= 40,
+/* Also uses 41-43 */
+	STORE_SLICE_a	= 41,
+	STORE_SLICE_b	= 42,
+	STORE_SLICE_c	= 43,
+
+	DELETE_SLICE	= 50,
+/* Also uses 51-53 */
+	DELETE_SLICE_a	= 51,
+	DELETE_SLICE_b	= 52,
+	DELETE_SLICE_c	= 53,
+
+	INPLACE_ADD	= 2,
+	INPLACE_SUBTRACT	= 20,
+	INPLACE_MULTIPLY	= 60,
+	INPLACE_DIVIDE	= 23,
+	INPLACE_MODULO	= 63,
+	STORE_SUBSCR	= 3,
+	DELETE_SUBSCR	= 75,
+	
+	BINARY_LSHIFT	= 61,
+	BINARY_RSHIFT	= 0,
+	BINARY_AND	= 57,
+	BINARY_XOR	= 65,
+	BINARY_OR	= 55,
+	INPLACE_POWER	= 64,
+	GET_ITER	= 59,
+	
+	PRINT_EXPR	= 70,
+	PRINT_ITEM	= 71,
+	PRINT_NEWLINE	= 72,
+	PRINT_ITEM_TO   = 73,
+	PRINT_NEWLINE_TO = 74,
+	INPLACE_LSHIFT	= 85,
+	INPLACE_RSHIFT	= 66,
+	INPLACE_AND	= 86,
+	INPLACE_XOR	= 21,
+	INPLACE_OR	= 4,
+	BREAK_LOOP	= 5,
+	WITH_CLEANUP    = 81,
+	LOAD_LOCALS	= 76,
+	RETURN_VALUE	= 88,
+	IMPORT_STAR	= 54,
+	EXEC_STMT	= 67,
+	YIELD_VALUE	= 79,
+	POP_BLOCK	= 82,
+	END_FINALLY	= 87,
+	BUILD_CLASS	= 77,
+	
+
+	STORE_NAME	= 135,	/* Index in name list */
+	DELETE_NAME	= 120,	/* "" */
+	UNPACK_SEQUENCE	= 92,	/* Number of sequence items */
+	FOR_ITER	= 121,
+
+	STORE_ATTR	= 126,	/* Index in name list */
+	DELETE_ATTR	= 107,	/* "" */
+	STORE_GLOBAL	= 106,	/* "" */
+	DELETE_GLOBAL	= 96,	/* "" */
+	DUP_TOPX	= 115,	/* number of items to duplicate */
+	LOAD_CONST	= 100,	/* Index in const list */
+	LOAD_NAME	= 101,	/* Index in name list */
+	BUILD_TUPLE	= 102,	/* Number of tuple items */
+	BUILD_LIST	= 99,	/* Number of list items */
+	BUILD_MAP	= 93,	/* Always zero for now */
+	LOAD_ATTR	= 114,	/* Index in name list */
+	COMPARE_OP	= 146,	/* Comparison operator */
+	IMPORT_NAME	= 108,	/* Index in name list */
+	IMPORT_FROM	= 109,	/* Index in name list */
+
+	JUMP_FORWARD	= 110,	/* Number of bytes to skip */
+	JUMP_IF_FALSE	= 111,	/* "" */
+	JUMP_IF_TRUE	= 112,	/* "" */
+	JUMP_ABSOLUTE	= 113,	/* Target byte offset from beginning of code */
+
+	LOAD_GLOBAL	= 116,	/* Index in name list */
+
+	CONTINUE_LOOP	= 90,	/* Start of loop (absolute) */
+	SETUP_LOOP	= 105,	/* Target address (relative) */
+	SETUP_EXCEPT	= 137,	/* "" */
+	SETUP_FINALLY	= 147,	/* "" */
+
+	LOAD_FAST	= 95,	/* Local variable number */
+	STORE_FAST	= 103,	/* Local variable number */
+	DELETE_FAST	= 97,	/* Local variable number */
+
+	RAISE_VARARGS	= 130,	/* Number of raise arguments (1, 2 or 3) */
+/* CALL_FUNCTION_XXX opcodes defined below depend on this definition */
+	CALL_FUNCTION	= 131,	/* #args + (#kwargs<<8) */
+	MAKE_FUNCTION	= 132,	/* #defaults */
+	BUILD_SLICE 	= 133,	/* Number of items */
+	
+	MAKE_CLOSURE    = 119,     /* #free vars */
+	LOAD_CLOSURE    = 91,     /* Load free variable from closure */
+	LOAD_DEREF      = 125,     /* Load and dereference from closure cell */ 
+	STORE_DEREF     = 136,     /* Store into cell */ 
+
+/* The next 3 opcodes must be contiguous and satisfy
+   (CALL_FUNCTION_VAR - CALL_FUNCTION) & 3 == 1  */
+	CALL_FUNCTION_VAR        = 140,	/* #args + (#kwargs<<8) */
+	CALL_FUNCTION_KW         = 141,	/* #args + (#kwargs<<8) */
+	CALL_FUNCTION_VAR_KW     = 142,	/* #args + (#kwargs<<8) */
+
+/* Support for opargs more than 16 bits long */
+	EXTENDED_ARG = 145,
+
+    // NETEASE //
+    SET_ADD = 98,
+    MAP_ADD = 122,
+    SetupWidth = 143,
+
+    NEOX_SPECIAL = 173,
+
+    // Trunkdev
+    LoadConstAndReturnValue = 117,
+    LoadConstAndBinarySubscr = 127,
+    LoadConstAndStoreMap = 129,
+    LoadConstX2 = 150,
+    LoadConstC = 163,               // Or is this LoadAttr LoadFast CallFunction (and overwrites the next 2 instructions ?)
+    LoadConstD = 164,
+    Load2ConstAndStoreMap = 175,    // has extended arg
+    StoreNameB = 157,
+    LoadConstAndMakeFunction = 180, // has extended arg
+    MakeFunctionAndStoreName = 159, // has extended arg
+    LoadGlobalAndLoadFast = 177,    // has extended arg
+    LoadGlobalAndCallFunction = 165,// has extended arg
+    LoadGlobalAndReturnValue = 230,
+    LoadConstAndCompareOp = 161,    // has extended arg
+    LoadFastAndLoadAttr = 205,      // has extended arg
+    CallFunctionAndStoreFast = 169, // has extended arg
+    LoadFastAndReturnValue = 228,
+    LoadFastAndLoadAttr3 = 198, // LoadFastB or it could be LoadFast, LoadAttr ? Idk...
+    LoadGlobalAndLoadAttr = 219,    // has extended arg LoadGlobalAndLoadAttr
+    LoadGlobalAndLoadAttrSpecial1 = 216,   // could be wrong here
+    LoadGlobalAndLoadFast2 = 206,   // has extended arg
+    CallFunctionAndPopTop = 138,
+    LoadFastAndCallFunctionAndPopTop = 153,  // has extended arg
+    LoadGlobalAndCallFunctionAndPopTop = 176,// has extended arg
+    LoadAttrAndLoadFast = 213,      // has extended arg (could be wrong? I think it might be like the one below where it mods)
+    LoadFastAndLoadAttrX2 = 197,    // This is a weird one, has extended arg + mod next instruction opcode?
+    LoadConstAndCallFunction = 155,
+    PopTopAndLoadConstAndReturnValue = 215,
+    LoadFastAndStoreAttr = 174,     // has extended arg
+    LoadFastAndLoadGlobal = 229,    // has extended arg
+    LoadFastAndPopJumpIfTrue = 226, // has extended arg
+    PopTopAndJumpForward = 123,
+    PopTopX3 = 6,
+    LoadLocalsAndReturnValue = 49,
+    LoadAttrAndCallFunctionAndPopTop = 171,  // has extended arg
+    LoadFastAttrFast = 203,
+    LoadFastAndCallFunction = 168,  // has extended arg
+    LoadFastAndStoreFast = 221,     // has extended arg
+    LoadFastX2 = 172,
+    LoadAttrAndCompareOP = 223,     // has extended arg
+    LoadFastD = 193,
+    LoadFastAndPopJumpIfFalse = 222,// has extended arg
+    LoadGlobalAndLoadAttrX2 = 204,
+    CallFunctionX2 = 179,
+    LoadAttrAndLoadGlobal = 152,
+    LoadGlobalAndLoadAttrSpecial2 = 189,
+    PopTopAndPopBlock = 69,
+    LoadConstAndLoadFast = 166,
+    CompareOPAndPopJumpIfFalse = 154,
+    StoreFastX2 = 224,
+    LoadFastAndLoadAttr2 = 170,
+    LoadFastAndLoadConst2 = 156,
+    CallFunctionAndPopTopSpecial = 217,
+    LoadFastX3AndCallFunction = 195,
+    LoadAttrAndCallFunction = 160,
+    LoadFastAndLoadConstSpecial = 182,
+    LoadFastF = 212, // This could be modifying next instructions, needs checking
+    LoadFastAttrFastAttr = 194,
+    LoadFastAttrPopJumpIfFalse = 200,
+    LoadConstAndImportName = 181,
+    LoadAttrX2 = 162,
+    BinarySubtractAndReturnValue = 25,
+    LoadFastAndLoadAttr4 = 190,
+    LoadAttrAndLoadFast2 = 158,
+    LoadFastX4 = 202,
+    UNKNOWN_7 = 7,
+};
+
+// ceval.c
+const int HAVE_ARGUMENT = 90;
+const int EXTENDED_ARG = 143;
+struct Instruction
+{
+    local byte nextop = ReadUByte(FTell());
+	if (nextop == LoadConstAndImportName || nextop == LoadGlobalAndLoadAttr
+|| nextop == LoadAttrAndCallFunction || nextop == LoadFastAndPopJumpIfFalse
+|| nextop == LoadFastAndLoadAttr4 || nextop == LoadFastAndLoadAttr3
+|| nextop == LoadFastAndLoadAttr2 || nextop == LoadFastAndCallFunction
+|| nextop == LoadGlobalAndLoadFast || nextop == CallFunctionAndStoreFast
+|| nextop == LoadFastAndCallFunctionAndPopTop || nextop == LoadGlobalAndLoadFast2
+|| nextop == LoadAttrAndLoadFast2 || nextop == CompareOPAndPopJumpIfFalse
+|| nextop == LoadFastAndLoadAttr || nextop == LoadAttrAndLoadFast
+|| nextop == LoadGlobalAndCallFunctionAndPopTop || nextop == CallFunctionAndPopTopSpecial
+|| nextop == LoadFastX2 || nextop == LoadConstX2 || nextop == LoadConstAndMakeFunction
+|| nextop == LoadFastAndLoadConst2 || nextop == LoadFastAndStoreAttr || nextop == LoadConstAndLoadFast
+|| nextop == LoadGlobalAndCallFunction || nextop == LoadFastAndLoadGlobal 
+
+)
+    {
+		ubyte opcode;
+		uint16 oparg;
+		ubyte opcode_extended_arg;
+		uint16 oparg_hi;
+	}
+    else if (nextop == LoadGlobalAndLoadAttrX2 || nextop == LoadGlobalAndLoadAttrSpecial1
+|| nextop == LoadFastAttrFast || nextop == LoadFastAndLoadAttrX2
+)
+    {
+        ubyte opcode;
+		uint16 oparg;
+		ubyte opcode_extended_arg;
+		uint16 oparg_hi;
+		ubyte opcode_extended_arg2;
+		uint16 oparg_hi2;
+    }
+    else if (nextop == LoadFastAttrFastAttr || nextop == LoadFastX4
+|| nextop == LoadFastX3AndCallFunction
+)
+    {
+        ubyte opcode;
+		uint16 oparg;
+		ubyte opcode_extended_arg;
+		uint16 oparg_hi;
+		ubyte opcode_extended_arg2;
+		uint16 oparg_hi2;
+		ubyte opcode_extended_arg3;
+		uint16 oparg_hi3;
+    }  
+    else if (nextop == NEOX_SPECIAL)
+    {
+        ubyte opcode;
+		uint16 oparg;
+        ubyte wat;
+		uint16 oparg_hi;
+    }
+    else if (nextop == UNKNOWN_7)
+    {
+        ubyte opcode;
+		uint16 oparg;
+    }
+    else
+    {
+		ubyte opcode;
+		if (opcode >= HAVE_ARGUMENT)
+			uint16 oparg;
+	}
+};
+
+typedef int32 r_long;
+typedef int64 r_long64;
+typedef int16 r_short;
+typedef ubyte r_byte;
+
+struct Code {
+	ObjType type;
+	if (type != TYPE_STRING) {
+		Warning("code not in string type");
+		Exit(1);
+	}
+	r_long n;
+	local int remain = n;
+	local int end = FTell() + n;
+
+	/* trick to optimize parse speed */
+	while (remain >= 6) {
+		Instruction inst[remain/6] <read=ReadInstruction,optimize=false>;
+		remain = end - FTell();
+	}
+	remain = end - FTell();
+
+	while (remain > 0) {
+		Instruction inst <read=ReadInstruction>;
+		remain -= sizeof(inst);
+	}
+};
+
+string Opcode2Opname(OpCode opcode)
+{
+	uint16 magic = file.magic.magic1;
+	local string opname = EnumToString(opcode);
+	if (magic >= 0) { // history between python 2.0 and 2.4
+		// r27197
+		if (opcode == 114) opname = "";
+		// r28249
+		if (opcode == 81) opname = "RETURN_NONE";
+		// r28494
+		if (opcode == 81) opname = "";
+		// r32346
+		if (opcode == 9) opname = "NOP";
+		// r32389
+		if (opcode == 9) opcode = "";
+		// r35378
+		if (opcode == 18) opname = "LIST_APPEND";
+		// r36216
+		if (opcode == 9) opname = "NOP";
+	}
+	// magic 62041 r36242 marshal version 1
+	// magic 62051 r37112
+	// magic 62061 r37403
+	// magic 62071 r38931 marshal version 2
+	// magic 62081 r39773
+	if (magic >= 62091) {  // r42624
+		// r42624
+		if (opcode == 81) opname = "WITH_CLEANUP";
+	}
+	// magic 62092 r42952
+	// magic 62101 r50600
+	// magic 62111 r50968
+	// magic 62121 r51082
+	// magic 62131 r51729
+	if (magic >= 62151) { // r59548
+		// r59548
+		if (opcode == 78) opname = "STORE_MAP";
+	}
+	// magic 62161 r61290
+	if (magic >= 62171) { // r67818
+		// r67818
+		if (opcode == 18) opname = "";
+		if (opcode == 94) opname = "POP_JUMP_IF_FALSE";
+	}
+	if (magic >= 62181) { // r70071
+		// r70071
+		if (opcode == 111) opname = "JUMP_IF_FALSE_OR_POP";
+		if (opcode == 112) opname = "JUMP_IF_TRUE_OR_POP";
+		if (opcode == 114) opname = "LoadAttr";
+		if (opcode == 104) opname = "POP_JUMP_IF_TRUE";
+	}
+
+	return opname;
+}
+
+string ReadInstruction(Instruction &ins)
+{
+	string s;
+	uint16 magic = file.magic.magic1;
+	OpCode opcode = (OpCode)ins.opcode;
+	string opname = Opcode2Opname(opcode);
+	if (exists(ins.oparg)) {
+		uint32 oparg = ins.oparg;
+		if (exists(ins.oparg_hi))
+			oparg += (uint32)ins.oparg_hi << 16;
+		// Note, COMPARE_OP oparg change name in r24970
+		if (opname == "COMPARE_OP") {
+			string cmp_op;
+			switch (oparg) {
+				case 0: cmp_op = "<"; break;
+				case 1: cmp_op = "<="; break;
+				case 2: cmp_op = "=="; break;
+				case 3: cmp_op = "!="; break;
+				case 4: cmp_op = ">"; break;
+				case 5: cmp_op = ">="; break;
+				case 6: cmp_op = "in"; break;
+				case 7: cmp_op = "not in"; break;
+				case 8: cmp_op = "is"; break;
+				case 9: cmp_op = "is not"; break;
+				case 10: cmp_op = "exception match"; break;
+				case 11: cmp_op = "BAD"; break;
+			}
+			SPrintf(s, "%s (%s)", opname, cmp_op);
+
+		} else {
+			SPrintf(s, "%s %d", opname, oparg);
+		}
+	} else {
+		s = opname;
+	}
+	return s;
+}
+
+struct LnoTab {
+	ObjType type;
+	r_long n;
+	//if (type != TYPE_STRING) {
+	//	Warning("lnotab not in string type");
+	//	Exit(1);
+	//}
+    if (type == TYPE_STRING)
+    {
+	    struct {
+		    uchar bytecode_offset_diff;
+		    uchar line_diff;
+	    } pair[n/2];
+    }
+};
+
+// Python/marshal.c
+typedef struct r_object {
+	ObjType type;
+	switch (type) {
+		case TYPE_NULL:
+		case TYPE_NONE:
+		case TYPE_STOPITER:
+		case TYPE_ELLIPSIS:
+		case TYPE_FALSE:
+		case TYPE_TRUE:
+			break;
+		case TYPE_INT:
+			r_long value;
+			break;
+		case TYPE_INT64:
+			r_long64 value;
+			break;
+		case TYPE_LONG:
+			r_long n;
+			local int size = n<0?-n:n;
+			r_short digit[size];
+			break;
+		case TYPE_FLOAT:
+			r_byte n;
+			char value[n];
+			break;
+		case TYPE_BINARY_FLOAT:
+			double value;
+			break;
+
+		case TYPE_COMPLEX:
+			r_byte nr;
+			char real[nr];
+			r_byte ni;
+			char imag[ni];
+			break;
+
+		case TYPE_BINARY_COMPLEX:
+			double real;
+			double imag;
+			break;
+			
+		case TYPE_INTERNED:
+		case TYPE_STRING:
+			r_long n;
+			if (n)
+				char str[n];
+			break;
+		case TYPE_STRINGREF:
+			r_long n;
+			break;
+		case TYPE_TUPLE:
+			r_long n;
+			if (n)
+				struct r_object elements[n] <optimize=false>;
+			break;
+		case TYPE_LIST:
+			r_long n;
+			if (n)
+				struct r_object elements[n] <optimize=false>;
+			break;
+		case TYPE_DICT:
+			while (1) {
+				struct r_object key;
+				if (key.type == TYPE_NULL)
+					break;
+				struct r_object val;
+			}
+			break;
+		case TYPE_SET:
+		case TYPE_FROZENSET:
+			r_long n;
+			if (n)
+				struct r_object elements[n] <optimize=false>;
+			break;
+		case TYPE_CODE:
+			r_long argcount;
+			r_long nlocals;
+			r_long stacksize;
+			r_long flags;
+			//struct r_object code;
+			Code code;
+			struct r_object consts;
+			struct r_object names;
+			struct r_object varnames;
+			struct r_object freevars;
+			struct r_object cellvars;
+			struct r_object filename;
+			struct r_object name;
+			r_long firstlineno;
+			//struct r_object lnotab;
+			LnoTab lnotab;
+			break;
+		default:
+			Warning("unknown type code");
+			Exit(1);
+	} 
+} r_object;
+
+struct {
+	Magic magic;
+	char mtime[4];
+	r_object data;
+} file;

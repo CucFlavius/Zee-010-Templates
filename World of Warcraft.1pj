@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<_010editor_project version="1.0">
+ <include_workspace>true</include_workspace>
+ <relative_paths>true</relative_paths>
+ <auto_save>true</auto_save>
+ <folder name="WorldOfWarcraft" open="false" dir="WorldOfWarcraft" filter="" subdirs="true">
+ </folder>
+ <file>WorldOfWarcraft_ADT.bt</file>
+ <file>WorldOfWarcraft_M2.bt</file>
+ <file>WorldOfWarcraft_M2_3.3.5.bt</file>
+ <file>WorldOfWarcraft_M3.bt</file>
+ <file>WorldOfWarcraft_TEX.bt</file>
+ <file>WorldOfWarcraft_WDL.bt</file>
+ <file>WorldOfWarcraft_WDT.bt</file>
+ <file>WorldOfWarcraft_WMO_group.bt</file>
+ <file>WorldOfWarcraft_WMO_root.bt</file>
+</_010editor_project>

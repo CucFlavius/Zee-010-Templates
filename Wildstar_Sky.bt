@@ -6,8 +6,24 @@
 //  Category: Wildstar
 //------------------------------------------------
 
+// TODO: WhiteVale_Main03.sky
+// Ambient Cloud 0
+// Cloud Gradient
+// Directional Sky 0,
+// Hemisphere Cloud 0
+// Hemisphere Fog 0
+// Hemisphere Lighting 0
+// Hemisphere Sky 0
+// Liquid Color 1
+// Liquid Color 2
+// Liquid Color 3
+
+// MISC, Light, Fog, Sky, Cloud, Sky box, Wind
+
+//------------------------------------------------
+
 #include "Lib/Common.bt"
-local int dOfs = 1216;  // Data Offset
+local int HEADER_SIZE = 0;  // Data Offset
 if(ThemeIsDark()) ThemeAutoScaleColors (true, 0.99);
 
 typedef struct(int len)
@@ -19,6 +35,21 @@ typedef struct(int len)
         byte padding[padLen]<optimize=false>;
 }PAD<hidden=true>;
 
+typedef struct
+{
+    int value;
+}Time<read=ReadTime>;
+
+string ReadTime(Time &t)
+{
+    string s;
+    float h = ((float)t.value / 86400.0) * 24.0;
+    float m = 60 - ((Ceil(h) - h) * 60);
+    if (m == 60) m = 0;
+    SPrintf(s, "Time: %i:%i", h, m);
+    return s;
+};
+
 void PAD16()
 {
     local int padLen = (FTell() % 16);
@@ -27,39 +58,54 @@ void PAD16()
 
 struct sub_1407D0F30
 {
-    int64 unkOne;         // Always 1
-    M3ARRAY colorBlockArray;       // ptr + 8
-    M3ARRAY unk1;       // ptr + 24
-    M3ARRAY unk2;       // ptr + 40
-    M3ARRAY unk3;       // ptr + 56
-    M3ARRAY unk4;       // ptr + 72
-    M3ARRAY unk7;       // ptr + 88
-    M3DOUBLEARRAY unk5; // ptr + 104
-    M3DOUBLEARRAY skySphereGradient; // ptr + 128
+    int64 unkOne;                       // 0, 1 (bool)
+    M3ARRAY colorBlockArray;            // ptr + 8
+    M3ARRAY unk1;                       // ptr + 24
+    M3ARRAY unk2;                       // ptr + 40
+    M3ARRAY unk3;                       // ptr + 56 unused
+    M3ARRAY unk4;                       // ptr + 72
+    if (version == 16)
+    {
+        M3ARRAY unk7;                       // ptr + 88
+    }
+    M3DOUBLEARRAY unk5;                 // ptr + 104
+    M3DOUBLEARRAY skySphereGradient;    // ptr + 128
 };
 
 struct ColorBlock(M3DOUBLEARRAY &array, int offs)
 {
     FSeek(offs + array.offsetA);
-    int timeOfDay[array.elements];
+    Time timeOfDay[array.elements]<bgcolor=cBlue>;
     FSeek(offs + array.offsetB);
-    RGBA color[array.elements]<optimize=false>;
+    RGBA color[array.elements]<optimize=false, bgcolor=cWhite>;
 };
 
 struct FogSettings
 {
-    float unk0;
-    float fogStartDistance;
-    float unk1;
-    float unk2;
-    float unk3;
-    float unk4;
+    float fogStartDistance;     // 0, 1, -937.0
+    float fogEndDistance;       // 0 .. 1800
+                                // Becomes fog start distance if fogStartDistance == 0
+                                // fogStartDistance must always be smaller than fogEndDistance
+    float unk1;                 // 0, 156.25 (doesn't seem to change anything)
+
+    if (version == 13)
+    {
+        float unk2;
+        float unk3;
+    }
+
+    if (version == 16)
+    {
+        Gap g(4);
+        float unk2;                 // 0, 0.5
+        float skyboxCover;          // 0.0 -> 1.0 (0 = no fog on sky)
+    }
 };
 
-struct FogBlock(M3DOUBLEARRAY &array, int offs)
+struct FogSettings_block(M3DOUBLEARRAY &array, int offs)
 {
     FSeek(offs + array.offsetA);
-    int timeOfDay[array.elements];
+    Time timeOfDay[array.elements];
     FSeek(offs + array.offsetB);
     FogSettings settings[array.elements]<optimize=false>;
 };
@@ -73,24 +119,24 @@ struct AngleAndColor
 struct AngleAndColorBlock(M3DOUBLEARRAY &array, int offs)
 {
     FSeek(offs + array.offsetA);
-    int timeOfDay[array.elements];       // Rotation
+    Time timeOfDay[array.elements]<bgcolor=cBlue>;       // Rotation
     FSeek(offs + array.offsetB);
-    AngleAndColor colorUnk[array.elements]<optimize=false>;
+    AngleAndColor colorUnk[array.elements]<optimize=false, bgcolor=cWhite>;
 };
 
-struct Gradient2
+struct AngleAndColorAB
 {
     float unkFloats[4];
-    RGBA colorA<bgcolor=cYellow>;
-    RGBA colorB<bgcolor=cYellow>;
+    RGBA colorA<bgcolor=cWhite>;
+    RGBA colorB<bgcolor=cWhite>;
 };
 
-struct Gradient2Block(M3DOUBLEARRAY &array, int offs)
+struct AngleAndColorAB_block(M3DOUBLEARRAY &array, int offs)
 {
     FSeek(offs + array.offsetA);
-    int timeOfDay[array.elements];
+    Time timeOfDay[array.elements]<bgcolor=cBlue>;
     FSeek(offs + array.offsetB);
-    Gradient2 gradient[array.elements]<optimize=false>;
+    AngleAndColorAB gradient[array.elements]<optimize=false, bgcolor=cWhite>;
 };
 
 struct UnkColorSubBlock3
@@ -103,15 +149,24 @@ struct UnkColorSubBlock3
 struct UnkColorBlock3(M3DOUBLEARRAY &array, int offs)
 {
     FSeek(offs + array.offsetA);
-    int timeOfDay[array.elements];
+    Time timeOfDay[array.elements]<bgcolor=cLtBlue>;
     FSeek(offs + array.offsetB);
-    UnkColorSubBlock3 colorUnk[array.elements]<optimize=false>;
+    UnkColorSubBlock3 colorUnk[array.elements]<optimize=false, bgcolor=cWhite>;
 };
 
 struct Gradient16
 {
     byte padding[16];
     RGBA colors[16]<optimize=false>;;
+};
+
+
+struct Gradient16Block(M3DOUBLEARRAY &array, int offs)
+{
+    FSeek(offs + array.offsetA);
+    Time timeOfDay[array.elements]<bgcolor=cLtBlue>;
+    FSeek(offs + array.offsetB);
+    Gradient16 gradient[array.elements]<optimize=false, bgcolor=cWhite>;
 };
 
 struct PostFXSettings
@@ -133,58 +188,69 @@ struct PostFXSettings
     byte padding2[8];
 };
 
-struct PostFXSettingsBlock(M3DOUBLEARRAY &array, int offs)
+struct PostProcessParametersTrack(M3DOUBLEARRAY &array, int offs)
 {
     FSeek(offs + array.offsetA);
-    int timeOfDay[array.elements];
+    Time timeOfDay[array.elements];
     FSeek(offs + array.offsetB);
     PostFXSettings settings[array.elements]<optimize=false>;
 };
 
-struct UnkColorSubBlock6
+struct ColorAB
 {
     RGBA colorA;
     RGBA colorB;
 };
 
-struct UnkColorBlock6(M3DOUBLEARRAY &array, int offs)
+struct ColorAB_block(M3DOUBLEARRAY &array, int offs)
 {
     FSeek(offs + array.offsetA);
-    int timeOfDay[array.elements];
+    Time timeOfDay[array.elements];
     FSeek(offs + array.offsetB);
-    UnkColorSubBlock6 colorUnk[array.elements]<optimize=false>;;
+    ColorAB colorUnk[array.elements]<optimize=false>;;
 };
 
 struct UnkColorSubBlock7
 {
+    VECTOR3 SHCoefficients[9];
+    //float shCoeff[27];
+/*
     // Most probably wrong
-    RGBA color0;
-
-    unsigned byte unks0[8];
     float unk0;
-    unsigned byte unks1[4];
-    RGBA color1;
     float unk1;
-
-    unsigned byte unks2[8];
-    float unk2;
-    unsigned byte unks3[4];
-    RGBA color2;
+    RGBA32 unk2;
     float unk3;
+    RGBA32 unk4;
+    RGBA32 unk5;
+    float unk6;
+    RGBA32 unk7;
+    VECTOR3 vec0;
+    RGBA32 unk8;
+    float unk9;
 
-    unsigned byte unks4[8];
-    float unk3;
-    unsigned byte unks5[4];
-    float unk4;
+    RGBA32 unk10;
+    RGBA32 unk11;
+    float unk12;
+    RGBA32 unk13;
+    VECTOR3 vec1;
+    RGBA32 unk14;
+    float unk15;
+
+    RGBA32 unk16;
+    RGBA32 unk17;
+    float unk18;
+    RGBA32 unk19;
+    float unk20;
+*/
 };
 
 
 struct UnkColorBlock7(M3DOUBLEARRAY &array, int offs)
 {
     FSeek(offs + array.offsetA);
-    int unks[array.elements];
+    Time timestamps[array.elements];
     FSeek(offs + array.offsetB);
-    UnkColorSubBlock7 colorUnk[array.elements]<optimize=false>;;
+    UnkColorSubBlock7 colorUnk[array.elements]<optimize=false>;
 };
 
 struct DataBlock(sub_1407D0F30 &block)
@@ -195,8 +261,8 @@ struct DataBlock(sub_1407D0F30 &block)
     if (block.colorBlockArray.elements > 0)
     {
         // Array //
-        FSeek(dOfs + block.colorBlockArray.offset);
-        M3DOUBLEARRAY colorBlockArrays[block.colorBlockArray.elements];
+        FSeek(HEADER_SIZE + block.colorBlockArray.offset);
+        M3DOUBLEARRAY colorBlockArrays[block.colorBlockArray.elements]<optimize=false, hidden=true>;
         PAD16();
         
         // Data //
@@ -210,38 +276,38 @@ struct DataBlock(sub_1407D0F30 &block)
     if (block.unk1.elements > 0)
     {
         // Array //
-        FSeek(dOfs + block.unk1.offset);
-        M3DOUBLEARRAY unks1[block.unk1.elements];
+        FSeek(HEADER_SIZE + block.unk1.offset);
+        M3DOUBLEARRAY unks1[block.unk1.elements]<optimize=false, hidden=true>;
         PAD16();
     
         // Data //
         dataOffset = FTell();
         for(i = 0; i < block.unk1.elements; i++)
         {
-            AngleAndColorBlock unkColorBlock(unks1[i], dataOffset);
+            AngleAndColorBlock angleAndColor(unks1[i], dataOffset);
         }
     }
 
     if (block.unk2.elements > 0)
     {
         // Array //
-        FSeek(dOfs + block.unk2.offset);
-        M3DOUBLEARRAY unks2[block.unk2.elements];
+        FSeek(HEADER_SIZE + block.unk2.offset);
+        M3DOUBLEARRAY fogGradientOffs[block.unk2.elements]<optimize=false, hidden=true>;
         PAD16();
     
         // Data //
         dataOffset = FTell();
         for(i = 0; i < block.unk2.elements; i++)
         {
-            Gradient2Block fogColor(unks2[i], dataOffset);
+            AngleAndColorAB_block angleAndColorAB(fogGradientOffs[i], dataOffset);
         }
     }
 
     if (block.unk4.elements > 0)
     {
         // Array //
-        FSeek(dOfs + block.unk4.offset);
-        M3DOUBLEARRAY unks4[block.unk4.elements];
+        FSeek(HEADER_SIZE + block.unk4.offset);
+        M3DOUBLEARRAY unks4[block.unk4.elements]<optimize=false, hidden=true>;
         PAD16();
     
         // Data //
@@ -254,29 +320,27 @@ struct DataBlock(sub_1407D0F30 &block)
 
     if (block.skySphereGradient.elements > 0)
     {
-        // Data //
-        FSeek(dOfs + block.skySphereGradient.offsetA);
-        int timeOfDay[block.skySphereGradient.elements];
-        FSeek(dOfs + block.skySphereGradient.offsetB);
-        Gradient16 skySphereGradient[block.skySphereGradient.elements]<optimize=false>;
+        Gradient16Block gradient16(block.skySphereGradient, HEADER_SIZE);
     }
 
-    if (block.unk7.elements > 0)
+    if (version == 16)
     {
-        // Array //
-        FSeek(dOfs + block.unk7.offset);
-        M3DOUBLEARRAY unks7[block.unk7.elements];
-        PAD16();
-    
-        // Data //
-        dataOffset = FTell();
-        for(i = 0; i < block.unk7.elements; i++)
+        if (block.unk7.elements > 0)
         {
-            // tODO
-            UnkColorBlock7 unkColorBlock(unks7[i], dataOffset);
+            // Array //
+            FSeek(HEADER_SIZE + block.unk7.offset);
+            M3DOUBLEARRAY unks7[block.unk7.elements]<optimize=false, hidden=true>;
+            PAD16();
+        
+            // Data //
+            dataOffset = FTell();
+            for(i = 0; i < block.unk7.elements; i++)
+            {
+                // tODO
+                UnkColorBlock7 unkColorBlock(unks7[i], dataOffset);
+            }
         }
     }
-    // TODO: missing Array/Data for unk3,unk5 (so far found only 0 array so ignored)
 };
 
 struct OffsetGroup
@@ -292,34 +356,38 @@ struct OffsetGroup
 struct ModelInfo(OffsetGroup &ofsGrp, int dataStart)
 {
     FSeek(dataStart + ofsGrp.arrayA.offset);
-    wchar_t filePath[ofsGrp.arrayA.elements];
+    wchar_t filePath[ofsGrp.arrayA.elements]<bgcolor=cLtRed>;
 
-    AngleAndColorBlock colorBlock(ofsGrp.arrayB, dataStart);
+    AngleAndColorBlock colorBlock(ofsGrp.arrayB, dataStart)<bgcolor=cWhite>;
 };
 
 struct SkyboxModels(M3ARRAY &modelInfoArray)
 {
-    FSeek(1216 + modelInfoArray.offset);
+    FSeek(HEADER_SIZE + modelInfoArray.offset);
     
-    OffsetGroup ofsGroups[modelInfoArray.elements];
+    OffsetGroup ofsGroups[modelInfoArray.elements]<optimize=false, bgcolor=cLtBlue>;
     local int i;
     local int dataStart = FTell();
+    // Sky Box Stars
+    // Sky Box Stars Deradune
+    // Sun Glare
+    // Sky Box Cloud Horizon
+    // ...
     for(i = 0; i < modelInfoArray.elements; i++)
     {
         ModelInfo modelInfo(ofsGroups[i], dataStart);
     }
 };
 
-struct Particulate(M3ARRAY &array)
+struct Particulate(int startOffs)
 {
-    M3ARRAY particulateArrays[array.elements]<optimize=false>;
-    local int dataStart = FTell();
+    M3ARRAY particulateArray<optimize=false>;
+    local int save = FTell();
 
-    FSeek(dataStart + particulateArrays[0].offset);
-    wchar_t particulatesModelPath[particulateArrays[0].elements];
+    FSeek(startOffs + particulateArray.offset);
+    wchar_t particulatesModelPath[particulateArray.elements];
 
-    FSeek(dataStart + particulateArrays[1].offset);
-    int unk;
+    FSeek(save);
 };
 
 struct UnkData
@@ -327,109 +395,169 @@ struct UnkData
     int unks[14];
 };
 
-char magic[4];      // XSKY (verified in src)
-int version;        // Has to be 16 (verified in src)
-int unk0;           // 0,1
-int unk1;           // 0,1
-float unk2;          // 0.59988
-int padding;
-M3ARRAY sourceFileArray;
-//FSeek(40);
-sub_1407D0F30 dataBlockArray0;
-//FSeek(192);
-sub_1407D0F30 dataBlockArray1;
-//FSeek(344);
-sub_1407D0F30 dataBlockArray2;
-//FSeek(496);
-sub_1407D0F30 dataBlockArray3;
-//FSeek(648);
-M3DOUBLEARRAY sunLightColorArray;         // offs 648 sub_1407D7800
-M3DOUBLEARRAY specularColorArray;         // offs 672 sub_1407D7770
-M3DOUBLEARRAY unk5;         // offs 696 sub_1407D7800
-M3DOUBLEARRAY fogSettingsArray;         // offs 720 sub_1407D7890
-M3ARRAY modelInfoArray;     // offs 744 sub_1407D7920
-M3DOUBLEARRAY postFXSettingsArray;         // offs 760 sub_1407D7A20
-M3DOUBLEARRAY unk9;         // offs 784
-M3DOUBLEARRAY unk10;        // offs 808
-M3ARRAY particulateArray;   // offs 832
-M3ARRAY envMapArray;        // offs 848
-M3DOUBLEARRAY unk13;        // offs 864
-M3ARRAY unk14;              // offs 880
-M3ARRAY unk15;              // offs 896
-M3ARRAY unk16;              // offs 912
-M3ARRAY unk17;              // offs 928
-M3DOUBLEARRAY unk18;        // offs 944 sub_1407D7800
-M3DOUBLEARRAY unk19;        // offs 968 sub_1407D7800
-M3ARRAY unk20;
-M3DOUBLEARRAY unk21;        // offs 992 sub_1407D7770, reads this in a loop until m3 array is 0, only found 0 so far so ignoring
-M3DOUBLEARRAY unk22;
-FSeek(1184);                // Skip past the loop above, since it's just 0's
-M3ARRAY unk23;              // offs 944 sub_1407D7AB0
-M3ARRAY unk24;              // offs 944 ReadAString
+struct Header
+{
+    int unk0;           // 0, 1, 2, 4, 5, 6
+    int unk1;           // 0, 1, 2, 3 ... 33
+    float unk2;         // 0.03333 .. 10000000
+    Gap g(4);
+    M3ARRAY sourceFileArray;
+    sub_1407D0F30 dataBlockArray0;  // Lighting Ambient (spherical harmonics)
+    sub_1407D0F30 dataBlockArray1;  // Skybox colors
+    sub_1407D0F30 dataBlockArray2;
+    sub_1407D0F30 dataBlockArray3;
+    M3DOUBLEARRAY sunLightColorArray;         // offs 648 sub_1407D7800
+    M3DOUBLEARRAY specularColorArray;         // offs 672 sub_1407D7770
+    M3DOUBLEARRAY unk5;         // offs 696 sub_1407D7800
+    M3DOUBLEARRAY fogSettingsArray;         // offs 720 sub_1407D7890
+    M3ARRAY modelInfoArray;     // offs 744 sub_1407D7920
+    M3DOUBLEARRAY postFXSettingsArray;         // offs 760 sub_1407D7A20
+    M3DOUBLEARRAY unk9;         // offs 784
+    M3DOUBLEARRAY unk10;        // offs 808
+    M3ARRAY particulateArray;   // offs 832
+    M3ARRAY envMapArray;        // offs 848
+    M3DOUBLEARRAY unk13;        // offs 864
+    M3ARRAY unk14;              // offs 880
+    M3ARRAY unk15;              // offs 896
+    M3DOUBLEARRAY unk16;              // offs 912
+    M3DOUBLEARRAY unk17;              // offs 928
+    M3DOUBLEARRAY unk18;        // offs 944 sub_1407D7800
+    M3DOUBLEARRAY unk19;        // offs 968 sub_1407D7800
+    M3DOUBLEARRAY unk20;
+    M3DOUBLEARRAY unk21;        // offs 992 sub_1407D7770, reads this in a loop until m3 array is 0, only found 0 so far so ignoring
+    M3DOUBLEARRAY unk22;
+    M3DOUBLEARRAY unk23;    
+    M3DOUBLEARRAY unk24;
+    M3DOUBLEARRAY unk25;
+    M3DOUBLEARRAY unk26;
+    M3ARRAY unkData;              // offs 944 sub_1407D7AB0
+
+    if (version == 16)
+    {
+        M3ARRAY lut;              // offs 944 ReadAString
+    }
+};
+
 
 // READ DATA //
-FSeek(1216 + sourceFileArray.offset);
-wchar_t sourcePath[sourceFileArray.elements];
 
-DataBlock block(dataBlockArray0);
-DataBlock block(dataBlockArray1);
-DataBlock block(dataBlockArray2);
-DataBlock block(dataBlockArray3);
+char magic[4];      // XSKY (verified in src)
+int version;        // 16 (verified in src)
 
-ColorBlock sunLightColor(sunLightColorArray, dOfs);
-AngleAndColorBlock specularColor(specularColorArray, dOfs);
+if (version == 16)
+    HEADER_SIZE = 1216;
+if (version == 13)
+    HEADER_SIZE = 1136;
 
-// skipping unk5 found no data
-if (fogSettingsArray.elements > 0)
-    FogBlock fogSettings(fogSettingsArray, dOfs);
+Header h<bgcolor=cYellow>;
 
-SkyboxModels models(modelInfoArray);
+FSeek(HEADER_SIZE + h.sourceFileArray.offset);
+wchar_t sourcePath[h.sourceFileArray.elements]<bgcolor=cRed>;
 
-PostFXSettingsBlock postFX(postFXSettingsArray, dOfs);
+DataBlock ambientBlock(h.dataBlockArray0)<bgcolor=cDkGray>;
+DataBlock skyboxBlock(h.dataBlockArray1)<bgcolor=cDkGray>;
+DataBlock fogBlock(h.dataBlockArray2)<bgcolor=cDkGray>;
+DataBlock unkBlock(h.dataBlockArray3)<bgcolor=cDkGray>;
 
-if (unk9.elements > 0)
+ColorBlock sunLightColor(h.sunLightColorArray, HEADER_SIZE);
+AngleAndColorBlock specularColor(h.specularColorArray, HEADER_SIZE);
+
+if (h.unk5.elements > 0)
+    ColorBlock unkColorData(h.unk5, HEADER_SIZE);
+
+if (h.fogSettingsArray.elements > 0)
+    FogSettings_block fogSettings(h.fogSettingsArray, HEADER_SIZE)<bgcolor=cDkPurple>;
+
+if (h.modelInfoArray.elements > 0)
+    SkyboxModels models(h.modelInfoArray);
+
+if (h.postFXSettingsArray.elements > 0)
+    PostProcessParametersTrack postFXTrack(h.postFXSettingsArray, HEADER_SIZE)<bgcolor=cLtYellow>;
+
+if (h.unk9.elements > 0)
 {
-    FSeek(1216 + unk9.offsetA);
-    int unkData0[8];
+    FSeek(HEADER_SIZE + h.unk9.offsetA);
+    int unk9Timestamps[h.unk9.elements];
+    FSeek(HEADER_SIZE + h.unk9.offsetB);
+    int unk9Data[h.unk9.elements];
 }
 
-// skipping unk10 empty
-
-Particulate particulates(particulateArray);
-
-FSeek(1216 + envMapArray.offset);     // Environment cube map
-wchar_t environmentMapPath[envMapArray.elements];
-
-if (unk13.elements > 0)
-    ColorBlock colorBlock3(unk13, dOfs);
-
-FSeek(1216 + unk14.offset);
-wchar_t sunGlareModelPathA[unk14.elements];
-
-FSeek(1216 + unk15.offset);
-wchar_t sunGlareModelPathB[unk15.elements];
-
-// skipping unk16 empty
-// skipping unk17 empty
-// skipping unk18 empty
-// skipping unk19 empty
-// skipping unk20 empty
-
-if (unk21.elements > 0)
+if (h.unk10.elements > 0)
 {
-    UnkColorBlock6 colorBlock4(unk21, dOfs);
+    FSeek(HEADER_SIZE + h.unk10.offsetA);
+    int unk10Timestamps[h.unk10.elements];
+    FSeek(HEADER_SIZE + h.unk10.offsetB);
+    int unk10Data[h.unk10.elements];
 }
-if (unk22.elements > 0)
+
+if (h.particulateArray.elements > 0)
 {
-    UnkColorBlock6 colorBlock5(unk22, dOfs);
+    FSeek(HEADER_SIZE + h.particulateArray.offset);
+    local long startOffs = HEADER_SIZE + h.particulateArray.offset + (h.particulateArray.elements * 16);
+    Particulate particulates(startOffs)[h.particulateArray.elements]<optimize=false>;
 }
-if (unk23.elements > 0)
+
+FSeek(HEADER_SIZE + h.envMapArray.offset);     // Environment cube map
+wchar_t environmentMapPath[h.envMapArray.elements];
+
+if (h.unk13.elements > 0)
+    ColorBlock colorBlock3(h.unk13, HEADER_SIZE);
+
+FSeek(HEADER_SIZE + h.unk14.offset);
+wchar_t sunGlareModelPathA[h.unk14.elements]<bgcolor=cLtPurple>;
+
+FSeek(HEADER_SIZE + h.unk15.offset);
+wchar_t sunGlareModelPathB[h.unk15.elements]<bgcolor=cLtPurple>;
+
+if (h.unk16.elements > 0)
 {
-    FSeek(1216 + unk23.offset);
-    UnkData unkData1[unk23.elements];
+    FSeek(HEADER_SIZE + h.unk16.offsetA);
+    int unk16Timestamps[h.unk16.elements]<bgcolor=cRed>;
+    FSeek(HEADER_SIZE + h.unk16.offsetB);
+    float unk16Data[h.unk16.elements]<bgcolor=cRed>;
 }
-if (unk24.elements > 0)
+
+if (h.unk17.elements > 0)
+    ColorBlock unk17(h.unk17, HEADER_SIZE)<bgcolor=cWhite>;
+
+if (h.unk18.elements > 0)
+    ColorBlock unk18(h.unk18, HEADER_SIZE)<bgcolor=cWhite>;
+
+if (h.unk19.elements > 0)
+   ColorAB_block unk19(h.unk19, HEADER_SIZE)<bgcolor=cWhite>;
+
+if (h.unk20.elements > 0)
+   ColorAB_block unk20(h.unk20, HEADER_SIZE)<bgcolor=cWhite>;
+
+if (h.unk21.elements > 0)
+    ColorAB_block unk21(h.unk21, HEADER_SIZE)<bgcolor=cWhite>;
+
+if (h.unk22.elements > 0)
+    ColorAB_block unk22(h.unk22, HEADER_SIZE)<bgcolor=cWhite>;
+
+if (h.unk23.elements > 0)
+    ColorAB_block unk23(h.unk23, HEADER_SIZE)<bgcolor=cWhite>; // ???
+
+if (h.unk24.elements > 0)
+    ColorAB_block unk24(h.unk24, HEADER_SIZE)<bgcolor=cWhite>;
+
+if (h.unk25.elements > 0)
+    ColorAB_block unk25(h.unk25, HEADER_SIZE)<bgcolor=cWhite>; // ???
+
+if (h.unk26.elements > 0)
+    ColorAB_block unk26(h.unk26, HEADER_SIZE)<bgcolor=cWhite>; // ???
+
+if (h.unkData.elements > 0)
 {
-    FSeek(1216 + unk24.offset);
-    wchar_t lutFile[unk24.elements];              // All 0's so far
+    FSeek(HEADER_SIZE + h.unkData.offset);
+    UnkData unkData[h.unkData.elements]<bgcolor=cPurple, optimize=false>;
+}
+
+if (version == 16)
+{
+    if (h.lut.elements > 0)
+    {
+        FSeek(HEADER_SIZE + h.lut.offset);
+        wchar_t lutFile[h.lut.elements]<bgcolor=cLtPurple>;              // All 0's so far
+    }
 }

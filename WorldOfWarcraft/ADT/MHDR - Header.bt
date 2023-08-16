@@ -1,0 +1,28 @@
+//------------------------------------------------
+// MHDR - Header
+//------------------------------------------------
+
+struct MHDR
+{
+    CHUNK hdr;
+    typedef struct {
+        uint hasMFBO : 1 <name = "Has MFBO">;
+        uint northrend : 1 <name = "Northrend something">;
+    } MHDRFlags <name = "Flags", size = 4>;
+
+    MHDRFlags flags;
+    uint mcin;              // Cata+: obviously gone. probably all offsets gone, except mh2o(which remains in root file).
+    uint mtex;
+    uint mmdx;
+    uint mmid;
+    uint mwmo;
+    uint mwid;
+    uint mddf;
+    uint modf;
+    uint mfbo;              // this is only set if flags & mhdr_MFBO.
+    uint mh2o;
+    uint mtxf;
+    ubyte mampValue;        // Cata+, explicit MAMP chunk overrides data
+    FSkip(3);               // Padding
+    FSkip(3 * 4);           // Unused
+};

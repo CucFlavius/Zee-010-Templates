@@ -3,42 +3,6 @@
 // IMPORTANT: This chunk contains all other chunks! The following variables are a header only. The MOGP chunk size will be way more than the header variables!
 //------------------------------------------------
 
-typedef struct
-{
-    uint HasBSPtree : 1 <name = "HasBSPtree", comment = "(MOBN and MOBR chunk).">;
-    uint Haslightmap : 1 <name = "Haslightmap", comment = "(MOLM, MOLD). (UNUSED: 20740) possibly: subtract mohd.color in mocv fixing ">;
-    uint HasVertexColors : 1 <name = "HasVertexColors", comment = "(MOCV chunk).">;
-    uint SMOGroupEXTERIOR : 1 <name = "SMOGroupEXTERIOR", comment = "Outdoor - also influences how doodads are culled">;
-    uint unused0x10 : 1 <name = "unused0x10", comment = "(UNUSED: 20740)">;
-    uint unused0x20 : 1 <name = "unused0x20", comment = "(UNUSED: 20740)">;
-    uint SMOGroupEXTERIOR_LIT : 1 <name = "SMOGroupEXTERIOR_LIT", comment = "Do not use local diffuse lightning. Applicable for both doodads from this wmo group(color from MODD) and water(CWorldView::GatherMapObjDefGroupLiquids).">; 
-    uint SMOGroupUNREACHABLE : 1 <name = "SMOGroupUNREACHABLE">;
-    uint ShowExteriorSky : 1 <name = "ShowExteriorSky", comment = "Show exterior sky in interior WMO group (Used for interiors of city in stratholme_past.wmo)">;
-    uint Haslights : 1 <name = "Haslights", comment = "(MOLR chunk)">;
-    uint SMOGroupLOD : 1 <name = "SMOGroupLOD", comment = "<= Cataclysm: Has MPBV, MPBP, MPBI, MPBG chunks, neither 0.5.5, 3.3.5a nor Cataclysm alpha actually use them though, but just skips them. Legion+(?): SMOGroup::LOD: Also load for LoD != 0 (_lod* groups)">;
-    uint Hasdoodads : 1 <name = "Hasdoodads", comment = "(MODR chunk)">;
-    uint SMOGroupLIQUIDSURFACE : 1 <name = "SMOGroupLIQUIDSURFACE", comment = "Has water(MLIQ chunk)">;
-    uint SMOGroupINTERIOR : 1 <name = "SMOGroupINTERIOR", comment = "Indoor">;
-    uint unused0x4000 : 1 <name = "unused0x4000", comment = "(UNUSED: 20740)">;
-    uint QueryMountAllowed : 1 <name = "QueryMountAllowed", comment = "QueryMountAllowed in 0.5.3">;
-    uint SMOGroupALWAYSDRAW : 1 <name = "SMOGroupALWAYSDRAW", comment = "Clear 0x8 after CMapObjGroup::Create() in MOGP and MOGI">;
-    uint HasMORIandMORBchunks : 1 <name = "HasMORIandMORBchunks", comment = "(UNUSED: 20740) Has MORI and MORB chunks.">;
-    uint Showskybox : 1 <name = "Showskybox", comment = "automatically unset if MOSB not present.">;
-    uint IsNotWaterButOcean : 1 <name = "IsNotWaterButOcean", comment = "LiquidType related, see below in the MLIQ chunk.">;
-    uint unk0x100000 : 1 <name = "unk0x100000">;
-    uint IsMountAllowed : 1 <name = "IsMountAllowed", comment = "IsMountAllowed">;
-    uint unused0x400000 : 1 <name = "unused0x400000", comment = "(UNUSED: 20740)">;
-    uint unk0x800000 : 1 <name = "unk0x800000">;
-    uint SMOGroupCVERTS2 : 1 <name = "SMOGroupCVERTS2", comment = "SMOGroup::CVERTS2: Has the second MOCV chunks: If the flag 0x4 isn't set this is the only MOCV chunk in the group. Whether the flag 0x4 is set or not: only the alpha values from this chunk are used (to blend the textures). FixColorVertexAlpha must not be used on this chunk !">;
-    uint SMOGroupTVERTS2 : 1 <name = "SMOGroupTVERTS2", comment = "SMOGroup::TVERTS2: Has two MOTV chunks: Just add two.">;
-    uint SMOGroupANTIPORTAL : 1 <name = "SMOGroupANTIPORTAL", comment = "Just call CMapObjGroup::CreateOccluders() independent of groupname being 'antiportal'. requires intBatchCount == 0, extBatchCount == 0, UNREACHABLE.">;
-    uint unk0x8000000 : 1 <name = "unk0x8000000", comment = "unk requires intBatchCount == 0, extBatchCount == 0, UNREACHABLE.">;
-    uint unused0x10000000 : 1 <name = "unused0x10000000", comment = "(UNUSED: 20740)">;
-    uint SMOGroupEXTERIOR_CULL : 1 <name = "SMOGroupEXTERIOR_CULL", comment = ">> 20740ᵘ SMOGroup::EXTERIOR_CULL">;
-    uint SMOGroupTVERTS3 : 1 <name = "SMOGroupTVERTS3", comment = "SMOGroup::TVERTS3: Has three MOTV chunks, eg. for MOMT with shader 18.">;
-    uint unk0x80000000 : 1 <name = "unk0x80000000", comment = "Seen in world/wmo/kultiras/human/8hu_warfronts_armory_v2_000.wmo">;
-} GROUPFLAGS <name = "[GroupFlags]", size = 4>;
-
 struct MOGP
 {
     CHUNK hdr;
@@ -64,9 +28,9 @@ struct MOGP
     unsigned byte fogIds[4];            // ids in MFOG
     uint32 groupLiquid;                 // see below in the MLIQ chunk
     uint32 uniqueID;                    // WMOAreaTableRec::m_WMOGroupID
-    enum { flag2_CanCutTerrain = 1 };   // ≥ Mists has portal planes to cut       
-    uint32 flags2;
-    uint32 unk;                         // UNUSED: 20740
+    GROUPFLAGS2 flags2;
+    int16 parentOrFirstChildSplitGroupIndex;    //See Split Groups
+    int16 nextSplitChildGroupIndex;
 };
 
 /*
@@ -106,4 +70,27 @@ void CMapObjGroup::CreateOccluders()
     }
   }
 }
+*/
+
+/*
+Split Groups
+First spotted in 9.2.0 Split groups is a new mechanic, which makes parent-child relation between Group WMOs. There is "Parent Split" Group and "Child Split" Groups, that be belong to Parent. From the way the data is organized right now, it's not possible for a "Child Split" Group to be a "Parent Split" for other Group WMOs. So this graph can have only one level of depth.
+
+
+Essentially "Child Split" Group do not have Portals leading to them. Instead all portals leading in and out are connected to "Parent Split". So portal culling algorithm needs to render "Child Split" Groups, when "Parent Split" passes Portal culling test.
+
+
+How it works:
+
+
+if SMOGroupFlags2.isSplitGroupParent flag is set, the group is marked as "Parent Split" Group. In this case MOGP.parentOrFirstChildSplitGroupIndex is a group index of first "Split Child" Group and MOGP.nextSplitChildGroupIndex is set to -1 (at least as of current observations).
+
+
+For "Split Child" SMOGroupFlags2.isSplitGroupParent is not set and SMOGroupFlags2.isSplitGroupChild is set instead. In this case MOGP.parentOrFirstChildSplitGroupIndex is index of "Parent Split" Group to which this "Split Child" belongs to, and MOGP.nextSplitChildGroupIndex is group index of next "Split Child" in the list.
+
+
+So to get all "Split Child" for particular "Parent Split", one would need to take MOGP.parentOrFirstChildSplitGroupIndex of "Parent Split" and go through chain of referencing MOGP.nextSplitChildGroupIndex, while MOGP.nextSplitChildGroupIndex is not -1
+
+
+For earliest known example of WMO with such mechanic, see FDID 4217818
 */

@@ -1,0 +1,37 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+struct File
+{
+    uint fileSign;
+    uint fileOffset;
+    uint fileSize;
+    uint fileOriginalSize;
+    uint fileHash0;
+    uint fileHash1;
+    uint fileFlags;
+};
+
+char magic[4];
+uint fileCount;
+uint unk0;
+uint unk1;
+uint unk2;
+uint indexOffset;
+
+FSeek(indexOffset);
+File files[fileCount]<optimize=false>;
+
+//File files[fileCount]<optimize=false>;
+
+//byte hash[16];

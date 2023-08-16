@@ -1,0 +1,417 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+//----------------------------------------------------------------------//
+//      Chunk Tools                                                     //
+//----------------------------------------------------------------------//
+
+struct GChunk
+{
+    char ID[4];
+    char version[4];
+    uint size;
+};
+
+int matchGChunk(char m[])
+{
+    local char s[] = ReadString( FTell());
+    if (Strlen(s) < 4) return 0;
+    if( m[0] == s[3] && m[1] == s[2] && m[2] == s[1] && m[3] == s[0] ) 
+        return 1;
+    return 0;
+}
+
+typedef struct
+{
+    GChunk chunk;
+    FSeek(FTell() + chunk.size - 12);
+    Printf("Skipping Chunk %c%c%c%c", chunk.ID[3], chunk.ID[2], chunk.ID[1], chunk.ID[0]);
+} SKIPGChunk <name = SkipGChunkName>;
+
+string SkipGChunkName(SKIPGChunk &str)
+{
+    if (Strlen(str.chunk.ID) > 0)
+    {
+        return ("Skip : " + str.chunk.ID[3] + str.chunk.ID[2] + str.chunk.ID[1] + str.chunk.ID[0]);
+    }
+    else
+    {
+        return "";
+    }
+}
+
+//----------------------------------------------------------------------//
+//      Structures                                                      //
+//----------------------------------------------------------------------//
+
+struct GResourceHeader
+{
+    char magic[4];
+    char version[4];
+    uint size;
+};
+
+struct G1MHeader
+{
+    uint firstChunkOffset;
+    uint reserved;
+    uint chunkCount;
+};
+
+struct G1MSHeader
+{
+    uint jointInfoOffset;
+    uint unk1;
+    ushort jointCount;
+    ushort jointIndicesCount;
+    ushort layer;
+    ushort padding;
+};
+
+
+struct G1MSJoint
+{	
+	VECTOR3 scale;	
+	int parent;
+	QUATERNION rotation;
+	VECTOR3 position;
+	float wCoord;
+};
+
+struct G1MS
+{
+    local long chunkStart = FTell();
+    GChunk chunk;
+    G1MSHeader header;
+
+    // Joint Indices //
+    short jointIndices[header.jointIndicesCount];
+
+    int flags;
+
+    // Joints //
+    FSeek(chunkStart + header.jointInfoOffset);
+    G1MSJoint joints[header.jointCount];
+
+    FSeek(chunkStart + chunk.size);
+};
+
+struct G1MM
+{
+    local long chunkStart = FTell();
+    GChunk chunk;
+
+    uint matrixCount;
+    MATRIX4x4 matrices[matrixCount];
+
+    FSeek(chunkStart + chunk.size);
+};
+
+struct AABB
+{
+    VECTOR3 min;
+    VECTOR3 max;
+};
+
+struct G1MGHeader
+{
+    char platform[4];
+    uint reserved;
+    AABB bounds;
+    uint sectionCount;
+};
+
+struct G1MGSubSectionHeader
+{
+    enum<ushort> SectionType 
+    { 
+        Section1 = 1,
+        Materials = 2,
+        Section3 = 3,
+        VertexBuffer = 4,
+        VertexAttributes = 5,
+        JointPalettes = 6,
+        IndexBuffer = 7,
+        Submesh = 8,
+        Mesh = 9,
+    } type;
+    ushort versionMaybe;
+    uint size;
+    uint count;
+};
+
+struct G1MGTexture
+{
+    ushort index;   // texture index in g1t file
+    ushort layer;   // TEXCOORD layer
+    ushort textureType;
+    ushort otherType;
+    ushort tileModeX;
+    ushort tileModeY;
+};
+
+struct G1MGMaterial
+{
+    uint unk0;
+    uint textureCount;
+    uint unk1;
+    uint unk2;
+
+    G1MGTexture textures[textureCount];
+};
+
+struct G1MGVertexBuffer
+{
+    uint unk0;
+    uint stride;
+    uint count;
+    uint unk1;
+    byte data[stride * count];
+};
+
+struct G1MGVertexAttributes
+{
+    ushort bufferID;
+    ushort offset;
+    enum<ushort>EG1MGVADatatype
+    {
+	    VADataType_Float_x1 = 0x00,
+	    VADataType_Float_x2 = 0x01,
+	    VADataType_Float_x3 = 0x02,
+	    VADataType_Float_x4 = 0x03,
+	    VADataType_UByte_x4 = 0x05,
+	    VADataType_UShort_x4 = 0x07,
+	    VADataType_UInt_x4 = 0x09, //Need confirmation
+	    VADataType_HalfFloat_x2 = 0x0A,
+	    VADataType_HalfFloat_x4 = 0x0B,
+	    VADataType_NormUByte_x4 = 0x0D,
+	    VADataType_Dummy = 0xFF
+    } dataType;
+    enum<byte> EG1MGVASemantic
+    {
+	    Position = 0x00,
+	    JointWeight,
+	    JointIndex,
+	    Normal,
+	    PSize,
+	    UV,
+	    Tangent,
+	    Binormal,
+	    TessalationFactor,
+	    PosTransform,
+	    Color,
+	    Fog,
+	    Depth,
+	    Sample
+    } semantic;
+    byte layer;
+};
+
+struct G1MGVertexAttributeSet
+{
+    int indexCount;
+    uint vBufferIndices[indexCount];
+    int attributesCount;
+    G1MGVertexAttributes attributes[attributesCount];
+};
+
+struct G1MGSubmesh
+{
+    uint submeshType; //53 or 61
+	uint vertexBufferIndex;
+	uint bonePaletteIndex;
+	uint unk1; //mat.palID according to vago's research
+	uint unk2;
+	uint unk3;
+	uint materialIndex;
+	uint indexBufferIndex;
+	uint unk4;
+	uint indexBufferPrimType;
+	uint vertexBufferOffset;
+	uint vertexCount;
+	uint indexBufferOffset;
+	uint indexCount;
+};
+
+struct G1MGIndexBuffer
+{
+    uint count;
+    uint dType;
+    uint unk;
+
+    switch (dType)
+    {
+        case 0x8:
+            byte indexData[count];
+            break;
+        case 0x10:
+            ushort indexData[count];
+            break;
+        case 0x20:
+            uint indexData[count];
+            break;
+        default:
+            break;
+    }
+
+    Align(4);
+};
+
+struct G1MGJointPaletteEntry
+{
+	uint G1MMIndex;
+	uint physicsIndex;
+	uint jointIndex;
+};
+
+struct G1MGJointPalette
+{
+    uint entryCount;
+    G1MGJointPaletteEntry entries[entryCount];
+};
+
+typedef struct
+{
+    char name[16];
+    ushort meshType;
+    ushort unk0;
+    int externalID;
+    uint indexCount;
+
+    if (indexCount > 0)
+    {
+        uint indices[indexCount];
+    }
+}G1MGMesh<read=name>;
+
+struct G1MGMeshGroup
+{
+    uint LOD;
+    uint group;
+    uint groupEntryIndex;
+    uint submeshCount1;
+    uint submeshCount2;
+    uint lodRangeStart;
+    uint lodRangeLength;
+    int unk0;
+    int unk1;
+
+    G1MGMesh submeshes[submeshCount1 + submeshCount2]<optimize=false>;
+};
+
+struct G1MGSection3
+{
+    int unk0;
+    int unk1;
+    int unk2;
+    int unk3;
+    short unk4;
+    short unk5;
+    char unkName[8];
+};
+
+typedef struct
+{
+    local long sectionStart = FTell();
+    G1MGSubSectionHeader header;
+
+    switch(header.type)
+    {
+        case Materials:
+            G1MGMaterial materials[header.count]<optimize=false, bgcolor=cYellow>;
+        break;
+        case VertexBuffer:
+            G1MGVertexBuffer vertexBuffer[header.count]<optimize=false, bgcolor=cLtPurple>;
+        break;
+        case VertexAttributes:
+            G1MGVertexAttributeSet vertexAttributeSets[header.count]<optimize=false, bgcolor=cLtRed>;
+        break;
+        case Submesh:
+            G1MGSubmesh submeshes[header.count]<optimize=false, bgcolor=cGreen>;
+        break;
+        case IndexBuffer:
+            G1MGIndexBuffer indexBuffers[header.count]<optimize=false, bgcolor=cLtGreen>;
+        break;
+        case JointPalettes:
+            G1MGJointPalette jointPalettes[header.count]<optimize=false, bgcolor=cLtRed>;
+        break;
+        case Mesh:
+            G1MGMeshGroup meshes[header.count]<optimize=false, bgcolor=cRed>;
+        break;
+        case Section3:
+            G1MGSection3 unkSection3[header.count]<optimize=false, bgcolor=cBlue>;
+        break;
+    };
+
+    FSeek(sectionStart + header.size);
+}G1MGSection<read=SectionRead>;
+
+string SectionRead(G1MGSection& section)
+{
+    switch(section.header.type)
+    {
+        case Section1: return "Section1";
+        case Materials: return "Materials";
+        case Section3: return "Section3";
+        case VertexBuffer: return "VertexBuffer";
+        case VertexAttributes: return "VertexAttributes";
+        case JointPalettes: return "JointPalettes";
+        case IndexBuffer: return "IndexBuffer";
+        case Submesh: return "Submesh";
+        case Mesh: return "Mesh";
+    }
+
+    return "UnknownSection";
+};
+
+struct G1MG
+{
+    local long chunkStart = FTell();
+    GChunk chunk;
+
+    G1MGHeader header;
+    G1MGSection sections[header.sectionCount]<optimize=false>;
+
+    FSeek(chunkStart + chunk.size);
+};
+
+struct G1MF
+{
+    local long chunkStart = FTell();
+    GChunk chunk;
+
+    int test[20];
+
+    FSeek(chunkStart + chunk.size);
+};
+
+//----------------------------------------------------------------------//
+//      Read                                                            //
+//----------------------------------------------------------------------//
+
+GResourceHeader resourceHeader<bgcolor=cRed>;
+G1MHeader modelHeader<bgcolor=cYellow>;
+
+local int exit = 100;
+while( ! FEof() )
+{
+    if (exit-- < 0) return;
+
+    if      (matchGChunk("G1MS")) G1MS skeleton<bgcolor=cLtGreen>;
+    else if (matchGChunk("G1MM")) G1MM bindPoses<bgcolor=cLtYellow>;
+    else if (matchGChunk("G1MG")) G1MG geometry<bgcolor=cPurple>;
+    else if (matchGChunk("G1MF")) SKIPGChunk unk; 
+    else SKIPGChunk unk; 
+}

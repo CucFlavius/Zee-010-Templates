@@ -1,0 +1,616 @@
+typedef struct
+{
+    local byte more = 1;
+    local long value = 0;
+    local byte shift = 0;
+    local long buffer = 0;
+    local int v7;
+    while (more)
+    {
+        if (FTell() >= FileSize()) return 0;
+
+        byte lower7bits;
+        more = (lower7bits & 128) != 0;
+        buffer = (lower7bits & 0x7f);
+        value |= buffer << shift;
+        shift += 7;
+
+        if (shift == 70)
+        {
+            Printf("BAD cVal\n");
+            return 0;
+        }
+    }
+} cValueOld<read=cValueRead>;
+
+int sub_1AEE950(long buffer, ubyte shift)
+{
+    local long v2;
+    if ( shift >= 64u )
+    {
+        //LODWORD(v2) = 0;
+        v2 = 0;
+    }
+    else if ( shift >= 32u )
+    {
+        //LODWORD(v2) = 0;
+        v2 = 0;
+    }
+    else
+    {
+        return buffer << (shift & 0x1F);
+    }
+
+    return v2;
+}
+
+typedef struct
+{
+    local long value = 0;
+    local unsigned int v10;
+    local int shift = 0;
+    local int v13 = 0;
+    local uint v4 = 0;
+    local int v7;
+    local int v8;
+    local int v9;
+    do
+    {
+        if (shift == 70)
+        {
+            Printf("BAD cVal\n");
+            return 0;       
+        }
+        else
+        {
+            if (FTell() >= FileSize()) return 0;
+            byte lowerBits;
+    
+            if (shift >= 64u)
+                v7 = 0;
+            else if (shift >= 32u)
+                v7 = 0;
+            else
+                v7 = (lowerBits & 0x7F) << (shift & 0x1F);
+    
+            //v7 = sub_1AEE950(lowerBits & 0x7F, shift);
+            v4 |= v8;
+            v9 = v7 | v13;
+            v13 |= v7;
+            shift += 7;
+        }
+    }
+    while ( lowerBits < 0 );
+    v10 = v9;
+    //value = v10;
+    value = (((long)v10) << 32) | (v4 & 0xffffffffL);
+} cValue<read=cValueRead>;
+
+string cValueRead(cValue &v)
+{
+    local string s;
+    SPrintf( s, "%u", v.value );
+    return s;
+}
+
+// Signed VLQ similar to Unreal Engine Compact Indices
+// https://en.m.wikipedia.org/wiki/Variable-length_quantity
+// Poorly written
+typedef struct
+{
+    byte v1;    // unsigned byte (important)
+    local int value = (v1 >> 1) & 0x7FFFFFBF;
+    local int v3 = v1 & 1;
+    local short v4 = 6;
+    local short v5;
+
+    if (v1 < 0)
+    {
+        do
+        {
+            char v11;
+            v5 = (v11 & 0x7F) << v4;
+            v4 += 7;
+            value |= v5;
+        }
+        while (v11 < 0);
+        value -= 0x7FFFFF80;
+    }
+    if (v3)
+    {
+        value = -value;
+    }
+} cValueSigned<read=cValSRead>;
+
+string cValSRead( cValueSigned &b )
+{
+    local string s;
+    SPrintf( s, "%d", b.value);
+    return s;
+}
+
+typedef struct(int index)
+{
+    local uint strlen = 0;
+    local long save = FTell();
+    if (index < 0 || index > strOffsetsCount) 
+    {
+        byte none;  // Empty struct warning fix
+        FSkip(-1);
+        local char data[1];
+        data[0] = ' ';
+    }
+    else
+    {
+        local uint stroffs = stringOffsets[index];
+        if (index + 1 == strOffsetsCount)
+            strlen = (dataStart - stringDataOffset) - stroffs;
+        else
+            strlen = stringOffsets[index + 1] - stroffs;
+        FSeek(stringDataOffset + stroffs);
+        if (strlen == 0)
+        {
+            byte none;  // Empty struct warning fix
+            FSkip(-1);
+            local char data[1];
+            data[0] = ' ';
+        }
+        else
+        {
+            char data[strlen]<optimize=false>;
+        }
+    }
+    FSeek(save);
+}STRING<read=STRING_Read>;
+
+string STRING_Read(STRING &s)
+{
+    if (s.strlen == 0)
+        return "";
+    return s.data;
+}
+
+struct NODE;
+
+typedef struct(int flags)
+{
+    local byte typeByte = 0;
+
+    if ( (flags & 0x20) != 0 )
+    {
+        byte typeByteRead<bgcolor=cBlack>;
+        typeByte = typeByteRead;
+    }
+
+    NODE countNode(1, "");
+    local int count = countNode.value.value;
+
+    if (count <= 0)
+    {
+        byte none<hidden=true>;  // Empty struct warning fix
+        FSkip(-1);
+        return;
+    }
+    else
+    {
+        NODE nodes(typeByte, "")[count]<optimize=false>;
+    }
+}ARRAY<read=ARRAY_Read>;
+
+string ARRAY_Read(ARRAY &a)
+{
+    local int i;
+    local string s;
+    local byte type = a.typeByte & 0xF;
+    local int flags = a.typeByte & 0xF0;
+    local byte typeV = type;
+
+    //SPrintf (s, "(%s%u", s, a.nodes[0].value.value);
+    SPrintf (s, "Array(%s", s);
+    local string c<hidden=true>;
+    for (i = 0; i < a.count; ++i)
+    {
+        if (i == 0)
+            c = "";
+        else
+            c = ", ";
+
+        typeV = type;
+        if (typeV == 0)
+            typeV = a.nodes[i].type;
+
+        switch(typeV)
+        {
+            case 1:
+                SPrintf (s, "%s" + c + "%u", s, a.nodes[i].value.value);
+                break;
+            case 2:
+                SPrintf (s, "%s" + c + "%f", s, a.nodes[i].value);
+                break;
+            case 5:
+                SPrintf (s, "%s" + c + "%s", s, a.nodes[i].value.data);
+                break;
+            case 11:
+                SPrintf (s, "%s" + c + "%s", s, NODE_Read(a.nodes[i].value));
+                break;
+            default:
+                SPrintf (s, "Array[] type: %u", type);
+                break;   
+        }
+    }
+    SPrintf (s, "%s)", s);
+
+    return s;
+}
+
+typedef struct
+{
+    // might have to use cValue if index goes past 128, using byte as optimization
+    cValue nameIndex;
+    byte typeByte;
+    local byte type = typeByte & 0xF;
+    STRING name(nameIndex.value);
+}VARDEF<read=VARDEF_Read>;
+
+string VARDEF_Read(VARDEF &def)
+{
+    return def.name.data + " " + GetNodeName(def.type);
+};
+
+string VARDEF_ReadName(VARDEF &def)
+{
+    return def.name.data;
+}
+
+struct STRUCTDEF
+{ 
+    cValue count;
+    cValue bitmapBitSize;
+    local int bitmapByteSize = bitmapBitSize.value / 8 + (bitmapBitSize.value % 8 != 0);
+    VARDEF defs[count.value]<optimize=false>;
+};
+
+struct Map(int flags)
+{
+    if ((flags & 0x80) == 0)
+    {
+        local byte keyTypeByte = 0;
+        local byte dataTypeByte = 0;
+
+        // I think it just means it's main map
+        if ( (flags & 0x10) != 0 )
+        {
+            cValue keyType;
+            keyTypeByte = keyType.value;
+        }
+        if ( (flags & 0x20) != 0 )
+        {
+            cValue dataType;
+            dataTypeByte = dataType.value;
+        }
+        
+        cValue count;
+
+        local int i<hidden=true>;
+        local int save<hidden=true>;
+        local int key<hidden=true>;
+
+        if ((flags & 0x40) != 0)
+        {
+            for(i = 0; i < count.value; i++)
+            {
+                //uint hash<hidden=false, bgcolor=cGreen>;    // seems to be skipped in code
+                //int offsetA<hidden=false, bgcolor=cGreen>;   // Offset to dictionary key/offset array
+                //save = FTell();
+                //FSeek(dataStart + offsetA);
+    
+                NODE keyNode(keyTypeByte, "")<hidden=false>;
+                NODE entry(dataTypeByte, NODE_Read(keyNode));
+            }
+        }
+
+        return;
+    }
+
+    cValue offset;
+
+    // Unsure about this one, but if the struct def offset is small, then map is empty ?
+    // There has to be a better way to check for empty map, but I haven't found one yet
+    if (offset.value < 2)  
+        return;
+
+    local long save<hidden=true> = FTell();
+    FSeek(dataStart + offset.value);
+    NODE defNode(9, "");
+    FSeek(save);
+
+    if ((flags & 0x40) != 0)
+    {
+        cValue t;
+        save = FTell();
+        FSeek(dataStart + t.value);
+    }
+
+    if (defNode.structdef.bitmapBitSize.value != 0)
+    {
+        ubyte bitmap[defNode.structdef.bitmapByteSize]<optimize=false>;
+    }
+
+    if ((flags & 0x40) != 0)
+        FSeek(save);
+
+    local int i<hidden=true>;
+    local byte bitIdx<hidden=true> = 0;
+    local byte byteIdx<hidden=true> = 0;
+    local byte bitMask<hidden=true>;
+    for(i = 0; i < defNode.structdef.count.value; i++)
+    {
+        bitMask = 1 << bitIdx;
+
+        if (defNode.structdef.bitmapBitSize.value == 0)
+            NODE value(defNode.structdef.defs[i].typeByte, VARDEF_ReadName(defNode.structdef.defs[i]));
+        else
+        {
+            if (i >= defNode.structdef.bitmapBitSize.value)
+                NODE value(defNode.structdef.defs[i].typeByte, VARDEF_ReadName(defNode.structdef.defs[i]));
+            else if ((bitMask & bitmap[byteIdx]) != 0)
+                NODE value(defNode.structdef.defs[i].typeByte, VARDEF_ReadName(defNode.structdef.defs[i]));
+        }
+
+        bitIdx++;
+        if (bitIdx >= 8)
+        {
+            byteIdx++;
+            bitIdx = 0;
+        }
+    }
+};
+
+enum<byte> NodeType
+{
+    NodeType_ReadNext = 0,
+    NodeType_Int = 1,
+    NodeType_Float = 2,
+    NodeType_Bool = 3,
+    NodeType_None = 4,
+    NodeType_String = 5,
+    NodeType_Map = 6,
+    NodeType_Array = 7,
+    NodeType_Set = 8,
+    NodeType_StructDef = 9,
+    NodeType_FieldMask = 10,
+    NodeType_NodeOffset = 11
+};
+
+string GetNodeName(byte type)
+{
+    switch(type)
+    {
+        case 0: return "ReadNext";
+        case 1: return "Int";
+        case 2: return "Float";
+        case 3: return "Bool";
+        case 4: return "None";
+        case 5: return "String";
+        case 6: return "Map";
+        case 7: return "Array";
+        case 8: return "Set";
+        case 9: return "StructDef";
+        case 10: return "FieldMask";
+        case 11: return "NodeOffset";     
+        default: return "Unk";  
+    }
+};
+
+struct SET(int flags)
+{
+    // Not implemented, haven't seen it in data so no way to make sure it works
+    /*
+    cValue count;
+    local long save;
+    if ((flags & 0x40) != 0)
+    {
+        Printf("SET 0x40\n");
+        cValue t;
+        FSeek(dataStart + t.value);
+    }
+
+    if (flags & 0x40)
+    {
+        // same deal as map
+        // code seems to read next type, and if it's 11
+        // it reads an offset, and then the node at that offset
+        // if it's not 11, it just reads a node
+    }
+    NODE nodes(0, "")[count.value]<optimize=false>;
+    */
+};
+
+typedef struct (byte typeByte, string ikey)
+{
+    local byte type = typeByte & 0xF;
+    local int flags = typeByte & 0xF0;
+    local string key = ikey;
+    if (typeByte == 0)
+    {
+        ubyte readType<bgcolor=cBlack, hidden=false>;
+        type = readType & 0xF;
+        flags = readType & 0xF0;
+    }
+
+    switch(type)
+    {
+        //case 0:
+        // Already handled above!!
+        case 1:
+            // int
+            cValue value;
+            if (flags == 16)
+            {
+                local int v11 = -(value.v9 & 1);
+                local long pair = (((long)value.v10) << 32) | (value.v4 & 0xffffffffL);
+                value.v10 = v11 ^ (pair >> 1);
+                value.v4 = -(v11 != 0) ^ (value.v4 >> 1);
+                value.value = (((long)value.v10) << 32) | (value.v4 & 0xffffffffL);
+            }
+
+            //if (flags == 16)
+            //    cValueSigned value; // Signed
+            //else
+            //    cValue value;       // Unsigned
+
+            break;
+        case 2:
+            // float
+            if (flags == 16)
+                float value;
+            else if (flags == 32)
+                double value;
+            else
+                local float value = 0;  // In case of errors
+            break;
+        case 3:
+            // bool
+            byte value;
+            break;
+        case 4:
+            // none
+            byte none;  // Empty struct warning fix
+            FSkip(-1);
+            break;
+        case 5:
+            // string
+            cValue stringID;
+            STRING value(stringID.value);
+            break;
+        case 6:
+            // map
+            if ((flags & 0x20) != 0)
+                Map value(flags)<bgcolor=cBlack>;
+            else
+                Map value(flags)<bgcolor=cBlue>;
+            break;
+        case 7:
+            // array
+            ARRAY value(flags)<bgcolor=cRed>;
+            break;
+        case 8:
+            SET value(flags)<bgcolor=cPurple>;
+            break;
+        case 9:
+            // struct definition
+            STRUCTDEF structdef;
+            break;
+        case 11:
+            // node offset
+            cValue offset;
+            local long save = FTell();
+            FSeek(dataStart + offset.value);
+            NODE value(0, ikey);
+            FSeek(save);
+            break;
+        default:
+            byte none;  // Empty struct warning fix
+            FSkip(-1);
+            return;
+    }
+}NODE<read=NODE_Read>;
+
+string NODE_Read(NODE &n)
+{
+    local string s;
+
+    switch(n.type)
+    {
+        case 0: 
+            return " " + n.key;
+        case 1:
+            // int
+            SPrintf( s, "%u", n.value.value );
+            break;
+        case 2:
+            // float
+            SPrintf( s, "%f", n.value );
+            break;
+        case 3:
+            // bool
+            if (n.value != 0)
+                return "True " + n.key;
+            else
+                return "False " + n.key;
+        case 4:
+            // none
+            return "None " + n.key;
+        case 5:
+            // string
+            if (n.value.strlen == 0)
+                s = "NULLSTRING";
+            else
+                s = n.value.data;
+            break;
+        case 6:
+            // map
+            return "Map : " + n.key;
+        case 7:
+            // array
+            return ARRAY_Read(n.value) + " " + n.key;
+            //return "ARRAY";
+        case 8:
+            // set
+            return "Set : " + n.key;
+        case 9:
+            // struct
+            return "Struct";
+        case 11:
+            // offset
+            return NODE_Read(n.value);
+        default:
+            return "No Read";
+    }
+    return s + " " + n.key;
+};
+
+/////////////////////////////////////////////
+//  Read
+/////////////////////////////////////////////
+
+int strOffsetsCount;
+int stringOffsets[strOffsetsCount]<bgcolor=cYellow>;
+int stringDataSize;
+local long stringDataOffset = FTell();
+char stringData[stringDataSize]<bgcolor=cBlue>;
+
+// here is where offsets are relative to
+local uint dataStart = FTell();
+
+int sizeA;
+
+FSeek(dataStart + sizeA);
+//NODE root(0, "");
+
+// Normally they do this in dictionary with flag checking, but that's too much effort
+byte dictType;      // Always dict, with 0x80 flag unset
+
+if ((dictType & 0x10) != 0)
+    cValue keyType;
+cValue dataType;
+cValue count;
+local int i<hidden=true>;
+local int save<hidden=true>;
+local int key<hidden=true>;
+for(i = 0; i < count.value; i++)
+{
+    uint hash<hidden=true, bgcolor=cGreen>;      // I think it's a hash of the data
+    int offsetA<hidden=true, bgcolor=cGreen>;    // Offset to dictionary key/offset array
+    save = FTell();
+    FSeek(dataStart + offsetA);
+    if ((dictType & 0x10) != 0)
+        NODE keyNode(keyType.value, "")<hidden=true>;
+    else
+        NODE keyNode(0, "")<hidden=true>;
+    cValue offsetB<hidden=true, bgcolor=cLtRed>;
+    FSeek(dataStart + offsetB.value);
+    NODE entry(0, NODE_Read(keyNode));
+    FSeek(save);
+}
+

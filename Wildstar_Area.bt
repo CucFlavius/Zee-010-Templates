@@ -6,11 +6,16 @@
 //  Category: Wildstar
 //------------------------------------------------
 
+// Chunk size = 512.0/512.0
+// Max world size = 128/128 chunks
+
+// !tele 3839 540 -4511 51
+
 #include "Lib/Common.bt"
 
 struct Header
 {
-    CHUNKID chunkID;
+    uint chunkID;
     uint version;
 };
 
@@ -19,7 +24,7 @@ struct HeightMap
     ushort map[19 * 19];
 };
 
-struct TextureIDs
+struct WorldLayerIDs
 {
     uint IDs[4];
 };
@@ -96,8 +101,12 @@ struct EnvironmentWeights
 
 struct CornerData
 {
-    // Game can blend between 4 different skyes to make a more unique one
-    uint worldSkyIDs[4];    // IDs into WorldSky.tbl   
+    // --- nope --- Game can blend between 4 different skyes to make a more unique one
+    uint unkID0;
+    uint unkID1;
+    uint unkID2;
+    uint worldSkyID;
+//uint worldSkyIDs[4];    // IDs into WorldSky.tbl   
 };
 
 struct EnvironmentData
@@ -108,7 +117,7 @@ struct EnvironmentData
 
 typedef struct {
     uint hasHeightmap : 1 <name = "Heightmap">;
-    uint hasTextureIDs : 1 <name = "Texture IDs">;
+    uint hasWorldLayerIDs : 1 <name = "World Layer IDs">;
     uint hasBlendMapRaw : 1 <name = "Blend Map Raw">;
     uint hasColorMapRaw : 1 <name = "Color Map Raw">;
     uint unkMap : 1 <name = "Unk Map Raw">;
@@ -141,23 +150,23 @@ typedef struct {
     uint hasUnkMap4 : 1 <name = "Unk Map 4 DXT">;
 } SubchunkFlags <name = "SubchunkFlags", size = 4>;
 
-struct SUBCHUNK
+struct SUBCHUNK_B
 {
     uint size;
-    if (size > FileSize())  // This needs a better interpretation, sometimes the chunk size is a short sometimes an int
-    {
-        FSkip(-4);
-        ushort size;
-        ushort unk;
-    }
+    // zlib compressed
+};
 
+struct SUBCHUNK
+{
+    uint sizeandunk;
+    local uint size = sizeandunk & 0xFFFFFF;
     local long save = FTell();
     SubchunkFlags flags;
     
     if(flags.hasHeightmap)
         HeightMap heightMap;
-    if(flags.hasTextureIDs)
-        TextureIDs textureIDs;
+    if(flags.hasWorldLayerIDs)
+        WorldLayerIDs worldLayerIDs;
     if(flags.hasBlendMapRaw)
         BlendMap blendMap;
     if(flags.hasColorMapRaw)
@@ -235,7 +244,6 @@ struct CurdGroup
 struct curD
 {
     CHUNK chunk;
-    local long save = FTell();
     uint groupCount;
     CurdGroup groups[groupCount]<optimize=false>;
 };
@@ -286,24 +294,33 @@ struct WAtG
     FSeek(save + chunk.size);
 };
 
-struct Leaf
+typedef struct
 {
-    VECTOR2 min;
-    VECTOR2 max;
-    uint id;
-    uint unk;
+    float min;
+    float max;
+}Range<read=ReadRange>;
+
+string ReadRange(Range &r)
+{
+    string s;
+    SPrintf(s, "Range(%f | %f)", r.min, r.max);
+    return s;
 };
 
-struct Node
+struct Leaf
 {
-    Leaf leafs[4];
+    Range rangeA;
+    Range rangeB;
+    int parentA;
+    int parentB;
+};
 
-    // Next stuff needs work
-    uint unks[4];
-    int unks2[2];
-    VECTOR2 min;
-    VECTOR2 max;
-    uint unks3[14];
+struct UnkData
+{
+    float A[16];    // not all floats
+    int B;
+    short C0;
+    short C1;
 };
 
 struct BSP
@@ -314,21 +331,22 @@ struct BSP
     uint unk3;
     uint unk4;
     uint unk5;
-    float unkf;
-    uint unk;
-    float unkf;
-    float unkf;
-    uint unk;
-    uint unk;
-    float unkf;
-    float unkf;
-    uint unk;
-    uint unk;
+    float unkf0;
+    uint unk6;
+    float unkf1;
+    float unkf2;
+    uint unk7;
+    uint unk8;
+    float unkf3;
+    float unkf4;
+    uint unk9;
+    uint unk10;
     uint countA;
     uint countB;
-    uint unk;
-    uint unk;
-    Node nodes[countA];
+    uint unk11;
+    uint unk12;
+    Leaf tree[countA]<bgcolor=cGreen, optimize=false>;
+    UnkData unkData[countB]<bgcolor=cYellow, optimize=false>;
 };
 
 struct wbsP
@@ -336,8 +354,7 @@ struct wbsP
     CHUNK chunk;
     local long save = FTell();
     uint count;
-    BSP bsp;
-    //BSP bsps[count]<optimize=false>;
+    BSP bsps[count]<optimize=false>;
 
     FSeek(save + chunk.size);
 };
@@ -345,18 +362,29 @@ struct wbsP
 struct CHNK
 {
     CHUNK chunk;
-    local long save = FTell();
-    while(FTell() < save + chunk.size)
+
+    if (header.chunkID == 1095910721)   // AREA
     {
-        SUBCHUNK subChunk;
-        while (FTell() < subChunk.save + subChunk.size - 1)
+        local long save = FTell();
+        SUBCHUNK_B subChunk;
+        FSeek(save + chunk.size);
+    }
+    if (header.chunkID == 1634887009)   // area
+    {
+        local long save = FTell();
+        while(FTell() < save + chunk.size)
         {
-            // Extra chunks
-            if     ( match( "PROP" ) ) PROP props;
-            else if( match( "curD" ) ) curD curds;  // https://cdn.discordapp.com/attachments/487618232279105540/924871987392823327/unknown.png
-            else if( match( "WAtG" ) ) WAtG water;
-            else if( match( "wbsP" ) ) wbsP bsp;
-            else SKIPCHUNKR unk; 
+            SUBCHUNK subChunk;
+    
+            while (FTell() < subChunk.save + subChunk.size - 1)
+            {
+                // Extra chunks
+                if     ( match( "PROP" ) ) PROP props;
+                else if( match( "curD" ) ) curD curds;  // https://cdn.discordapp.com/attachments/487618232279105540/924871987392823327/unknown.png
+                else if( match( "WAtG" ) ) WAtG water;
+                else if( match( "wbsP" ) ) wbsP bsp;
+                else SKIPCHUNKR unk; 
+            }
         }
     }
 };
@@ -369,35 +397,41 @@ enum<uint> MODELTYPE {
     Unk1 = 4,
 };
 
+struct ChunkPlacement
+{
+    // The subchunks that the prop occupies
+    // In subchunk coords (chunkCoords + (subChunkCoords * 16))
+    // Used for culling / loading
+    short xMin;     // Inclusive
+    short yMin;     // Inclusive
+    short xMax;     // Exclusive
+    short yMax;     // Exclusive
+};
+
 typedef struct (int end)
 {
     uint32 UUID;        // used in PROP chunks as references for collision/etc.
     uint32 ParentID;
-    uint32 unk0;
-    uint32 unk1;
+    byte padding[8];
     MODELTYPE modelType;
     int pathOffset;
     int unkOffset0;
     float scale;
     QUATERNION rotation;
     VECTOR3 position;
-    byte unk3;
-    byte unk4;
-    byte unk5;
-    byte unk6;
-    byte unk7;
-    byte unk8;
-    byte unk9;
-    byte unk10;
-    int unk11;
-    int unk12;           // 0's
-    int unk13;
-    RGBA32 color0;      // typically 7f7f7fff so just a multiplier shading color
+    ChunkPlacement placement;
+    int unk11;          // 0,1,2,3,4,8,9,32,512,513
+    int zero0;          // 0's
+    int unk13;          // 6 digit number
+    RGBA32 color0;      // typically 7f7f7fff so just a multiplier shading color, BGRA nor RGBA
     RGBA32 color1;
-    int unk14;
+    int unk14;          // 3,175,176,563
     int unk15;
     RGBA32 color2;
-    int unk16;          // 0's
+    int zero1;          // 0's
+
+    if (ParentID != 0)
+        Printf("%u\n", ParentID);
 
     local int save = FTell();
     if (pathOffset != 0)
@@ -434,26 +468,25 @@ struct PROp
 
 typedef struct (int end)
 {
-    int unk0;
+    uint UUID;                  // Probably
     short positionCount;
+    ChunkPlacement placement;
     short unk1;
-    short unk2;
-    short unk3;
-    short unk4;
-    short unk5;
     int positionOffset;
-    int unk6;
+    int unk2;
 
     local int save = FTell();
+
     FSeek(end + positionOffset);
     VECTOR3 positions[positionCount];
+
     FSeek(save);
-}CurtInfo;
+} CurtInfo;
 
 struct CURT
 {
     CHUNK chunk;
-    local long save = FTell();
+    local long save<hidden=true> = FTell();
 
     int count;
     CurtInfo infos(save)[count]<optimize=false>;

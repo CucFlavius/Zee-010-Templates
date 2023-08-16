@@ -34,10 +34,9 @@ struct HeaderV2
     uint compressionFormat;
     LayerInfo layerInfos[4];
     uint imageSizesCount;
-    if (imageSizesCount > 0)
-        uint imageSizes[imageSizesCount];
+    uint imageSizes[13];
     int unk_06C;
-    byte wtf[8];
+    //byte pad[8];
 };
 
 HeaderV2 header;

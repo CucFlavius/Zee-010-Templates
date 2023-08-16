@@ -1,0 +1,97 @@
+//--------------------------------------
+//      File: WorldOfWarcraft_ADT.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Adt file
+//  Category: WoW
+//--------------------------------------
+
+#include "Lib/Common.bt"
+#include "WorldOfWarcraft/ADT/MVER - Version.bt"
+#include "WorldOfWarcraft/ADT/MHDR - Header.bt"
+
+struct LiquidInstance(long start)
+{
+    ushort liquidType;           // DBC - foreign_key<uint16_t, &LiquidTypeRec::m_ID> liquid_type;
+    ushort liquidObjectOrLVF;    // DBC - foreign_key<uint16_t, &LiquidObjectRec::m_ID> liquid_object_or_lvf;
+                                 // if >= 42, look up via LiquidObjectRec::LiquidTypeID => LiquidTypeRec::MaterialID => LiquidMaterialRec::LVF, otherwise LVF
+                                 // also see below for offset_vertex_data: if that's 0 and lt != 2 -> lvf = 2
+    float minHeightLevel;        // used as height if no heightmap given and culling
+    float maxHeightLevel;        // >= WoD ignores value and assumes to both be 0.0 for LVF = 2!
+    byte xOffset;                // The X offset of the liquid square (0-7)
+    byte yOffset;                // The Y offset of the liquid square (0-7)
+    byte width;                  // The width of the liquid square (1-8)
+    byte height;                 // The height of the liquid square (1-8)
+                                 // The above four members are only used if liquid_object_or_lvf <= 41. Otherwise they are assumed 0, 0, 8, 8. (18179) 
+    uint offsetExistsBitmap;     // not all tiles in the instances need to be filled.always(width* height + 7) / 8 bytes.
+                                 // offset can be 0 for all-exist. also see (and extend) Talk:ADT/v18#SMLiquidInstance
+    uint offsetVertexData;       // actual data format defined by LiquidMaterialRec::m_LVF via LiquidTypeRec::m_materialID
+                                 // if offset = 0 and liquidType != 2, then let LVF = 2, i.e. some ocean stuff
+
+    local long save = FTell();
+    if (offsetExistsBitmap > 0 && height > 0)
+    {
+        FSeek(offsetExistsBitmap + start);
+        byte bitmap[Ceil(width * height / 8)]<bgcolor=cRed>;
+    }
+
+    if (offsetVertexData != 0)
+    {
+        FSeek(offsetVertexData + start);
+        float heights[(width + 1) * (height + 1)]<bgcolor=cLtRed>;
+    }
+
+    FSeek(save);
+};
+
+struct LiquidAttributes
+{
+    ulong fishable;
+    ulong deep;
+};
+
+struct LiquidChunk(long start)
+{
+    uint offsetInstances<bgcolor=cLtBlue>;
+    uint layerCount<bgcolor=cLtBlue>;
+    uint offsetAttributes<bgcolor=cLtBlue>;
+    
+    local long save<hidden=true> = FTell();
+    
+    if (offsetInstances > 0 && layerCount > 0)
+    {
+        FSeek(offsetInstances + start);
+        LiquidInstance instances(start)[layerCount]<optimize=false, bgcolor=cGreen>;
+    }
+    
+    if (offsetAttributes > 0 && layerCount > 0)
+    {
+        FSeek(offsetInstances + start);
+        LiquidAttributes attributes[layerCount]<optimize=false, bgcolor=cYellow>;
+    }    
+
+    FSeek(save);
+};
+
+struct MH2O
+{
+    CHUNK hdr;
+    local long save<hidden=true> = FTell();
+
+    LiquidChunk liquidChunks(save)[16*16]<optimize=false>;
+
+    FSeek(save + hdr.size);
+};
+
+struct ADT
+{
+    while( ! FEof() )
+    {
+        if     ( match( "MVER" ) ) MVER version;
+        else if( match( "MHDR" ) ) MHDR header;
+        else if( match( "MH2O" ) ) MH2O liquid;
+        else SKIPCHUNKR unk;
+    }
+};
+
+ADT wdt;

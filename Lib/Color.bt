@@ -30,6 +30,7 @@ typedef struct
     local int backupBack = GetBackColor();
     local int backupFore =  GetForeColor();
     local int backColor = ReadFloatColor();
+    if(ThemeIsDark()) ThemeAutoScaleColors (false);
     SetBackColor (backColor);
     if (backColor >= 8388607)
     {
@@ -45,6 +46,7 @@ typedef struct
     float a;
     SetBackColor (backupBack);
     SetForeColor (backupFore);
+    if(ThemeIsDark()) ThemeAutoScaleColors (true);
 }RGBA<read=ReadRGBA>;
 
 string ReadRGBA(RGBA &c)
@@ -89,6 +91,7 @@ typedef struct
     unsigned byte b;
     unsigned byte a;
     SetBackColor (backup);
+    if(ThemeIsDark()) ThemeAutoScaleColors (true);
 }RGBA32<read=ReadRGBA32>;
 
 string ReadRGBA32(RGBA32 &c)

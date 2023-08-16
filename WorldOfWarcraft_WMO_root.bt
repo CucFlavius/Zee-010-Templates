@@ -20,6 +20,7 @@
 // like the MOGP chunk, containing all group data.
 
 #include "Lib/Common.bt"
+#include "WorldOfWarcraft/WMO_Root/Flags.bt"
 #include "WorldOfWarcraft/WMO_Root/MVER - Version.bt"
 #include "WorldOfWarcraft/WMO_Root/MOHD - Header.bt"
 #include "WorldOfWarcraft/WMO_Root/MOTX - Texture Filenames.bt"
@@ -51,6 +52,8 @@
 #include "WorldOfWarcraft/WMO_Root/MGI2 - Group Info V2.bt"
 #include "WorldOfWarcraft/WMO_Root/MNLD - New Light Definitions.bt"
 #include "WorldOfWarcraft/WMO_Root/MDDL - Detail Doodad Layers.bt"
+#include "WorldOfWarcraft/WMO_Root/MOLV - Unknown.bt"
+#include "WorldOfWarcraft/WMO_Root/MOMX - Unknown.bt"
 
 struct WMO_ROOT
 {
@@ -86,6 +89,9 @@ struct WMO_ROOT
         else if( match( "MGI2" ) ) MGI2  group_info_v2;
         else if( match( "MNLD" ) ) MNLD  new_light_definitions;
         else if( match( "MDDL" ) ) MDDL  detail_doodad_layers;
+        else if( match( "MOLV" ) ) MOLV  lightVolume;
+        else if( match( "MOUV" ) ) MOUV  uvAnimation;
+        else if( match( "MOMX" ) ) MOMX  unknown;
         else SKIPCHUNKR unk; 
     }
 };

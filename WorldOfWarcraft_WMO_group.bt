@@ -20,6 +20,7 @@
 //--------------------------------------
 
 #include "Lib/Common.bt"
+#include "WorldOfWarcraft/WMO_Root/Flags.bt"
 #include "WorldOfWarcraft/WMO_Group/MVER - Version.bt"
 #include "WorldOfWarcraft/WMO_Group/MOGP - Header.bt"
 #include "WorldOfWarcraft/WMO_Group/MOPY - Triangle Material Info.bt"
@@ -97,6 +98,7 @@ struct WMO_GROUP
         // MPBP
         // MPBI
         // MPBG
+        else if( match( "MOC2" ) ) MOCV vertexColorUnk;
 
         else SKIPCHUNKR unk; 
     }

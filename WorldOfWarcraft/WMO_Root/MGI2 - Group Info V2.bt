@@ -12,7 +12,7 @@
 
 struct GroupInfoV2
 {
-    char _0x0[4];
+    GROUPFLAGS2 flags2;
     uint32 lodIndex; // groupInfoList[i].flags & SMOGroup::LOD
 };
 

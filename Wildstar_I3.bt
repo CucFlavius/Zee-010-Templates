@@ -7,14 +7,9 @@
 //------------------------------------------------
 
 #include "Lib/Common.bt"
+#include "Wildstar/Array.bt"
 
 local int headerSize = 368;
-
-void PAD16()
-{
-    local int padLen = (FTell() % 16);
-    FSkip(padLen);  
-}
 
 struct BoundingBox
 {
@@ -25,15 +20,15 @@ struct BoundingBox
 struct Header
 {
 	char magic[4];          // IDEF
-	uint32 version;
-	uint64 unk0[3];
-	M3ARRAY sectors;
-	M3ARRAY portals;
-	M3ARRAY passes;
+	uint32 version;         // 41
+	Gap g(24);
+	M3ARRAY arrSectors;
+	M3ARRAY arrPortals;
+	M3ARRAY arrPasses;
 	M3ARRAY unk1; // 2 bytes per entry
 	M3ARRAY unk2; // 64 bytes per entry
 	M3ARRAY unk3; // 40 bytes per entry
-	M3ARRAY unk4; // 176 bytes per entry
+	M3ARRAY arrLights; // 176 bytes per entry
 	M3ARRAY unk5; // 32 bytes per entry
 	M3ARRAY unk6; // 64 bytes per entry
 	M3ARRAY unk7; // 2 bytes per entry
@@ -51,144 +46,175 @@ struct Header
 
 struct Sector
 {
-	uint64 sectorNumber;    // This could be sector name index in the name table, needs verifying
-	uint64 unk1;
+	uint64 nameIndex;
+	Gap g(8);
 	BoundingBox bb;
-	uint64 unk2;
-	uint64 unk3;
+	uint unk;               // 0, 1
+	Gap g(12);
 };
 
 struct Portal(int portalsEnd)
 {
-	uint32 unkNumber;       // This could be portal name index in the name table, needs verifying
-	ushort sectorIndexA;
-    ushort sectorIndexB;
-	uint64 unk0;
-	BoundingBox bb0;        // same for all portals, seems to be for whole model
-	QUATERNION plane;
+	uint32 nameIndex;
+                            // This could be portal name index in the name table, needs verifying
+	ushort sectorIndexA;    // 0 .. 39
+    ushort sectorIndexB;    // 0 .. 39
+	Gap g(8);
+	BoundingBox boundsA;        // same for all portals, seems to be for whole model
+	PLANE plane;
 	M3ARRAY verticesArray;       // float[3] (mostly float[2] with one float == 0 as portals are axis aligned), uint32 always 0
 	M3ARRAY indicesArray;        // points to 2 byte values, relative to sizeof(I3Header) + header.ofsUnk1 + header.nUnk1 * sizeof(Unk1Entry)
-	BoundingBox bb1;
-	float unk1;
-    float unk2;
-	float side;             // Maybe
-	float unk4;
+	BoundingBox boundsB;
+	Gap g(8);
+	float side;             // -1, 1 (and also 0.999999 -0.999999 etc)
+	float unk1;             // -0 always
 
     local int save = FTell();
 
     if (verticesArray.elements > 0)
     {
         FSeek(portalsEnd + verticesArray.offset);
-        PAD16();
-        VECTOR4 vertices[verticesArray.elements]<bgcolor=cLtBlue>;
+        VECTOR4 vertices[verticesArray.elements]<bgcolor=cGreen, optimize=false>;
     }
     if (indicesArray.elements > 0)
     {
         FSeek(portalsEnd + indicesArray.offset);
-        PAD16();
-        short indices[indicesArray.elements]<bgcolor=cLtGreen>;
+        short indices[indicesArray.elements]<bgcolor=cLtGreen, optimize=false>;
     }
 
     FSeek(save);
 };
 
-struct Unk221Entry
+struct FloatTrack(int end)
 {
-	uint16 textureIndex, unk1;
-	uint32 unk2, unk3, unk4, unk5, unk6;
-	M3DOUBLEARRAY arrays0[5]; // Or not
-	uint32 unk7, unk8, unk9, unk10, unk11, unk12;
-	M3DOUBLEARRAY arrays1[5]; // Or not
-	uint32 unk13, unk14;
-};
+    M3DOUBLEARRAY offset;
 
-struct UnkPassData0(int unkPassData0End)
-{
-	uint32 unk1, unk2, unk3, unk4, unk5, unk6;
-	M3ARRAY unk221Array;
+    local long save = FTell();
 
-    local int save = FTell();
-
-    if (unk221Array.elements > 0)
-    {
-        FSeek(unkPassData0End + unk221Array.offset);
-        PAD16();
-        Unk221Entry unk221[unk221Array.elements]<bgcolor=cLtGreen>;
-    }
+    FSeek(offset.offsetA + end);
+    int test;
 
     FSeek(save);
 };
-
-struct UnkPassData1
-{
-    byte data[2];
-};
-
-struct TextureUnits(int textureUnitsEnd)
-{
-	int16 unk1; // always 0xFF
-	uint16 flags; // probably, 0 -> color texture, 1 -> normal texture
-	uint32 unk3; // always 5 (also in the texture struct for M3 this is mostly 5)
-	float unk4;
-	uint32 unk5;
-	M3ARRAY texturePathArray;
-
-    local int save = FTell();
-
-    FSeek(textureUnitsEnd + texturePathArray.offset);
-    PAD16();
-    wchar_t name[texturePathArray.elements]<bgcolor=cYellow>;
-
-    FSeek(save);
-};
-
-struct UnkPassData2
-{
-    byte data[2];
-};
-
 
 struct Pass(int passEnd)
 {
-    uint32 unk0; // always 0 so far
-	uint32 unkCounter; // 0, 1, 40, 41, ...
+    struct UnkPassData0(int unkPassData0End)
+    {
+        struct PassUnk0A(int unkPassData0AEnd)
+        {
+	        uint16 colorTexUnitIndex;       // 0 .. 114
+            uint16 normalTexUnitIndex;      // 1 .. 113
+	        uint unk0;                      // 0, 1, 3, 5
+            uint unk1;                      // 0, 1, 3, 5, 6
+            uint unk2;                      // 0, 1, 2, 3, 5
+            uint unk3;                      // 0, 1, 2, 3, 5, 6
+            uint unk4;                      // 0, 1, 3, 4, 5, 6
+            Gap g(24);                      // Unused track
+            Track unkTrack0(TFloat, unkPassData0AEnd);
+            Track unkTrack1(TFloat, unkPassData0AEnd);
+            Track unkTrack2(TFloat, unkPassData0AEnd);
+            Track unkTrack3(TFloat, unkPassData0AEnd);
+            Gap g(4);
+	        uint unk5;                      // 0, 1
+            uint unk6;                      // 0, 1
+            uint unk7;                      // 0, 1
+            uint unk8;                      // 0, 1
+            Gap g(4);
+            Track unkTrack4(TFloat, unkPassData0AEnd);
+            Track unkTrack5(TFloat, unkPassData0AEnd);
+            Track unkTrack6(TFloat, unkPassData0AEnd);
+            Track unkTrack7(TFloat, unkPassData0AEnd);
+            Track unkTrack8(TFloat, unkPassData0AEnd);
+	        uint unk9;                      // 2, 3, 4, 5, 6
+            uint unk10;                     // 0 .. 22
+        };
+
+        Gap g(4);
+	    uint unk0;      // 0, 2, 3, 4, 6, 12, 8192, 24576, 24578, 24580, 24582
+        uint unk1;      // 0, 1, 2, 3, 4, 5, 6, 8, 10
+        uint unk2;      // 0, 1, 2, 3, 4, 6, 7
+        uint unk3;      // 0 .. 68
+        uint unk4;      // 0 .. 68
+	    M3ARRAY arrUnk0A;
+    
+        local int save = FTell();
+    
+        if (arrUnk0A.elements > 0)
+        {
+            local int unkPassData0ACount = arrUnk0A.elements;
+            local int fileUnkPassData0AOffset = unkPassData0End + arrUnk0A.offset;
+            local int unkPassData0AEnd = fileUnkPassData0AOffset + ((296 * unkPassData0ACount + 15) & 0xFFFFFFFFFFFFFFF0);
+            FSeek(fileUnkPassData0AOffset);
+            PassUnk0A unk221(unkPassData0AEnd)[arrUnk0A.elements]<bgcolor=cLtGreen, optimize=false>;
+        }
+    
+        FSeek(save);
+    };
+    
+    struct TextureUnits(int textureUnitsEnd)
+    {
+	    int16 unk0;             // -1, 1, 2
+	    uint16 flags;           // 0,1 probably, 0 -> color texture, 1 -> normal texture
+	    uint32 unk1;            // 0, 1, 3, 4, 5, 21
+	    float unk2;             // 0.0 .. 0.5 ish
+	    Gap g(4);
+	    M3ARRAY texturePathArray;
+    
+        local int save = FTell();
+    
+        FSeek(textureUnitsEnd + texturePathArray.offset);
+        wchar_t name[texturePathArray.elements]<bgcolor=cYellow>;
+    
+        FSeek(save);
+    };
+    
+    // READ //
+
+    Gap g(4);
+	uint32 unk;            // 0, 1, 2, 40, 41 ... 107 (flags?)
 	M3ARRAY nameArray;
-	M3ARRAY unk1Array; // -> 40 bytes values
-	M3ARRAY unk2Array; // -> 2 byte values
-	M3ARRAY texUnitsArray; // -> 32 byte values
-	M3ARRAY unk3Array;// -> 2 byte values
+	M3ARRAY unk1Array;      // -> 40 bytes struct
+	M3ARRAY unk2Array;      // -> short
+	M3ARRAY texUnitsArray;  // -> 32 byte struct
+	M3ARRAY unk3Array;      // -> short, unused
 
     local int save = FTell();
 
     FSeek(passEnd + nameArray.offset);
-    PAD16();
     wchar_t name[nameArray.elements]<bgcolor=cYellow>;
 
     if (unk1Array.elements > 0)
     {
-        FSeek(passEnd + unk1Array.offset);
-        PAD16();
-        local int unkPassData0End = FTell() + (unk1Array.elements * 40);
-        UnkPassData0 unkData0(unkPassData0End)[unk1Array.elements]<bgcolor=cGreen, optimize=false>;
+        local int unkPassData0Count = unk1Array.elements;
+        local int fileUnkPassData0Offset = passEnd + unk1Array.offset;
+        local int unkPassData0End = fileUnkPassData0Offset + ((40 * unkPassData0Count + 15) & 0xFFFFFFFFFFFFFFF0);
+        FSeek(fileUnkPassData0Offset);
+        UnkPassData0 unkData0(unkPassData0End)[unkPassData0Count]<bgcolor=cGreen, optimize=false>;
     }
     if (unk2Array.elements > 0)
     {
-        FSeek(passEnd + unk2Array.offset);
-        PAD16();
-        UnkPassData1 unkData1[unk2Array.elements]<bgcolor=cRed, optimize=false>;
+        // -1, 0, 1, 2 .. 12
+        local int unk2ArrayCount = unk2Array.elements;
+        local int fileUnk2ArrayOffset = passEnd + unk2Array.offset;
+        FSeek(fileUnk2ArrayOffset);
+        short unkData1[unk2ArrayCount]<bgcolor=cRed, optimize=false>;
     }
     if (texUnitsArray.elements > 0)
     {
-        FSeek(passEnd + texUnitsArray.offset);
-        PAD16();
-        local int textureUnitsEnd = FTell() + (texUnitsArray.elements * 32);
-        TextureUnits textureUnits(textureUnitsEnd)[texUnitsArray.elements]<bgcolor=cBlue, optimize=false>;
+        local int textureUnitsCount = texUnitsArray.elements;
+        local int fileTextureUnitsOffset = passEnd + texUnitsArray.offset;
+        local int textureUnitsEnd = fileTextureUnitsOffset + ((32 * textureUnitsCount + 15) & 0xFFFFFFFFFFFFFFF0);
+        FSeek(fileTextureUnitsOffset);
+        TextureUnits textureUnits(textureUnitsEnd)[textureUnitsCount]<bgcolor=cBlue, optimize=false>;
     }
     if (unk3Array.elements > 0)
     {
-        FSeek(passEnd + unk3Array.offset);
-        PAD16();
-        UnkPassData2 unkData2[unk3Array.elements]<bgcolor=cPurple, optimize=false>;
+        // Unused
+        local int unk3ArrayCount = unk3Array.elements;
+        local int fileUnk3ArrayOffset = passEnd + unk3Array.offset;
+        FSeek(fileUnk3ArrayOffset);
+        short unkData2[unk3ArrayCount]<bgcolor=cPurple, optimize=false>;
     }
     FSeek(save);
 };
@@ -198,42 +224,59 @@ struct Unk1Data
     byte data[2];
 };
 
-
 struct Unk2Data
 {
-    byte data[64];
-};
+    int unk0;               // 2 .. 202 (index into something)
+    int unk1;               // 3 .. 95 (index into something)
+    Gap g(8);
+    VECTOR4 position;
+    VECTOR4 scale;
+    QUATERNION rotation;
 
-struct Unk3Unk0Data
-{
-    byte data[2];
+    Printf("%i,", unk0);
 };
 
 struct Unk3Data(int unk3End)
 {
-	uint64 unk1;
+	Gap g(8);
 	M3ARRAY nameArray;
 	M3ARRAY unk0Array;
 
     local int save = FTell();
 
-    FSeek(unk3End + nameArray.offset);
-    PAD16();
-    wchar_t passName[nameArray.elements]<bgcolor=cYellow>;
+    local int nameArrayCount = nameArray.elements;
+    local int fileNameArrayOffset = unk3End + nameArray.offset;
+    FSeek(fileNameArrayOffset);
+    wchar_t passName[nameArrayCount]<bgcolor=cYellow>;
 
     if (unk0Array.elements > 0)
     {
-        FSeek(unk3End + unk0Array.offset);
-        PAD16();
-        Unk3Unk0Data unkData0[unk0Array.elements]<bgcolor=cGreen, optimize=false>;
+        local int unk0ArrayCount = unk0Array.elements;
+        local int fileUnk0ArrayOffset = unk3End + unk0Array.offset;
+        FSeek(fileUnk0ArrayOffset);
+        short unkData0[unk0ArrayCount]<bgcolor=cGreen, optimize=false>;
     }
 
     FSeek(save);
 };
 
-struct Unk4Data
+struct Light
 {
-    byte data[176];
+    int nameIndex;
+    Gap g(12);
+    VECTOR4 position;
+    VECTOR4 scale;
+    QUATERNION rotation;
+    int unk0;               // 0, 1, 2, 3, 4, 5, 6, 7, 12
+    int unk1;               // -1
+    int unk2;               // 0, 2, 3, 4
+    int unk3;               // -1
+    Gap g(16);
+    VECTOR4 vec0;
+    VECTOR4 vec1;
+    VECTOR4 vec2;
+    VECTOR4 vec3;
+    Gap g(16);
 };
 
 struct Unk5Data
@@ -286,44 +329,51 @@ struct Unk13Data
     byte data[4];
 };
 
-Header header;
-if (header.sectors.elements > 0)
+Header header<bgcolor = cRed>;
+if (header.arrSectors.elements > 0)
 {
-    FSeek(headerSize + header.sectors.offset);
-    Sector sectors[header.sectors.elements]<bgcolor=cPurple, optimize=false>;
+    FSeek(headerSize + header.arrSectors.offset);
+    Sector sectors[header.arrSectors.elements]<bgcolor=cPurple, optimize=false>;
 }
-if (header.portals.elements > 0)
+if (header.arrPortals.elements > 0)
 {
-    FSeek(headerSize + header.portals.offset);
-    local int portalsEnd = FTell() + (header.portals.elements * 144);
-    Portal portals(portalsEnd)[header.portals.elements]<optimize=false>;
+    local int portalCount = header.arrPortals.elements;
+    local int filePortalsOffset = headerSize + header.arrPortals.offset;
+    local int portalsEnd = filePortalsOffset + ((144 * portalCount + 15) & 0xFFFFFFFFFFFFFFF0);
+    FSeek(filePortalsOffset);
+    Portal portals(portalsEnd)[portalCount]<bgcolor=cLtRed, optimize=false>;
 }
-if (header.passes.elements > 0)
+if (header.arrPasses.elements > 0)
 {
-    FSeek(headerSize + header.passes.offset);
-    local int passEnd = FTell() + (header.passes.elements * 88);
-    Pass passes(passEnd)[header.passes.elements]<optimize=false>;
+    local int passCount = header.arrPasses.elements;
+    local int filePassesOffset = headerSize + header.arrPasses.offset;
+    local int passEnd = filePassesOffset + ((88 * passCount + 15) & 0xFFFFFFFFFFFFFFF0);
+    FSeek(filePassesOffset);
+    Pass passes(passEnd)[passCount]<optimize=false>;
 }
 if (header.unk1.elements > 0)
 {
+    // Unused
     FSeek(headerSize + header.unk1.offset);
     Unk1Data unk1[header.unk1.elements]<optimize=false>;
 }
 if (header.unk2.elements > 0)
 {
     FSeek(headerSize + header.unk2.offset);
-    Unk2Data unk2[header.unk2.elements]<optimize=false>;
+    Unk2Data unk2[header.unk2.elements]<bgcolor = cLtYellow, optimize=false>;
 }
 if (header.unk3.elements > 0)
 {
-    FSeek(headerSize + header.unk3.offset);
-    local int unk3End = FTell() + (header.unk3.elements * 40);
-    Unk3Data unk3(unk3End)[header.unk3.elements]<optimize=false>;
+    local int unk3Count = header.unk3.elements;
+    local int fileUnk3Offset = headerSize + header.unk3.offset;
+    local int unk3End = fileUnk3Offset + ((40 * unk3Count + 15) & 0xFFFFFFFFFFFFFFF0);
+    FSeek(fileUnk3Offset);
+    Unk3Data unk3(unk3End)[unk3Count]<optimize=false>;
 }
-if (header.unk4.elements > 0)
+if (header.arrLights.elements > 0)
 {
-    FSeek(headerSize + header.unk4.offset);
-    Unk4Data unk4[header.unk4.elements]<optimize=false>;
+    FSeek(headerSize + header.arrLights.offset);
+    Light lights[header.arrLights.elements]<bgcolor = cLtPurple, optimize=false>;
 }
 if (header.unk5.elements > 0)
 {
@@ -374,10 +424,25 @@ if (header.unk13.elements > 0)
 if (header.unkStringTable.elements > 0)
 {
     FSeek(headerSize + header.unkStringTable.offset);
-    wchar_t stringTable[header.unkStringTable.elements]<optimize=false>;
+    wchar_t stringTable[header.unkStringTable.elements]<bgcolor=cLtGray, hidden=true, optimize=false>;
 }
 if (header.stringOffsets.elements > 0)
 {
     FSeek(headerSize + header.stringOffsets.offset);
-    int stringOffsets[header.stringOffsets.elements]<optimize=false>;
+    int stringOffsets[header.stringOffsets.elements]<hidden=true, optimize=false>;
+
+    local int i = 0;
+    local int sStart;
+    local int sEnd;
+    for (i = 0; i < header.stringOffsets.elements; i++)
+    {
+        sStart = stringOffsets[i] * 2;
+        if (i == header.stringOffsets.elements - 1)
+            sEnd = header.unkStringTable.elements * 2;
+        else
+            sEnd = stringOffsets[i + 1] * 2;
+    
+        FSeek(headerSize + header.unkStringTable.offset + sStart);
+        WSPATH name(sEnd - sStart);
+    }
 }

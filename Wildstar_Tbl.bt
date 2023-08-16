@@ -10,6 +10,16 @@
 
 local int HeaderSize = 96;
 
+void Align(int alignment)
+{
+    local int loc = FTell();
+    local int pad = (alignment - (loc % alignment));
+    if (pad != 0 && pad < alignment)
+    {
+        FSkip(pad);
+    }
+};
+
 struct Header
 {
     char magic[4];  // DTBL
@@ -39,6 +49,11 @@ struct Column
     ushort dataType;
     ushort padding;
     uint unk1;
+    local long save = FTell();
+    local long offset = (long)(HeaderSize + header.fieldCount * 24 + header.fieldOffset + nameOffset);
+    FSeek((header.fieldCount % 2 == 0) ? offset : (offset + 8));
+    wchar_t name[nameLength];
+    FSeek(save);
 };
 
 local int recIndex = 0;
@@ -54,6 +69,7 @@ typedef struct
             break;
         }
     }
+
     wstring data;
 }WString<name="String", read=READWString>;
 
@@ -62,10 +78,10 @@ string READWString( WString &s )
     return s.data;
 }
 
+local int i;
 struct Record(Header &header)
 {
     FSeek(HeaderSize + header.recordOffset + (header.recordSize * recIndex));
-    local int i;
     local int save;
     for (i = 0; i < header.fieldCount; i++)
     {
@@ -84,31 +100,29 @@ struct Record(Header &header)
                 uint64 uLong;
                 break;
             case 130:
-                uint num6;
-                uint num7;
+                Align(8);
+                uint64 strOffset;
                 save = FTell();
-                if (num6 != 0)
-                {
-                    FSeek(num6 + HeaderSize + header.recordOffset); 
-                }
-                else
-                {
-                    FSeek(num7 + HeaderSize + header.recordOffset);
-                }
+                FSeek(strOffset + HeaderSize + header.recordOffset); 
                 WString data;
                 FSeek(save);
-
-                if (i < header.fieldCount - 1)
-                    if (num6 == 0 && columns[i + 1].dataType != 130)
-                        FSkip(4);
                 break;
         }
     }
     recIndex = recIndex + 1;
 };
 
+string VarName(uint val)
+{
+    string s;
+    SPrintf(s, "%u", i);
+    return s;//columns[i].name;
+}
+
 Header header;
 FSeek(HeaderSize + header.fieldOffset);
-Column columns[header.fieldCount];
+Column columns[header.fieldCount]<optimize=false>;
 FSeek(HeaderSize + header.recordOffset);
 Record records(header)[header.recordCount]<optimize=false>;
+FSeek(HeaderSize + header.lookupOffset);
+int lookup[header.maxID];

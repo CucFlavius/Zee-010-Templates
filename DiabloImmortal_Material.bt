@@ -5,13 +5,64 @@
 //   Purpose: Reading material data used to render models
 //  Category: DiabloImmortal
 //------------------------------------------------
-#include "Lib/Common.bt"
+//#include "Lib/Common.bt"
+typedef struct (int size)
+{
+    char s[size];
+} STRINGc <name = StringCName>;
+
+string StringCName(STRINGc &str)
+{
+    if (Strlen(str.s) > 0)
+        return "String : " + str.s;
+    else
+        return "";
+}
+
+typedef struct
+{
+    ushort strSize;
+    char s[strSize];
+} STRINGd <name = StringDName>;
+
+string StringDName(STRINGd &str)
+{
+    if (Strlen(str.s) > 0)
+        return "String : " + str.s;
+    else
+        return "";
+}
+
+
+enum<byte> EShaderGraphType
+{
+    PBR = 0,
+    Unlit = 1,
+    Particle = 2,
+    Effect = 3,
+    Decal = 4,
+    PostProcess = 5,
+    UI = 6,
+    Function = 7,
+};
 
 struct MATERIAL
 {
     STRINGd materialName;
     STRINGd shaderName;
-    uint unk1;
+    EShaderGraphType type;
+    byte handwritten;
+    ushort unk;
+    ushort sizeOfProperties;
+    STRINGc properties(sizeOfProperties);
+};
+
+struct Submaterial
+{
+    STRINGd fileName;
+    STRINGd shaderName;
+    ushort unk1;
+    ushort unk2;
     ushort sizeOfProperties;
     STRINGc properties(sizeOfProperties);
 };
@@ -20,13 +71,8 @@ struct MATERIALb
 {
     //time_t creationTime;
     STRINGd materialName;
-    byte unk;
-    STRINGd fileName;
-    STRINGd shaderName;
-    ushort unk1;
-    ushort unk2;
-    ushort sizeOfProperties;
-    STRINGc properties(sizeOfProperties);
+    byte submatCount;
+    Submaterial mSubMaterials[submatCount]<optimize=false>;
 };
 
 byte version;                                       // Probably version, always 46 ?

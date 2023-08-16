@@ -25,13 +25,14 @@ struct BONE // 352
     int16 parentId;         // A value of -1 indicates this bone has no parent
     short unk2;             // MAYBE submesh id
     byte boneNameCRC[4];    // Maybe
-    //Printf ("%u \n", flags);
+    //Printf ("%u \n", unk2);
     //byte gap_008[4];    // Are the {@link #gap_000} values of two bones from two m3 equal, so are their {@link #gap_008} values.
                         // In case of two bones with {@link #gap_000} = -1, {@link #gap_008} can still be equal to each other <br>
                         // Good chance that {@link #gap_008} controls which bones 'go together', but it's not clear how its value is generated
     int32 padding_00C;
 
-    Track scale(TVector3HF, bonesEndPos)[4]<optimize=true>;    // unk_block_010[2] is related to parent.unk_block_010[0]. Both pointer have (mostly) always the same amount of elements,  Those values seem to be 0, for leaf bones
+    Track scale(TVector3HF, bonesEndPos)[2]<optimize=true>;    // unk_block_010[2] is related to parent.unk_block_010[0]. Both pointer have (mostly) always the same amount of elements,  Those values seem to be 0, for leaf bones
+    Track unk(TVector3HF, bonesEndPos)[2]<optimize=true>;
     Track rotation(TQuaternionS, bonesEndPos)[2]<optimize=true>;
     Track position(TVector3, bonesEndPos)[2]<optimize=true>;
 

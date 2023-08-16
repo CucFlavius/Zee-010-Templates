@@ -1,0 +1,180 @@
+//--------------------------------------
+//      File: WorldOfWarcraft_M2_3.3.5.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading M2 files from Wotlk 3.3.5 client
+//  Category: WoW
+//--------------------------------------
+
+#include "Lib/Common.bt"
+
+typedef struct
+{
+    uint flag_tilt_x : 1 <name = "Tilt X", comment = "The model is tilted on the X axis.">;
+    uint flag_tilt_y : 1 <name = "Tilt Y", comment = "The model is tilted on the Y axis.">;
+    uint unk0x4 : 1 <name = "Unknown 0x4", comment = "">;
+    uint flag_use_texture_combiner_combos  : 1 <name = "Has blend mode overrides", comment = "add textureCombinerCombos array to end of data. The model has blend mode overrides.">;
+    uint unk0x10 : 1 <name = "Unknown 0x10", comment = "">;
+} GLOBALFLAGS <name = "Global Flags", size = 4>;
+
+struct M2Range
+{
+    uint minimum;
+    uint maximum;
+};
+
+struct M2Bounds
+{
+    BOUNDINGBOX extent;
+    float radius;
+};
+
+struct M2Track
+{
+    uint16 interpolationType;
+    uint16 globalSequence;
+    M2ARRAY timestamps;
+    M2ARRAY values;
+};
+
+struct M2Sequence
+{
+  uint16 id;                   // Animation id in AnimationData.dbc
+  uint16 variationIndex;       // Sub-animation id: Which number in a row of animations this one is.
+  uint32 duration;             // The length of this animation sequence in milliseconds.
+  float movespeed;               // This is the speed the character moves with in this animation.
+  uint32 flags;                // See below.
+  int16 frequency;             // This is used to determine how often the animation is played. For all animations of the same type, this adds up to 0x7FFF (32767).
+  uint16 _padding;
+  M2Range replay;                // May both be 0 to not repeat. Client will pick a random number of repetitions within bounds if given.
+  uint32 blendTime;
+  M2Bounds bounds;
+  int16 variationNext;         // id of the following animation of this AnimationID, points to an Index or is -1 if none.
+  uint16 aliasNext;            // id in the list of animations. Used to find actual animation if this sequence is an alias (flags & 0x40)
+};
+
+struct M2CompBone
+{
+    int32 key_bone_id;            // Back-reference to the key bone lookup table. -1 if this is no key bone.
+    enum
+    {
+        ignoreParentTranslate = 0x1,
+        ignoreParentScale = 0x2,
+        ignoreParentRotation = 0x4,
+        spherical_billboard = 0x8,
+        cylindrical_billboard_lock_x = 0x10,
+        cylindrical_billboard_lock_y = 0x20,
+        cylindrical_billboard_lock_z = 0x40,
+        transformed = 0x200,
+        kinematic_bone = 0x400,       // MoP+: allow physics to influence this bone
+        helmet_anim_scaled = 0x1000,  // set blend_modificator to helmetAnimScalingRec.m_amount for this bone
+        something_sequence_id = 0x2000, // <=bfa+, parent_bone+submesh_id are a sequence id instead?!
+    } flags;              
+    int16 parent_bone;            // Parent bone ID or -1 if there is none.
+    uint16 submesh_id;            // Mesh part ID OR uDistToParent?
+    uint32 boneNameCRC;         // these are for debugging only. their bone names match those in key bone lookup.
+    M2Track translation;
+    M2Track rotation;   // compressed values, default is (32767,32767,32767,65535) == (0,0,0,1) == identity
+    M2Track scale;
+    VECTOR3 pivot;                 // The pivot point of that bone.
+};
+
+struct M2Vertex
+{
+  VECTOR3 pos;
+  unsigned byte bone_weights[4];
+  unsigned byte bone_indices[4];
+  VECTOR3 normal;
+  VECTOR2 tex_coords[2];  // two textures, depending on shader used
+};
+
+struct Header
+{
+    char magic[4];      // MD20
+    uint version;       // 264 - 1.8 Wrath of the Lich King
+    M2ARRAY name;
+    GLOBALFLAGS globalFlags;
+    M2ARRAY globalLoops;
+    M2ARRAY sequences;
+    M2ARRAY sequenceIdxHashByID;
+    M2ARRAY bones;
+    M2ARRAY boneIndicesByID;
+    M2ARRAY vertices;
+    uint numSkinProfiles;
+    M2ARRAY colors;
+    M2ARRAY textures;
+    M2ARRAY textureWeights;
+    M2ARRAY textureTransforms;
+    M2ARRAY textureIndicesByID;
+    M2ARRAY materials;
+    M2ARRAY boneCombos;
+    M2ARRAY textureCombos;
+    M2ARRAY textureTransformBoneMap;
+    M2ARRAY textureWeightCombos;
+    M2ARRAY textureTransformCombos;
+    BOUNDINGBOX boundingBox;
+    float boundingSphereRadius;
+    BOUNDINGBOX collisionBox;
+    float collisionSphereRadius;
+    M2ARRAY collisionIndices;
+    M2ARRAY collisionPositions;
+    M2ARRAY collisionFaceNormals;
+    M2ARRAY attachments;
+    M2ARRAY attachmentIndicesByID;
+    M2ARRAY events;
+    M2ARRAY lights;
+    M2ARRAY cameras;
+    M2ARRAY cameraIndicesByID;
+    M2ARRAY ribbonEmitters;
+    M2ARRAY particleEmitters;
+    if (globalFlags.flag_use_texture_combiner_combos)
+    {
+        M2ARRAY textureCombinerCombos;
+    }
+};
+
+// Read Data //
+
+Header header;
+
+if (header.name.count > 0)
+{
+    FSeek(header.name.offset);
+    char name[header.name.count];
+}
+
+if (header.globalLoops.count > 0)
+{
+    FSeek(header.globalLoops.offset);
+    uint globalLoopTimestamps[header.globalLoops.count];
+}
+
+if (header.sequences.count > 0)
+{
+    FSeek(header.sequences.offset);
+    M2Sequence sequences[header.sequences.count];
+}
+
+if (header.sequenceIdxHashByID.count > 0)
+{
+    FSeek(header.sequenceIdxHashByID.offset);
+    short sequenceIdxHashByIDs[header.sequenceIdxHashByID.count];
+}
+
+if (header.bones.count > 0)
+{
+    FSeek(header.bones.offset);
+    M2CompBone bones[header.bones.count];
+}
+
+if (header.boneIndicesByID.count > 0)
+{
+    FSeek(header.boneIndicesByID.offset);
+    short boneIndicesByIDs[header.boneIndicesByID.count];
+}
+
+if (header.vertices.count > 0)
+{
+    FSeek(header.vertices.offset);
+    M2Vertex vertices[header.vertices.count];
+}

@@ -17,7 +17,7 @@ struct MOGN
     local long startPos = FTell();
     local long currentPos = FTell();
 
-    while (currentPos < startPos + hdr.size - 2)
+    while (currentPos < startPos + hdr.size)
     {
         STRING s;
         currentPos = FTell();

@@ -1,0 +1,16 @@
+
+//------------------------------------------------
+// MOLV
+//------------------------------------------------
+
+struct Volume // 100 bytes
+{
+    PLANE planes[6]<optimize=false>;
+    byte unk[4];
+};
+
+struct MOLV
+{
+    CHUNK hdr;
+    Volume volumes[hdr.size / 100]<optimize=false>;
+};

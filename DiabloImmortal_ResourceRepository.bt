@@ -13,6 +13,8 @@ FSkip(4);                                       // empty
 ushort sizeOfFileTypeStrings;
 char fileTypeStrings[sizeOfFileTypeStrings];    // split by ;
 ushort sizeOfFolderStrings;
+if (sizeOfFolderStrings == 0xFFFF)
+    uint sizeOfFolderStrings;
 char folderPathStrings[sizeOfFolderStrings];    // split by ;
 
 struct HASH

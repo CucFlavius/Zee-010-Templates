@@ -52,6 +52,7 @@ typedef struct {
 int match(char m[])
 {
     local char s[] = ReadString( FTell());
+    if (Strlen(s) < 4) return 0;
     if( m[0] == s[3] && m[1] == s[2] && m[2] == s[1] && m[3] == s[0] ) 
         return 1;
     return 0;

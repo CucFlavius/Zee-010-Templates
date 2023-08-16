@@ -19,7 +19,7 @@ typedef struct
 typedef struct (int size)
 {
     char s[size];
-} STRINGc <name = StringCName>;
+} STRINGc <read = StringCName>;
 
 // Read a string size then string
 typedef struct
@@ -31,7 +31,15 @@ typedef struct
 typedef struct (int size)
 {
     wchar_t path[size];
-} WSPATH;
+} WSPATH<read = WSPathRead>;
+
+string WSPathRead(WSPATH &str)
+{
+    if (Strlen(str.path) > 0)
+        return str.path;
+    else
+        return "";
+}
 
 // Read null terminated string, with variable name
 typedef struct (char nn[])
@@ -56,7 +64,7 @@ string StringName(STRING &str)
 string StringCName(STRINGc &str)
 {
     if (Strlen(str.s) > 0)
-        return "String : " + str.s;
+        return str.s;
     else
         return "";
 }

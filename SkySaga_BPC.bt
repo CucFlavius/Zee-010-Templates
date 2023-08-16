@@ -1,0 +1,58 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+struct Header
+{
+    int magic;
+    short unk0;
+    short unk1;
+    short unk2;
+    short unk3;
+    int unk4;
+    int64 fileSize;
+    int64 offset;
+    int unk7;   // end cluster size?
+    int count;
+};
+
+struct UnkData
+{
+    int64 someOffset;
+    byte hash0[12];
+    int unk3;
+    byte hash1[8];
+    int offset;
+    int sizeMaybe;
+    int sizeMaybe2;
+    int sizeUncompressedMaybe;
+    byte hash2[20];
+    short unk8;
+    short unk9;
+    int unk0;
+    int padding0[3];    // this padding is definitely not fixed size, last entry is less
+};
+
+struct UnkDataB
+{
+    int unk0;
+    byte hash[8];
+    int unk1;
+};
+
+Header h;
+FSeek(h.offset);
+
+UnkData unkData[h.count];
+FSkip(-8);  // pad fix
+int unkCount;
+UnkDataB unkDataB[unkCount];

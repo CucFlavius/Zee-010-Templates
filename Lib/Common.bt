@@ -8,6 +8,11 @@
 //  Category: Library
 //------------------------------------------------
 
+typedef struct (int size)
+{
+    byte gap[size]<bgcolor=cBlack, hidden=true>;
+}Gap<hidden=true>;
+
 #include "Lib/Vector.bt"
 #include "Lib/Color.bt"
 #include "Lib/Bounds.bt"
@@ -16,6 +21,7 @@
 #include "Lib/String.bt"
 #include "Lib/Array.bt"
 #include "Lib/Animation.bt"
+#include "Lib/Flags.bt"
 
 // skip bites of size
 typedef struct (int size) {
@@ -26,3 +32,13 @@ typedef struct {
     VECTOR3 normal;
     float distance;
 } PLANE;
+
+void Align(int alignment)
+{
+    local int loc = FTell();
+    local int pad = (alignment - (loc % alignment));
+    if (pad != 0 && pad < alignment)
+    {
+        FSkip(pad);
+    }
+};

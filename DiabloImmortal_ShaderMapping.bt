@@ -6,7 +6,22 @@
 //  Category: Model
 //------------------------------------------------
 
-#include "Lib/Common.bt"
+//#include "Lib/Common.bt"
+
+typedef struct
+{
+    ushort strSize;
+    char s[strSize];
+} STRINGd <name = StringDName>;
+
+string StringDName(STRINGd &str)
+{
+    if (Strlen(str.s) > 0)
+        return "String : " + str.s;
+    else
+        return "";
+}
+
 
 struct Something0
 {

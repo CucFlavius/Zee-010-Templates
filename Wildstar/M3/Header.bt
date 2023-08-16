@@ -85,8 +85,9 @@ struct HEADER
         // Read new header //
         headerSize = 1584;
 
-        byte gap_008[8];
-        M3ARRAY unk_offset_010;         // 112 bytes
+        int unk0a;      // 0, 1
+        Gap g(4);
+        M3ARRAY sequenceArray;         // 112 bytes
         Track unk_offset_020(TByte, headerSize);
         Track unk_offset_038(TByte, headerSize);
         Track unk_offset_050(TByte, headerSize);
@@ -97,6 +98,8 @@ struct HEADER
         Track unk_offset_0C0(TByte, headerSize);
         Track unk_offset_0D8(TByte, headerSize);
         M3ARRAY unk_offset_0F0;         // 184 bytes
+
+        // These 5 are read at once
         Track unk_offset_100(TUInt32, headerSize);
         Track unk_offset_118(TUInt32, headerSize);
         Track unk_offset_130(TByte, headerSize);
@@ -115,10 +118,10 @@ struct HEADER
         M3ARRAY materials;               // 48 bytes
         M3ARRAY model2Display;          // 4 bytes
         Array display2model(TInt16, headerSize)<bgcolor=cYellow>;          //Contains the mapping for model2display to meshGroupId. And it is meshGroupId := display2meshGroupId[model2display]
-        M3ARRAY unk_offset_220;         // 70 bytes
+        M3ARRAY unk_offset_220;         // 76 bytes
         M3ARRAY unk_offset_230;         // 4 bytes
         M3ARRAY unk_offset_240;         // 112 bytes
-        M3ARRAY geometry;
+        M3ARRAY geometry;               // 200 bytes
         M3ARRAY unk_offset_260;         // 4 bytes
         M3ARRAY unk_offset_270;         // 2 bytes
         M3ARRAY unk_offset_280;         // 8 bytes

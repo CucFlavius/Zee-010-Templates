@@ -7,15 +7,22 @@ typedef struct
 
 struct M3ARRAY
 {
-    uint32 elements <fgcolor=cWhite, bgcolor=cBlack>;
-    uint32 unused <fgcolor=cDkGray, bgcolor=cDkGray>;
-    uint64 offset <fgcolor=cWhite, bgcolor=cDkGray>; // pointer to T, relative to begin of m2 data block (i.e. MD21 chunk content or begin of file)
+    uint32 elements;
+    Gap g(4);
+    uint64 offset; // pointer to T, relative to begin of m2 data block (i.e. MD21 chunk content or begin of file)
 };
 
 struct M3DOUBLEARRAY
 {
-    uint32 elements <fgcolor=cWhite, bgcolor=cBlack>;
-    uint32 unused <fgcolor=cDkGray, bgcolor=cDkGray>;
-    uint64 offsetA <fgcolor=cWhite, bgcolor=cDkGray>;
-    uint64 offsetB <fgcolor=cWhite, bgcolor=cDkGray>;
+    uint32 elements;
+    Gap g(4);
+    uint64 offsetA;
+    uint64 offsetB;
+};
+
+struct OFFSET4
+{
+    int64 unk<bgcolor=cRed>;
+    int32 offset<bgcolor=cRed>;
+    int32 size<bgcolor=cRed>;
 };

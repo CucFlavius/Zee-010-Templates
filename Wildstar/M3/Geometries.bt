@@ -37,7 +37,7 @@ enum<byte> VERTEXBLOCKFIELDTYPE {
     unk8Bit = 6,            // 8 bit, ??
 };
 
-enum<byte> BODYPART {
+enum<short> BODYPART {
     BODY_None = 0,
     BODY_LeftAnkle = 1,
     BODY_RightAnkle = 2,
@@ -130,12 +130,12 @@ typedef struct
 {
     hfloat x;
     hfloat y;
-}UV<read=ReadUVs>;
+}Vec2_16bit<read=ReadUVs>;
 
-string ReadUVs (UV& u)
+string ReadUVs (Vec2_16bit& u)
 {
     string s;
-    SPrintf (s, "UV(%f, %f)", u.x, u.y);
+    SPrintf (s, "Vec2(%f, %f)", u.x, u.y);
     return s;
 }
 
@@ -147,24 +147,23 @@ struct VERTEX (VERTEXBLOCKFIELDTYPE vertexBlockFieldType[])
     {
         switch( vertexBlockFieldType[i] ) 
         {
+            case Vector3 :
+                VECTOR3 vec3;
+                break;
             case Vector3_16bit : 
-                VECTOR3SHORT position;
+                VECTOR3SHORT vec3Compressed;
                 break;
             case Vector3_8BitNorm :
-                NORM8 tangent;
-                NORM8 normal;
-                NORM8 biTangent;
-                i+=2;
+                NORM8 vec3_8bit;
                 break;
             case Vector4_8bit :
-                BONEINDICES boneIndices;
-                BONEWEIGHTS boneWeights;
-                unsigned byte vertexColor0[4];
-                unsigned byte vertexColor1[4];
-                i+=3;
+                ubyte x;
+                ubyte y;
+                ubyte z;
+                ubyte w;
                 break;
             case Vector2_16bit :
-                UV uv;
+                Vec2_16bit uv;
                 break;
             case Null:
                 break;
@@ -185,18 +184,8 @@ struct VERTEXOld
     BONEWEIGHTS boneWeights;
     unsigned byte vertexColor0[4];
     unsigned byte vertexColor1[4];
-    UV uv0;
-    UV uv1;
-};
-
-struct VERTICESOld(int count)
-{
-    VERTEXOld vertex[count]<optimize=false>;
-};
-
-struct VERTICES (int count, VERTEXBLOCKFIELDTYPE vertexBlockFieldType[])
-{
-    VERTEX vertex(vertexBlockFieldType)[count]<optimize=false>;
+    Vec2_16bit uv0;
+    Vec2_16bit uv1;
 };
 
 struct MESH
@@ -210,9 +199,9 @@ struct MESH
     uint32 vertexCount;
     uint16 boneMapIndex;
     uint16 boneMapCount;
-    uint16 unk2;            // index into something?
+    uint16 unk2;            // 1, 2, 3, 4 index into something?
     short materialSelector; // {@link StructMaterial material} index, linked under {@link StructM3Header header}
-    short unk3;             // 20 or 0, could be flags
+    short unk0F0Index;      // index in Unk0F0
     short unk4;             // -1
     short unk5;             // -1 or 0
     byte meshGroupId;       // Defines the group this mesh belongs to. For models without groups, this seems to be -1
@@ -223,29 +212,23 @@ struct MESH
                             // The <code>IDs</code> is assigned to meshes, which describe a specific area of a model, for example: left hand, right hand, neck, etc. 
                             // It is reasonable to assume that this <code>ID</code> is used to blend out meshes if, for example, the model wears gear. This still needs to be checked.
                             // The information may be part of a item model or may be found in a .tbl defining said item.
-    byte paddingA[5];
-    short unk8;
-    short unk9;
-    short unk10;
-    short unk11;
-    short unk12;
-    short unk13;
-    short unk14;
-    short unk15;
-    byte unk16;
-    byte unk17;
-    byte paddingB[6];
+    short unk8;             // 0, 1
+    short unk9;             // 0, 1, 3, 4 .. 30, 50, 100
+    short unk10;            // 1, 2, 3
+    short unk11;            // 1, 2, 3
+    short unk12;            // 1, 2, 3
+    short unk13;            // 1, 2, 3
+    RGBA32 color0;
+    RGBA32 color1;
+    byte unk16;             // 0, 1, 2, 3, 4, 8, 10, 11, 12 (if set to 10 the mesh won't render)
+    byte unk17;             // 0, 1, 2, 3
+    Gap g(6);
     VECTOR4 boundsMin;
     VECTOR4 boundsMax;
-    VECTOR4 unk18;          // (1.0, 1.0, 0.0, 0.0)
+    VECTOR4 unk18;          // (1.0, 1.0, 0.0, 0.0) is most common
 };
 
-struct MESHES (int count)
-{
-    MESH mesh[count]<optimize=false>;
-};
-
-struct GEOMETRY
+struct GEOMETRY     // 200
 {
     uint64 signature;                               // For all 34712 scanned m3, the first value is 80, the other seven are 0. 
                                                     // This is probably a 64 uint, maybe used as a signature to identify this packet.
@@ -257,24 +240,24 @@ struct GEOMETRY
     VERTEXBLOCKFIELDTYPE vertexBlockFieldType[11];  // This array seems to indicate which field holds which information
     byte vertexBlockFieldPosition[11];              // Contains information from which byte to which byte certain informations can be found. 
                                                     // Starting at i, a range ends at i+n with n>0 if [i+n] != 0
-    uint16 gap_036;
+    Gap g(2);
     M3ARRAY vertexBlockArray;                       // 1b
     M3ARRAY unused048;                              // For all 34712 scanned m3 empty (2018.12.11)
     M3ARRAY unused058;                              // For all 34712 scanned m3 empty (2018.12.11)
     uint32 indexCount;
     byte indexSize;      
-    byte unk1;                                
+    byte unk1;                                      // 1, 2
                                                     // Seems relevant to {@link #vertexBlockCount}. 
                                                     // As soon {@link #vertexBlockCount} passes 65536 (max value for uint16), this entry changes from {2,1} to {4,2}
                                                     // Opposite to {2,1}, {4,2} indices do not start at 0 for each submesh. 
                                                     // The index can also be far greater than the number of available vertices.
                                                     // Additional, if 4 bytes are read, the bytes which hold the actual index can be the first 2 LSB or MSB.
-    int16 padding_06E;
+    Gap g(2);
     M3ARRAY indexData;                              // 1b
     M3ARRAY meshesArray;                            // 112b
     uint32 nVertexBlocks2;                          // Mostly equal to {@link #vertexBlockCount}, probably part of a struct within this struct, so this value doesn't need to be passed around as a separate value.
                                                     // Sometimes this value is smaller than the other
-    int32 gap_093;
+    Gap g(4);
     M3ARRAY meshVertexBlockRange;                   // 4b This pointer directs to an array <b>A</b>, containing indices for the vertex block array. 
                                                     // Start index and end index, for mesh <b>i</b> can be found at <b>A[i]</b> and <b>A[i+1]</b>
                                                     // Prob. legacy stuff, because this information is also encoded in each mesh, or used as a lookup table so it's not necessary to follow the mesh pointer.
@@ -287,31 +270,42 @@ struct GEOMETRY
 
     local long savePos = FTell();
 
-    FSeek(geometryEndPos + vertexBlockArray.offset);
-    VERTICES vertices(vertexBlockCount, vertexBlockFieldType);
+    if (vertexBlockArray.elements > 0)
+    {
+        FSeek(geometryEndPos + vertexBlockArray.offset);
+        VERTEX vertex(vertexBlockFieldType)[vertexBlockCount]<optimize=false>;
+    }
 
-    FSeek(geometryEndPos + indexData.offset);
-    short indexDatas[indexCount];    
+    if (indexData.elements > 0)
+    {
+        FSeek(geometryEndPos + indexData.offset);
+        short indexDatas[indexCount];  
+    }  
 
-    FSeek(geometryEndPos + meshesArray.offset);
-    MESHES meshes(meshesArray.elements);
+    if (meshesArray.elements > 0)
+    {
+        FSeek(geometryEndPos + meshesArray.offset);
+        MESH mesh[meshesArray.elements]<optimize=false>;
+    }
 
-    FSeek(geometryEndPos + meshVertexBlockRange.offset);
-    int vertexBlockRange[meshVertexBlockRange.elements];
+    if (meshVertexBlockRange.elements > 0)
+    {
+        FSeek(geometryEndPos + meshVertexBlockRange.offset);
+        int vertexBlockRange[meshVertexBlockRange.elements];
+    }
 
-    FSeek(geometryEndPos + unk_offset_0A8.offset);
-    short unk0A8[unk_offset_0A8.elements];
+    if (unk_offset_0A8.elements > 0)
+    {
+        FSeek(geometryEndPos + unk_offset_0A8.offset);
+        short unk0A8[unk_offset_0A8.elements];
+    }
 
-    FSeek(geometryEndPos + unk_offset_0B8.offset);
-    int unk0B8[unk_offset_0B8.elements];
+    if (unk_offset_0B8.elements > 0)
+    {
+        FSeek(geometryEndPos + unk_offset_0B8.offset);
+        int unk0B8[unk_offset_0B8.elements];
+    }
 
     FSeek(savePos);
 };
-
-struct GEOMETRIES (HEADER &header)
-{
-    geometryEndPos = headerSize + header.geometry.offset + (header.geometry.elements * 208);
-    GEOMETRY geometry[header.geometry.elements]<optimize=false>;
-};
-
 

@@ -14,18 +14,56 @@ struct Hash
     char hashB[16];
 };
 
-struct Block
+struct BlockV0
 {
-    int ID;            // 1
-    int offset;            // large number, some size
-    int fileCount;            // first archive count
+    int ID;                     // 1
+    int fileCount;              // the number of real files inside the block
+    short unk0;
+    short unk1;
+    int unk2;
+    int partCount;
+    int partSizes[partCount];   // 4194304
+    Hash hashes[fileCount];  
+};
+
+struct BlockV1
+{
+    int ID;                     // 1
+    int fileCount;              // the number of real files inside the block
+    int partCount;              // first archive count
     int count;
-    int fileSizes[fileCount];            // 4194304
+    int partSizes[partCount];   // 4194304
     int unks[count * 2];
     int unks2[count];
     Hash hashes[fileCount];  
 };
 
+struct FileInfo
+{
+    int strLen;
+    char filePath[strLen];
+    int fileSize;
+    int startBlock;
+    int offset;
+    int endBlock;
+};
+
+struct BlockV2
+{
+    int ID;                     // 1
+    int fileCount;              // the number of real files inside the block
+    int partCount;              // first archive count
+    int count;
+    int partSizes[partCount];   // 4194304
+    int unks[count * 2];
+    int unks2[count];
+    Hash partHashes[partCount];
+    FileInfo fileInfos[fileCount]<optimize=false>;
+};
+
 CHUNKID magic;      // HPPK
 int blockCount;
-Block blocks[blockCount]<optimize=false>;
+
+BlockV2 blocks[blockCount]<optimize=false>;
+//BlockV1 blocks[blockCount]<optimize=false>;
+//BlockV0 blocks[blockCount]<optimize=false>;

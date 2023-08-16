@@ -20,11 +20,10 @@ struct TEXTURE (int index, long texturesEndPos)
                             // 6, 0 -> ?
     byte textureType;       // This may actually be a reference to assetTextureXY, found in model2display.tbl.
                             // 0 - diffuse, 1 - normal, 2 - FX(?)
-    byte unk1;
-    int32 unk2;             // type?
+    byte unk1;              // 0
+    int32 unk2;             // 0, 5, 21, 63
     float unk3;
     byte unks[4];
-    
     Array texturePath(TChar16, texturesEndPos);
 };
 
@@ -32,8 +31,7 @@ struct TEXTURES (HEADER &header)
 {
     local int i;
     local long texturesEndPos = headerSize + header.textures.offset + (header.textures.elements * 32);
-    local long test = headerSize + (header.textures.elements * 32);
-    Printf("%u", test);
+
     for( i = 0; i < header.textures.elements; i++ )
     {
         TEXTURE texture(i, texturesEndPos);

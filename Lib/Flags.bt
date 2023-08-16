@@ -1,0 +1,64 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//------------------------------------------------
+
+
+typedef struct {
+    uint Unk0x1 : 1;
+    uint Unk0x2 : 1;
+    uint Unk0x4 : 1;
+    uint Unk0x8 : 1;
+    uint Unk0x10 : 1;
+    uint Unk0x20 : 1;
+    uint Unk0x40 : 1;
+    uint Unk0x80 : 1;
+    uint Unk0x100 : 1;
+    uint Unk0x200 : 1;
+    uint Unk0x400 : 1;
+    uint Unk0x800 : 1;
+    uint Unk0x1000 : 1;
+    uint Unk0x2000 : 1;
+    uint Unk0x4000 : 1;
+    uint Unk0x8000 : 1;
+    uint Unk0x10000 : 1;
+    uint Unk0x20000 : 1;
+    uint Unk0x40000 : 1;
+    uint Unk0x80000 : 1;
+    uint Unk0x100000 : 1;
+    uint Unk0x200000 : 1;
+    uint Unk0x400000 : 1;
+    uint Unk0x800000 : 1;
+    uint Unk0x1000000 : 1;
+    uint Unk0x2000000 : 1;
+    uint Unk0x4000000 : 1;
+    uint Unk0x8000000 : 1;
+    uint Unk0x10000000 : 1;
+    uint Unk0x20000000 : 1;
+    uint Unk0x40000000 : 1;
+    uint Unk0x80000000 : 1;
+} FLAGSUnk <size = 4>;
+
+typedef struct {
+    ushort Unk0x1 : 1;
+    ushort Unk0x2 : 1;
+    ushort Unk0x4 : 1;
+    ushort Unk0x8 : 1;
+    ushort Unk0x10 : 1;
+    ushort Unk0x20 : 1;
+    ushort Unk0x40 : 1;
+    ushort Unk0x80 : 1;
+    ushort Unk0x100 : 1;
+    ushort Unk0x200 : 1;
+    ushort Unk0x400 : 1;
+    ushort Unk0x800 : 1;
+    ushort Unk0x1000 : 1;
+    ushort Unk0x2000 : 1;
+    ushort Unk0x4000 : 1;
+    ushort Unk0x8000 : 1;
+} FLAGSUnkSh <size = 2>;

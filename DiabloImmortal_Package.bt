@@ -10,8 +10,9 @@
 struct FILE
 {
     uint strSize;
-    STRINGc UUID(strSize);
-    int fileSize;
+    if (strSize < 9999)
+        STRINGc UUID(strSize);
+    uint fileSize;
     char hash[32];
     byte fileData[fileSize];
 };

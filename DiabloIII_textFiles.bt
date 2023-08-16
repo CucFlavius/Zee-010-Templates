@@ -1,0 +1,115 @@
+//--------------------------------------
+//--- 010 Editor v3.0.1 Binary Template
+//
+// Author: MrRawr
+// Revision: 1.0
+// Purpose: Extract Most strings from Diablo3 text files
+//--------------------------------------
+local string title = "Items";
+//local int fileHeader = FileNew();
+local int fileItems = FileNew();
+char type[4];
+int version;
+char empty[8];
+int BlizzardFileNumber;
+char empty2[8];
+int dunno1;
+int dunno2;
+int dunno3;
+int dunno4;
+FPrintf( fileItems, "version,%i\n", version);
+typedef struct {
+    int stringPosition;
+    int stringLength;
+    int terminator;
+    int blank;
+} StringData;
+local int searchHeader = 1;
+struct Item{
+    //FPrintf( fileHeader, "item");
+    local int notTerminated;
+    local int notEmpty;
+    do {
+        StringData stringData;
+        //FPrintf( fileHeader, ",%i,%i", stringData.stringPosition, stringData.stringLength);
+        notTerminated = stringData.terminator;
+        notEmpty = stringData.stringLength;
+    } while ( notTerminated == 0 && notEmpty > 0 );
+    if ( notTerminated == -1 ) {
+        StringData stringFiller;
+        if ( stringFiller.terminator > 0 ) {
+            searchHeader = 0;
+            FSkip(-8);
+        } 
+    }
+    else {
+        int blank;
+        if ( notTerminated > 1 ) {
+            searchHeader = 0;
+            FSkip(-12);
+        }
+        else if ( blank > 0 ) {
+            FSkip(-4);
+        }
+    }
+    //FPrintf( fileHeader, "\n");
+};
+
+do {
+    Item item;
+} while ( searchHeader == 1 );
+
+//2290
+
+local int i;
+local int y;
+local int length;
+local int infoSize;
+local int temp;
+struct ItemInfo {
+    infoSize = 0;
+    while ( exists(item[i].stringData[y]) ) {
+        length = item[i].stringData[y].stringLength;
+        if ( length > 0 ) {
+            if ( y == 0 ) {
+                char itemCode[length];
+                infoSize += sizeof(itemCode);
+                if ( (length%8) > 0 ) {
+                    char itemCodeFiller[8-(length%8)];
+                    infoSize += sizeof(itemCodeFiller);
+                }
+                FPrintf( fileItems, ",%s", itemCode);
+            }
+            else if ( y == 1 ) {
+                char itemType[length];
+                infoSize += sizeof(itemType);
+                if ( (length%8) > 0 ) {
+                    char itemTypeFiller[8-(length%8)];
+                    infoSize += sizeof(itemTypeFiller);
+                }
+                FPrintf( fileItems, ",%s", itemType);
+            }
+            else if ( y == 2 ) {
+                char itemName[length];
+                infoSize += sizeof(itemName);
+                if ( (length%8) > 0 ) {
+                    char itemNameFiller[8-(length%8)];
+                    infoSize += sizeof(itemNameFiller);
+                }
+                FPrintf( fileItems, ",%s",  itemName);
+            }
+        }
+        y++;
+    }
+};
+i = 0;
+while( exists(item[i]) ) {
+    y = 0;
+    FPrintf( fileItems, "itemInfo");
+    ItemInfo itemInfo;
+    if ( infoSize > 0 ) {
+        FSkip(8-(infoSize%8));
+    }
+    FPrintf( fileItems, "\n");
+    i++;
+}

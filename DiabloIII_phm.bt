@@ -1,0 +1,77 @@
+//--------------------------------------
+//--- 010 Editor v3.2.1 Binary Template
+//
+// File: Diablo III *.phm
+// Author: Falo
+// Revision: 1.0
+//--------------------------------------
+struct{
+    ubyte DEADBEEF[16];
+    uint unk1[5];
+    int ofsMeshHeader;
+    int sizeMeshHeader;
+
+    if(ofsMeshHeader)
+    {
+        FSeek(ofsMeshHeader + 16);
+        struct MESHHEADER meshheader;
+    }
+}HEADER;
+
+struct MESHHEADER{
+    float unk1[18];
+    int unk2;
+    int numVerts;
+    int numFaces;
+    int unk3;
+    int unk4;
+    int unk5;
+    int ofsVerts;
+    int sizeVerts;
+    int ofsFaces;
+    int sizeFaces;
+    int ofsUnk1;
+    int sizeUnk1;
+    int ofsUnk2;
+    int sizeUnk2;
+    int ofsUnk3;
+    int sizeUnk3;
+
+    struct{
+        FSeek(ofsVerts+16);
+        struct FLOAT3 vert[numVerts]<optimize=false>;
+    }Vertices;
+
+    struct{
+        FSeek(ofsFaces+16);
+        struct FACE3 face[numFaces]<optimize=false>;
+    }Faces;
+
+    struct{
+        FSeek(ofsUnk2+16);
+        int test2;
+    }Unk2;
+
+    struct{
+        FSeek(ofsUnk1+16);
+        int test1;
+    }Unk1;
+};
+
+struct FLOAT3{
+    float x;
+    float y;
+    float z;
+    Printf("v %f %f %f\n",x,y,z);
+};
+
+struct FACE3{
+    int f1;
+    int f2;
+    int f3;
+    int unk1;
+    int unk2;
+    int unk3;
+    int unk4;
+    Printf("f %d %d %d\n",f1+1,f2+1,f3+1);
+};

@@ -8,6 +8,8 @@
 
 #include "Lib/Common.bt"
 
+local int AIDXBlockOffset = -1;
+
 struct Header
 {
     char magic[4];              // PACK
@@ -23,4 +25,97 @@ struct Header
     uint64 unk3;
 };
 
-Header header;
+struct PackBlockHeader
+{
+    uint64 blockOffset;
+    uint64 blockSize;
+
+    if (blockSize == 16)
+    {
+        AIDXBlockOffset = blockOffset;
+    }
+};
+
+struct AIDX
+{
+    uint magic;     // AIDX
+    uint version;
+    uint unk1;
+    uint rootBlock;
+};
+
+struct FolderBlock;
+
+typedef struct(int filesEnd)
+{
+    uint nameOffset;
+    uint flags; // 3: zlib compressed, 5: lzma compressed
+    uint64 writeTime; // uint64 // FILETIME
+    uint64 uncompressedSize;
+    uint64 compressedSize;
+    byte hash[20];
+    uint unk2;
+
+    local long save = FTell();
+
+    FSeek(filesEnd + nameOffset);
+
+    string name<hidden=true>;
+
+    FSeek(save);
+
+} File<read=ReadFileName>;
+
+string ReadFileName(File &f) { return f.name; };
+
+
+typedef struct(int foldersEnd)
+{
+    uint nameOffset;
+    uint nextBlock;
+
+    local long save = FTell();
+    FSeek(foldersEnd + nameOffset);
+    string name<hidden=true>;
+    FSeek(save);
+
+    if (nextBlock != 0)
+    {
+        FolderBlock block(nextBlock)<optimize=false>;
+    }
+} Folder<read=ReadFolderName>;
+
+string ReadFolderName(Folder &f) { return f.name; };
+
+struct FolderBlock(int blockIndex)
+{
+    local long save = FTell();
+
+    local int offset = blockHeaders[blockIndex].blockOffset;
+    FSeek(offset);
+
+    uint numSubdirectories;
+    uint numFiles;
+
+    local long pos = FTell();
+    local long end = (8 * numSubdirectories) + (56 * numFiles) + pos;
+    if (numSubdirectories > 0)
+    {
+        Folder folder(end)[numSubdirectories]<optimize=false>;
+    }
+
+    if (numFiles > 0)
+    {
+        File file(end)[numFiles]<optimize=false>;
+    }
+
+    FSeek(save);
+};
+
+Header header<bgcolor=cRed>;
+FSeek(header.offsetBlockTable);
+PackBlockHeader blockHeaders[header.numberOfBlocks]<optimize=false, bgcolor=cGreen>;
+if (AIDXBlockOffset == -1) return;
+FSeek(AIDXBlockOffset);
+AIDX aidx;
+FolderBlock rootBlock(aidx.rootBlock)<optimize=false, bgcolor=cLtPurple>;

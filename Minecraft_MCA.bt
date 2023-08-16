@@ -1,0 +1,48 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.2 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+BigEndian();
+int locationTable[32 * 32];
+int timestampTable[32 * 32];
+
+
+int GetChunkOffset(int i)
+{
+    local int coffset = ((i >> 8) & 0xFFFFFF);
+    return coffset * 4096;
+}
+
+int GetChunkSize(int i)
+{
+    local int csize = i & 0xFF;
+    return csize * 4096;
+}
+
+struct Chunk
+{
+    int chunkLength;
+    byte compressionScheme; // 1 = gzip, 2 = zlib
+    //byte data[chunkLength];
+};
+
+local int i;
+local int offset;
+for (i = 0; i < 1024; i++)
+{
+    offset = GetChunkOffset(locationTable[i]);
+    if (offset != 0)
+    {
+        FSeek(offset);
+        Chunk chunk;
+    }
+}

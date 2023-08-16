@@ -58,14 +58,16 @@ void TWS_resolve (int t,  int s)
 
 typedef struct
 {
-    ushort time;
-    ushort animID;
+    uint time;
+    //ushort time;
+    //ushort animID;
 }Timestamp<read=readTimestamp>;
 
 string readTimestamp(Timestamp& t)
 {
     string s; 
-    SPrintf (s, "Time: %u  AnimID: %u", t.time, t.animID);
+    //SPrintf (s, "Time: %u  AnimID: %u", t.time, t.animID);
+    SPrintf (s, "Time: %u", t.time);
     return s;
 }
 
@@ -90,6 +92,14 @@ typedef struct (int T, int startPos_)
         FSeek(c);
     }
 }Track;
+
+struct TRACK
+{
+    uint elements<hidden=false>;
+    uint unused<hidden=false>;
+    unsigned int64 timestampOffs<hidden=false>;
+    unsigned int64 valueOffs<hidden=false>;
+};
 
 string ArrayRead (int t, int size, int offset)
 {

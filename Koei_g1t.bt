@@ -1,0 +1,128 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+struct GResourceHeader
+{
+    char magic[4];
+    char version[4];
+    uint size;
+};
+
+struct G1THeader
+{
+    uint tableOffset;
+    uint textureCount;
+    enum<uint> EG1TPlatform
+    {
+	    PS2 = 0x0,
+	    PS3 = 0x1,
+	    X360 = 0x2,
+	    NWii = 0x3,
+	    NDS = 0x4,
+	    N3DS = 0x5,
+	    PSVita = 0x6,
+	    Android = 0x7,
+	    iOS = 0x8,
+	    NWiiU = 0x9,
+	    Windows = 0xA,
+	    PS4 = 0xB,
+	    XOne = 0xC,
+	    NSwitch = 0x10,
+    } platform;
+};
+
+struct G1TTextureInfo
+{
+    unsigned byte mipSys;
+    enum<byte> TextureFormat
+    {
+        r8g8b8a8 = 0x0,
+        b8g8r8a8 = 0x1,
+        r32 = 0x2,
+        r16g16b16a16 = 0x3,
+        r32g32b32a32 = 0x4,
+        DXT1 = 0x6,
+        DXT3 = 0x7,
+        DXT5 = 0x8,
+        b8g8r8a8_1 = 0x9,
+        b8g8r8a8_2 = 0xA,
+        r8 = 0xB,
+        r32g32b32a32_2 = 0xD,
+        a8 = 0xF,
+        DXT1_2 = 0x10,
+        DXT5_2 = 0x12,
+        b5g6r5 = 0x34,
+        a4b4g4r4 = 0x36,
+        DXT1_3 = 0x3C,
+        DXT1_4 = 0x3D,
+        _3DS_rgb = 0x47,
+        _3DS_rgb_2 = 0x48,
+        ETC1_rgb = 0x56,
+        DXT1_5 = 0x59,
+        DXT5_3 = 0x5B,
+        ATI1 = 0x5C,
+        ATI2 = 0x5D,
+        BC6H = 0x5E,
+        BC7 = 0x5F,
+        DXT1_6 = 0x60,
+        DXT5_4 = 0x62,
+        BC4 = 0x63,
+        BC5 = 0x64,
+        BC6H_2 = 0x65,
+        BC7_2 = 0x66,
+        ETC1_rgb_2 = 0x6F,
+        ETC1_rgba = 0x71
+    } textureFormat;
+    unsigned byte dxdy;
+    unsigned byte unk0;
+    unsigned byte unk1;
+    unsigned byte unk2;
+    unsigned byte unk3;
+    unsigned byte extraHeaderVersion;
+
+    local uint width = Pow(2, dxdy & 0xF);
+    local uint height = Pow(2, dxdy >> 4);
+
+    if (extraHeaderVersion > 0)
+    {
+        uint extraDataSize;
+        uint unk4;
+        uint unk5;
+        
+        if (extraDataSize >= 0x10)
+        {
+            uint w;
+            width = w;
+        }
+        if (extraDataSize >= 0x14)
+        {
+            uint h;
+            height = h;
+        }
+    }
+};
+
+/// Read ///
+
+GResourceHeader resourceHeader;
+G1THeader header;
+
+FSeek(header.tableOffset);
+int offsets[header.textureCount];
+
+local int i<hidden=true>;
+for(i = 0; i < header.textureCount; i++)
+{
+    FSeek(header.tableOffset + offsets[i]);
+    G1TTextureInfo texHeader;
+};

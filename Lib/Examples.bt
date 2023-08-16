@@ -21,6 +21,18 @@ typedef struct {
     uint name : 1 <name = "name", comment = "comment">;
 } MODEL_FLAGS <name = "ModelFlags", size = 4>;
 
+typedef struct {
+    //ubyte length <hidden = true>;
+    ubyte name : 1;
+    ubyte name : 1;
+    ubyte name : 1;
+    ubyte name : 1;
+    ubyte name : 1;
+    ubyte name : 1;
+    ubyte name : 1;
+    ubyte name : 1;
+} MODEL_FLAGSB <name = "ModelFlags", size = 1>;
+
 // Enum // 
 enum<uint> BLENDINGMODE {
     // Src Color - Dest Color, Src Alpha - Dest Alpha

@@ -1,0 +1,109 @@
+//--------------------------------------
+//      File: WorldOfWarcraft_M3.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: M3 Main File
+//  Category: WoW
+//--------------------------------------
+
+#include "Lib/Common.bt"
+
+struct m3SL
+{
+    char chunkID[4];
+    int version;
+    int a2_2;   // 182 offset ?
+    int a2_3;
+    int m_shader_size;
+    int a2_5;
+    int64 a2_6;
+};
+
+struct m3SH
+{
+    char chunkID[4];
+    int unk0[3];
+    int blsFileID;
+    int tafgFileID;
+    int unk1[4];
+};
+
+struct m3SP
+{
+    char chunkID[4];
+    int unk0[25];   
+    int unk1[10];
+};
+
+struct m3ST
+{
+    char chunkID[4];
+    int unk0[10];
+    short unk1[6];
+    int unk2[6];
+};
+
+struct m3SS
+{
+    char chunkID[4];
+    int unk0[10];
+    short unk1[10];
+    int unk2[14];
+};
+
+struct m3MD
+{
+    char chunkID[4];
+    int unk0[27];
+    float unk1[8];
+    int unk2;
+    int textureFileIDs[3];
+    int unk3[10];
+};
+
+struct UnkA // 168
+{
+    int index;
+    int64 unk0;
+    int unk1;
+    int hasunk0;
+    int hashunk1;
+    int64 unk2;
+    int countA;     // 32 * countA
+    byte data[132];
+};
+
+struct m3S2
+{
+    char chunkID[4];
+
+    // m3SL
+    int version;
+    int a2_2;
+    int a2_3;
+    int m_shader_size;
+    int a2_5;
+    int a2_6;
+
+    FSeek(4 * a2_5);
+    UnkA unkA[m_shader_size]<bgcolor=cYellow>;
+};
+
+
+struct M3
+{
+    while( ! FEof() )
+    {
+        if     ( matchr( "m3SL" ) ) m3SL shaderLibrary;
+        else if( matchr( "m3SH" ) ) m3SH shader;
+        else if( matchr( "m3SP" ) ) m3SP shaderParameters;
+        else if( matchr( "m3ST" ) ) m3ST shaderTextures;
+        else if( matchr( "m3SS" ) ) m3SS shaderSamplers;
+        else if( matchr( "m3MD" ) ) m3MD materialData;
+        else if( matchr( "m3S2" ) ) m3S2 shaderLibraryV2;
+        //else SKIPCHUNK unk;
+        else break;
+    }
+};
+
+M3 m3;

@@ -53,15 +53,17 @@ struct OSGN
     local int start = FTell();
     int elementCount;
     int unk;            // 8
-    Element elements(start)[elementCount];
+    Element elements(start)[elementCount]<optimize=false>;
 };
 
 struct Instruction
 {
+BitfieldDisablePadding();
     int Type : 10;
     int pad : 14;
     int Length : 6;
     int Extended : 1;
+BitfieldEnablePadding();
 };
 
 struct SHDR
@@ -72,7 +74,7 @@ struct SHDR
     FSkip(1);
     short programType;      // 1 = vertex shader
     int dwordCount;
-    //Instruction instructions[dwordCount];
+    Instruction instructions[dwordCount]<optimize=false>;
 };
 
 struct VariableType
@@ -115,7 +117,7 @@ struct ConstantBuffer(int start)
     FSeek(start + nameOffset);
     string name;
     FSeek(start + variableOffset);
-    ConstantVariable variables(start)[variableCount];
+    ConstantVariable variables(start)[variableCount]<optimize=false>;
     FSeek(save);
 };
 
@@ -163,9 +165,9 @@ Header header;
 for(i = 0; i < header.chunkCount; i++)
 {
     FSeek(header.chunkOffsets[i]);
-    if     ( matchr( "ISGN" ) ) ISGN inputSignature;
-    else if( matchr( "OSGN" ) ) OSGN outputSignature;
-    else if( matchr( "SHDR" ) ) SHDR shader;
-    else if( matchr( "RDEF" ) ) RDEF resourceDefinitions;
+    if     ( matchr( "ISGN" ) ) ISGN inputSignature<bgcolor=cYellow>;
+    else if( matchr( "OSGN" ) ) OSGN outputSignature<bgcolor=cGreen>;
+    else if( matchr( "SHDR" ) ) SHDR shader<bgcolor=cLtPurple>;
+    else if( matchr( "RDEF" ) ) RDEF resourceDefinitions<bgcolor=cRed>;
     else SKIPCHUNK unk; 
 }

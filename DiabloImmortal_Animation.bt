@@ -6,40 +6,149 @@
 //  Category: DiabloImmortal
 //------------------------------------------------
 #include "Lib/Common.bt"
-#include "DiabloImmortal/AnimationKeyframe.bt"
 
-struct Header
+typedef struct {
+    //ubyte length <hidden = true>;
+    byte AH_FLAG_EXPORT_SCALE : 1 <name = "HasScale">;
+    byte AH_FLAG_EXPORT_QUANTIZATION : 1 <name = "Quantization">;
+    byte AH_FLAG_EXPORT_RIGHT : 1 <name = "Right">;
+    byte AH_FLAG_EXPORT_BINCOMPRESS : 1 <name = "BinCompress">;
+} FLAGS <name = "AnimFlags", size = 1>;
+
+local byte byte_2E4385F[33]<hidden=true> = {
+ 0, 3, 4, 5, 6, 7, 8, 9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF, 0x10, 0x11,
+ 0x12, 0x13, 0x20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+struct AnimHeader
 {
-    FSeek(FileSize() - 88);
+    int fileType;
+    if (fileType == 1094885710)
+        FSeek(16);
+    else
+        FSeek(4);
+    char magicNum[10];              // 'CHAR::ANIM'
+    ushort version;
+    ushort numOfBone;
+    byte pad0[2]<hidden=true>;
+    int durationMS;
+    byte compressType;
+    FLAGS flags;
+    time_t createTime;
+    byte quantBitWidth;
+    byte frameRate;
+    float maxError;
+};
 
-    int strLen;
-    char HEADER[strLen];
-    short padding;
+struct NeoxHeader
+{
+    Align(16);
     int dataSize;
-    int empty0[4];
+    int hash;               // 32 bit Fowler–Noll–Vo hash generated from magic and dataSize
+    int magic;              // -1408193520, gets checked to be that value
+    short version;          // 3, gets checked to be == 3
+    byte subversion;        // maybe, gets checked to be 0
+    byte padding;           // haven't seen this byte referenced, and is always 0
+    local int boneCountOffs = FTell();
+    short boneCount;        // checked if it's the same count as in the header
+    short blockCount;
+    short unk0;             // 772
+    short unk1;             // 1795
+    byte unk2;
+    byte has3Tracks;
+    local int trackCount;
+    if (has3Tracks != 0)
+        trackCount = 3;
+    else
+        trackCount = 2;
 
-    int strLen;
-    char CHANNEL_DATA[strLen];
-    int unk;
-    int empty1[4];
+    byte unk3;              // if (unk3) v7 = 3F8000003F8000003F8000003F800000; else v7 = 0;
+                            // v7 has to be default value, 4x 1.0f are written to it if unk3 != 0
+    byte unk4;             // 0, 63
+    int frameCount;
+    int framerate;
 
-    int strLen;
-    char MOTION_DATA[strLen];
-    byte padding;
-    int unk;
+    short offsToBlockOffsets;
+    short offsToTrackFlagsA;
+    short offsToTrackFlagsB;
+    short offsetToUnk0;
+    short offsetToUnk1;
 
-    FSeek(0);
+    byte unk5;
+    byte unk6;
+
+    local int dataCount = (trackCount * boneCount + 31) >> 5; // same as / 32
+    local int totalTracks = trackCount * boneCount;
+    local float durationInSeconds = (float)(uint)(frameCount - 1) / (float)framerate;
 };
 
-struct Unk0x8Type
+typedef struct
 {
-    char unk[14];
-};
+    short timeStamp;
+    VECTOR3 value;
+}KeyframeVec3<read=ReadKeyframeVec3>;
 
-struct Unk0x8Type2
+string ReadKeyframeVec3(KeyframeVec3 &k)
 {
-    char unk[16];
-};
+    local string s;
+    SPrintf( s, "t%i (%f, %f, %f)", k.timeStamp, k.value.x, k.value.y, k.value.z );
+    return s;
+}
+
+typedef struct
+{
+    local int quantBitWidth<hidden=true> = 12;
+    short timeStamp;
+    BitfieldDisablePadding();
+    int64 data:quantBitWidth*3<hidden=true>;
+    BitfieldEnablePadding();
+
+    local ulong v12<hidden=true> = (ulong)Pow(2, quantBitWidth) - 1;
+    local byte comp<hidden=true> = (byte)((data >> 3 * quantBitWidth) & 3);
+
+    local float v14<hidden=true> = v12 * 0.70711;
+
+    local float a<hidden=true> = (((data >> 2 * quantBitWidth) & v12) / v14) - 0.70711;
+    local float b<hidden=true> = (((data >> quantBitWidth) & v12) / v14) - 0.70711;
+    local float c<hidden=true> = ((v12 & data) / v14) - 0.70711;
+    local float d<hidden=true> = Sqrt(1.0 - (a * a) - (b * b) - (c * c));
+
+    if (comp == 0)
+    {
+        local float x = d;
+        local float y = a;
+        local float z = b;
+        local float w = c;
+    }
+    else if (comp == 1)
+    {
+        local float x = c;
+        local float y = d;
+        local float z = a;
+        local float w = b;
+    }
+    else if (comp == 2)
+    {
+        local float x = b;
+        local float y = c;
+        local float z = d;
+        local float w = a;
+    }
+    else
+    {
+        local float x = a;
+        local float y = b;
+        local float z = c;
+        local float w = d;
+    }
+
+}Keyframe5B<read=ReadKeyframe5B>;
+
+string ReadKeyframe5B(Keyframe5B &k)
+{
+    local string s;
+    SPrintf( s, "t%i (%f, %f, %f, %f)", k.timeStamp, k.x, k.y, k.z, k.w );
+    return s;
+}
 
 struct Track
 {
@@ -60,52 +169,15 @@ struct Track
     }
 };
 
-struct Track2
-{
-    short keyframeCount;
-    byte compression;
-    byte unk;
-    short unk;
-    byte data[6];
-};
-
-typedef enum <byte>{ 
-	hasScaleTrack = 0x01,
-	hasPositionTrack = 0x02, 
-	hasPositionTrackB = 0x04,
-	unk0x8 = 0x08,
-} ANIM_FLAGS <read=read_ANIM_FLAGS>;
-
-string read_ANIM_FLAGS (local ANIM_FLAGS &af) {
-	local string s = "";
-	local ANIM_FLAGS i = 1;
-
-	SPrintf (s, "%d: ", af);  
-
-    
-    s += IntToBinaryStr(af);
-    s += " ";
-
-    for( i = 0; i < 10; i++ )
-	{
-		if (af & i)
-		{
-			s = s + EnumToString(i);
-            s = s + " ";
-		}
-	}
-	return s;
-}
-
-struct BONE(ANIM_FLAGS &flags)
+struct BONETrack(FLAGS &flags)
 {
     byte nameLength;
     char name[nameLength];
     short parent;               // Bone parent
 
     local int t = 1;            // Rotation track always exists
-    if (flags & 0x1) { t++; }
-    if (flags & 0x2 || flags & 0x4) { t++; }
+    if (flags.AH_FLAG_EXPORT_SCALE != 0) { t++; }
+    if (flags.AH_FLAG_EXPORT_QUANTIZATION != 0 || flags.AH_FLAG_EXPORT_RIGHT != 0) { t++; }
 
     local int i;
     for (i = 0; i < t; i++)
@@ -118,17 +190,7 @@ struct BONE(ANIM_FLAGS &flags)
     }
 };
 
-struct BONE2(ANIM_FLAGS &flags)
-{
-    byte nameLength;
-    char name[nameLength];
-    uint parent;             // Bone parent
-
-    local int i;
-    Track2 track;
-};
-
-struct BONE_B
+struct BONE
 {
     byte nameLength;
     char name[nameLength];
@@ -138,68 +200,227 @@ struct BONE_B
 struct BONEHIERARCHY
 {
     short boneCount;
-    BONE_B bone[boneCount]<optimize=false>;
+    BONE bone[boneCount]<optimize=false>;
 };
 
-//Header header;
-
-// Test animation file format
-char formatTest[4]<hidden=true>;
-FSeek(0);
-
-if (formatTest[0] == 78)
+void Align(int alignment)
 {
-    // Header V1
-    char magic[4];
-    int chunkSize;
-    int64 padding;
-}
-else
-{
-    // Header V2
-    char magic[4];
-}
-char CHARANIM[10];
-short someType;         // 2 or 3, if input parameter (animFormat == 4) { someType = 3; } else { someType = 2; }
-short boneCount;        // total number of bones
-short zero;
-uint animationLength;   // animation length in miliseconds
-byte animFormat;        // animation format: 0, 1, 2, 4
-if (animFormat == 4)
-{
-    // Anim V1
-    ANIM_FLAGS flags;       // if(inData + 17 != 0) then 1 |= 4 else 1
-                            // if anim format is 4 then only 0x1 is ever set and probably doesn't mean scale, even though the game can also write 0x4 here
-    time_t createTime;      // animation file creation time
-    byte zero;              // always 0
-    char a4;                // unknown parameter of AnimationCore::SerializeHeaderAndCharAnim()
-    float a5;               // unknown parameter of AnimationCore::SerializeHeaderAndCharAnim()
-    BONEHIERARCHY hierarchy;
-    // bone data, NYI
-    byte unk[53];
-    int unk;
-    int unk;
-    int unk;
-    int unk;
-    float test[100];
-}
-else
-{
-    // Anim V2
-    ANIM_FLAGS flags;       // |= 1, if (inData + 17 != 0) then |= 4, if (a5 >= 1) then |= 2
-    time_t createTime;      // animation file creation time
-    byte a5;                // parameter of AnimationCore::SerializeHeaderAndCharAnim()
-    byte zero;              // = 0
-    uint zero;              // = 0
-    if (flags & 0x8)
+    local int loc = FTell();
+    local int pad = (alignment - (loc % alignment));
+    if (pad != 0 && pad < alignment)
     {
-        Printf("Flag 0x8 not implemented bone type");
-        // Only 40 animations have this, can ignore for now
+        FSkip(pad);
+    }
+};
 
-        //BONE2 bone(flags)[boneCount]<optimize=false>;
+struct TrackOffsets
+{
+    int frameCount;
+    int offsetA;
+    int offsetB;
+    int offsetC;
+    int offsetD;
+};
+
+struct TrackData(TrackOffsets& dataOffsets, int boneCountOffs, int frameCount)
+{
+    local int frameCount = dataOffsets.frameCount;
+    if (dataOffsets.offsetA != -1)
+    {
+        FSeek(dataOffsets.offsetA + boneCountOffs);
+        Align(4);
+        float dataA[432]<bgcolor=0x00AAAA>;        // dunno how many, and they sometimes start +1 or +2 bytes later
+    }
+    if (dataOffsets.offsetB != -1)
+    {
+        FSeek(dataOffsets.offsetB + boneCountOffs);
+        local int boneCount = nHeader.boneCount - 3;
+        local int v142 = (boneCount - trackFlagsB.totalBitsPosition) + (boneCount - trackFlagsB.totalBitsRotation);
+        if ( nHeader.has3Tracks )
+            v142 += (boneCount - trackFlagsB.totalBitsScale);
+        // this count isn't right, even though seems to be what they're doing in code
+
+        ubyte indicesB[v142]<bgcolor=0x00AAFF>;         // dunno what size, seems to be bytes, and about 90% of boneCount
+        local ubyte dataB[v142];
+        local int i<hidden=true>;
+        local int v144 = 0;// it's (dataOffset[1] * frameDiffA) >> 3; some sort of frame count?
+        for(i = 0; i < v142; i++)
+        {
+            // hack because I'm not reading the right amount
+            if (indicesB[i] >= 33) continue;
+
+            dataB[i] = 3 * byte_2E4385F[indicesB[i]];
+            v144 += dataB[i];
+        }
+    }
+    if (dataOffsets.offsetC != -1)
+    {
+        // These are again some sort of flags
+        FSeek(dataOffsets.offsetC + boneCountOffs);
+        byte dataC[boneCount * 4 + 2]<bgcolor=0xAA00FF>;
+    }
+    if (dataOffsets.offsetD != -1)
+    {
+        FSeek(dataOffsets.offsetD + boneCountOffs);
+        ubyte dataD[2 * boneCount]<bgcolor=cYellow>;
+/*
+        local ubyte dataDD[2 * boneCount];
+
+        for(i = 0; i < 2 * boneCount; i++)
+        {
+            // hack because I'm not reading the right amount
+            if (dataD[i] >= 33) continue;
+
+            dataDD[i] = byte_2E4385F[dataD[i]];
+        }
+*/
+    } 
+};
+
+struct BoneFlags(int trackCount)
+{
+    if (trackCount == 3)
+    {
+        byte position : 1;
+        byte scale : 1;
+        byte rotation : 1;
     }
     else
     {
-        BONE bone(flags)[boneCount]<optimize=false>;
+        byte rotation : 1;
+        byte position : 1;
+    }
+};
+
+struct TrackFlags(int trackCount, int boneCount)
+{
+    local long save<hidden=true> = FTell();
+    local int i<hidden=true>;
+
+    BitfieldDisablePadding();
+
+    local int totalAnimatedBones = 0;
+
+    local int dataCount = (trackCount * boneCount + 31) >> 5; // / 32
+    local int flagsSize = dataCount & 0x1FF8;
+    //local int offsetFlagsA = offsetFlagsA_1 + 4 * flagsSize;
+    //local int offsetFlagsB = offsetFlagsB_1 + 4 * flagsSize;
+
+
+    if (trackCount == 3)
+    {
+        local int totalBitsPosition = 0;
+        local int totalBitsScale = 0;
+        local int totalBitsRotation = 0;
+
+        for (i = 0; i < boneCount; i++)
+        {
+            byte position : 1<hidden = true>;
+            byte scale : 1<hidden = true>;
+            byte rotation : 1<hidden = true>;
+            if (position)
+                totalBitsPosition++;
+            if (scale)
+                totalBitsScale++;
+            if (rotation)
+                totalBitsRotation++;
+            if (position || rotation || scale)
+                totalAnimatedBones++;
+        }
+    }
+    else
+    {
+        local int totalBitsRotation = 0;
+        local int totalBitsPosition = 0;
+
+        for (i = 0; i < boneCount; i++)
+        {
+            byte rotation : 1<hidden = true>;
+            byte position : 1<hidden = true>;
+            if (position)
+                totalBitsPosition++;
+            if (rotation)
+                totalBitsRotation++;
+            if (position || rotation)
+                totalAnimatedBones++;
+        }
+    }
+    FSeek(save);
+    BoneFlags boneFlags(trackCount)[boneCount]<optimize=false>;
+
+    BitfieldEnablePadding();
+};
+
+struct BONE4
+{
+    
+};
+
+struct QUAT
+{
+    int data[4];
+
+    local int v43[4];   // _mm_cvtsi32_si128(1u);
+    v43[3] = 1;
+
+    local int v45[4];
+    local int i;
+    for(i = 0; i < 4; i++)
+    {
+        v45[i] = 0xAAAAAAAA & data[i];
+    }
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+//  Read
+
+AnimHeader header<bgcolor=cGreen>;
+
+if (header.compressType == 4)
+{
+    BONEHIERARCHY hierarchy<bgcolor=cLtBlue>;
+    NeoxHeader nHeader<bgcolor=cRed>;
+
+    local int offs<hidden=true> = nHeader.boneCountOffs;
+
+    FSeek(offs + nHeader.offsToBlockOffsets);
+    TrackOffsets dataOffsets[nHeader.blockCount]<bgcolor=cYellow>;
+    FSeek(offs + nHeader.offsToTrackFlagsA);
+    TrackFlags trackFlagsA(nHeader.trackCount, nHeader.boneCount)<bgcolor=0xFFFF00>;
+    FSeek(offs + nHeader.offsToTrackFlagsB);
+    TrackFlags trackFlagsB(nHeader.trackCount, nHeader.boneCount)<bgcolor=0xFFAA00>;
+
+    if (nHeader.offsetToUnk0 != 0xFFFF)
+    {
+        FSeek(offs + nHeader.offsetToUnk0);
+        //TrackFlags trackFlagsC(nHeader.trackCount, nHeader.boneCount)<bgcolor=0xFFAA00>;
+        //float unkData[nHeader.totalTracks]<bgcolor=cLtYellow>;   // almost right amount of data, it's totalTracks+something
+        // 1392 bytes / 4 = 348 or / 6 = 232
+        QUAT quats[3];
+    }
+    if (nHeader.offsetToUnk1 != 0xFFFF)
+    {
+        FSeek(offs + nHeader.offsetToUnk1);
+        //float offs5Data[nHeader.totalTracks];   // almost right amount of data, it's totalTracks+something, seems to be same size as offs4Data
+        VECTOR3 offs5Data[102]; 
+    }
+
+    local int i<hidden=true> = 0;
+    for(i = 0; i < nHeader.blockCount; i++)
+    {
+        TrackData trackData(dataOffsets[i], offs, nHeader.frameCount);
+    }
+
+}
+else
+{
+    if (header.flags.AH_FLAG_EXPORT_BINCOMPRESS != 0)
+    {
+        Printf("Bincompress animation nyi");
+        // Only 40 animations have this, can ignore for now
+    }
+    else
+    {
+        BONETrack bone(header.flags)[header.numOfBone]<optimize=false>;
     }
 }

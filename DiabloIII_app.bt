@@ -2,7 +2,7 @@
 //      File: App
 //   Authors: Zee
 //   Version: 1.0
-//   Purpose: Reading the app file from Diablo III
+//   Purpose: Reading the appearance file from Diablo III
 //  Category: DiabloIII
 //------------------------------------------------
 
@@ -26,7 +26,7 @@ uint unk3[2];
 
 // Look Data
 uint unk4;
-STRING szLookName(64);
+STRINGc szLookName(64);
 float fAngles[4];
 float fAngularVelocity;
 float unk5;
@@ -90,12 +90,12 @@ uint unk17[3];
 if (version == 247)
 {
     // XObject
-    STRING xObjectName(256);
-    STRING xObjectPathName(256);
+    STRINGc xObjectName(256);
+    STRINGc xObjectPathName(256);
     
     // XMesh
-    STRING xMeshName(256);
-    STRING xMeshPathName(256);
+    STRINGc xMeshName(256);
+    STRINGc xMeshPathName(256);
 
     uint unk18[4];
 }
@@ -133,7 +133,7 @@ typedef struct {
 } BONETRANSFORM <optimize=true>;
 
 typedef struct {
-    STRING name(64);                    // bone name
+    STRINGc name(64);                    // bone name
     long parentID;                      // bone parent id
     BOUNDINGBOX boundingBox;            // bounding box
     BOUNDINGSPHERE boundingSphere;      // spherical bounds for the bone
@@ -152,12 +152,13 @@ typedef struct {
     int SNOParticleSystem;
     if (version == 260)
         uint unk4;
+    Printf("\"%s\", ", name.s);
 } BONE <optimize=true>;
 
 if (bones.offset > 0)
 {
     FSeek(bones.offset + 16);
-    BONE bone[bones.number];
+    BONE bone[bones.number]<optimize=false>;
 }
 
 //------------------------------------------------//
@@ -215,7 +216,7 @@ typedef struct {
 	uint32 unk2;
     if (version == 260)
         uint unk3[2];
-	float unk4[7]; //2x vector3 + float?
+	BOUNDINGCAPSULE capsuleCollider;
      if (version == 260)
         uint unk5;
 } COLLISIONSHAPE <optimize=true>;
@@ -261,7 +262,7 @@ for (c = 0; c < bones.number; c++)
 //------------------------------------------------//
 
 typedef struct {
-    STRING unk0(64);
+    STRINGc unk0(64);
     uint unk1[4];
     QUATERNION rotation0;
     VECTOR3 position0;
@@ -274,8 +275,8 @@ typedef struct {
     if (version == 260)
         SKIP skip(16); // empty
     unk3;
-    STRING unk4(64);
-    
+    STRINGc unk4(64);
+    //Printf("\"%s\", ", unk0.s);
 } CONSTRAINTPARAMETER <optimize=true>;
 
 local int p;
@@ -293,7 +294,7 @@ for (p = 0; p < bones.number; p++)
 //------------------------------------------------//
 
 typedef struct {
-    STRING name(64);
+    STRINGc name(64);
     long parentID;
     QUATERNION rotation;
     VECTOR3 position;
@@ -358,8 +359,8 @@ typedef struct {
     int unk5;
 	float unk6;
 
-    STRING objectName(128);
-    STRING meshName(128);
+    STRINGc objectName(128);
+    STRINGc meshName(128);
 
     BOUNDINGBOX boundingBox;
 	uint32 collisionShapeCount;
@@ -411,7 +412,7 @@ typedef struct {
     uint tagMapSize;
     uint unk1[2];
     int nSNOShaderMap;
-    RGBA materialColor[4];
+    RGBA materialColor[4]<optimize=false>;
     float unk2;
     int unk3;
     uint textureListOffset;
@@ -422,7 +423,7 @@ typedef struct {
 } MATERIAL;
 
 typedef struct {
-    STRING materialName(128);
+    STRINGc materialName(128);
     uint materialsOffset;
     uint materialsSize;
     uint unk0;               // padding

@@ -1,0 +1,27 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+struct UnkData
+{
+    uint fileID<format=hex>;
+    int unk0;
+    int index;
+    int unk2;
+    int unk3;
+};
+
+int unkCount0;
+int unkCount1;
+int unk0;
+int unk1;
+UnkData data[unkCount0];

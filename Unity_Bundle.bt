@@ -1,0 +1,65 @@
+//------------------------------------------------
+//      File: Unity_Bundle
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: 
+//  Category: Unity
+//------------------------------------------------
+
+void Align(int alignment)
+{
+    local int loc = FTell();
+    local int pad = (alignment - (loc % alignment));
+    if (pad != 0 && pad < alignment)
+    {
+        FSkip(pad);
+    }
+};
+
+struct Header
+{
+    string magic;       // UnityFS
+    uint version;
+    string unityVersion;
+    string unityRevision;
+    uint64 size;
+    uint compressedBlocksInfoSize;
+    uint uncompressedBlocksInfoSize;
+    uint flags;
+};
+
+BigEndian();
+Header header;
+
+if (header.version >= 7)
+    Align(16);
+
+if (header.flags & 0x80)    // kArchiveBlocksInfoAtTheEnd
+{
+    local long save = FTell();
+    FSeek(FileSize() - header.compressedBlocksInfoSize);
+    byte blocksInfoBytes[header.compressedBlocksInfoSize];
+    FSeek(save);
+}
+else //0x40 kArchiveBlocksAndDirectoryInfoCombined
+{
+    byte blocksInfoBytes[header.compressedBlocksInfoSize];
+}
+
+byte data[25627];
+
+switch (header.flags & 0x3F)
+{
+    default:    // None
+        Printf("Uncompressed");
+        break;
+    case 1:
+        Printf("LZMA");
+        break;
+    case 2:
+        Printf("LZ4");
+        break;
+    case 3:
+        Printf("LZ4HC");
+        break;
+}

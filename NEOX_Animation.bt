@@ -1,0 +1,122 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+void Align(int alignment)
+{
+    local int loc = FTell();
+    local int pad = (alignment - (loc % alignment));
+    if (pad != 0 && pad < alignment)
+    {
+        FSkip(pad);
+    }
+};
+
+struct BoneName
+{
+    char name[32];
+};
+
+struct BoneFlags(int trackCount)
+{
+    if (trackCount == 3)
+    {
+        byte position : 1;
+        byte scale : 1;
+        byte rotation : 1;
+    }
+    else
+    {
+        byte rotation : 1;
+        byte position : 1;
+    }
+};
+
+struct TrackFlags(int trackCount, int boneCount)
+{
+    local long save<hidden=true> = FTell();
+    local int i<hidden=true>;
+
+    BitfieldDisablePadding();
+
+    local int totalAnimatedBones = 0;
+
+    local int dataCount = (trackCount * boneCount + 31) / 32; // same as >> 5
+    local int flagsSize = dataCount & 0x1FF8;
+
+    if (trackCount == 3)
+    {
+        local int totalBitsPosition = 0;
+        local int totalBitsScale = 0;
+        local int totalBitsRotation = 0;
+
+        for (i = 0; i < boneCount; i++)
+        {
+            byte position : 1<hidden = true>;
+            byte scale : 1<hidden = true>;
+            byte rotation : 1<hidden = true>;
+            if (position)
+                totalBitsPosition++;
+            if (scale)
+                totalBitsScale++;
+            if (rotation)
+                totalBitsRotation++;
+            if (position || rotation || scale)
+                totalAnimatedBones++;
+        }
+    }
+    else
+    {
+        local int totalBitsRotation = 0;
+        local int totalBitsPosition = 0;
+
+        for (i = 0; i < boneCount; i++)
+        {
+            byte rotation : 1<hidden = true>;
+            byte position : 1<hidden = true>;
+            if (position)
+                totalBitsPosition++;
+            if (rotation)
+                totalBitsRotation++;
+            if (position || rotation)
+                totalAnimatedBones++;
+        }
+    }
+    FSeek(save);
+    BoneFlags boneFlags(trackCount)[boneCount]<optimize=false>;
+
+    BitfieldEnablePadding();
+};
+
+struct FlagSet(int trackCount, int unkCount)
+{
+    TrackFlags flags(trackCount, unkCount);
+    Align(4);
+};
+
+char name[32];
+char unk[32];
+short boneCount;
+BoneName boneNames[boneCount];
+int framerate;
+byte unk;
+byte has3Tracks;
+local int trackCount;
+if (has3Tracks != 0)
+    trackCount = 3;
+else
+    trackCount = 2;
+int unk2;
+short zero;
+short unk;
+int unkCount;   // Bones with anim count ?
+FlagSet set(trackCount, unkCount)[16];

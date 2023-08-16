@@ -1,0 +1,15 @@
+
+//------------------------------------------------
+// MOMX
+//------------------------------------------------
+
+struct MaterialAnim
+{
+    RGBA32 translationSpeed[4]<optimize=false>;
+};
+
+struct MOMX
+{
+    CHUNK hdr;
+    MaterialAnim materialAnim[hdr.size / 16]<optimize=false>;
+};
