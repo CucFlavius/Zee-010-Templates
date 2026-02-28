@@ -1,0 +1,26 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.2 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct MVER
+{
+    CHUNK hdr;
+    uint32 version;     // < PreVanilla (0.6.0.3592) 14, PreVanilla (0.6.0.3592) … < Vanilla 16,  ≥ Vanilla 17
+};
+
+while( ! FEof() )
+{
+    if     ( match( "MVER" ) ) MVER  version;
+    else SKIPCHUNKR unk; 
+}

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<_010editor_workspace version="1.0">
+ <window layoutHorizontal="false">
+  <tabgroup size="800">
+   <file selected="false" readonly="false" scrollX="0" scrollY="0" cursorPos="16" selStart="16" selSize="4" selColumnStart="-1" selColumnSize="-1" template="G:\Projects\Zee-010-Templates\D4_PlayerClass.bt">
+    "D:\D4 Extracted\base\meta\PlayerClass\Sorcerer.pcl"
+   </file>
+   <file selected="false" readonly="false" scrollX="0" scrollY="0" cursorPos="16" selStart="16" selSize="4" selColumnStart="-1" selColumnSize="-1" template="G:\Projects\Zee-010-Templates\D4_Actor.bt">
+    "D:\D4 Extracted\base\meta\Actor\sorcererF.acr"
+   </file>
+   <file selected="false" readonly="false" scrollX="0" scrollY="3082" cursorPos="49595" selStart="49595" selSize="8" selColumnStart="-1" selColumnSize="-1">
+    "D:\D4 Extracted\base\meta\UI\FrontEnd_CharacterCreate_Overlay.ui"
+   </file>
+   <file selected="false" readonly="false" scrollX="0" scrollY="0" cursorPos="16" selStart="16" selSize="4" selColumnStart="-1" selColumnSize="-1">
+    "D:\D4 Extracted\base\meta\MarkingShape\global_bodyMarking_12.msh"
+   </file>
+   <file selected="false" readonly="false" scrollX="0" scrollY="277" cursorPos="4500" selStart="4500" selSize="4" selColumnStart="-1" selColumnSize="-1" template="G:\Projects\Zee-010-Templates\D4_CustomizationGlobal.bt">
+    "D:\D4 Extracted\base\meta\Global\customization.glo"
+   </file>
+  </tabgroup>
+  <tabgroup size="721">
+   <file selected="false" readonly="false" scrollX="0" scrollY="414" cursorPos="11986" selStart="11986" selSize="110" selColumnStart="-1" selColumnSize="-1">
+    "G:\Projects\Zee-010-Templates\D4_App.bt"
+   </file>
+   <file selected="false" readonly="false" scrollX="0" scrollY="0" cursorPos="313" selStart="314" selSize="0" selColumnStart="-1" selColumnSize="-1">
+    "G:\Projects\Zee-010-Templates\D4_App_Data.bt"
+   </file>
+   <file selected="false" readonly="false" scrollX="0" scrollY="80" cursorPos="623" selStart="623" selSize="0" selColumnStart="-1" selColumnSize="-1">
+    "G:\Projects\Zee-010-Templates\D4_Actor.bt"
+   </file>
+   <file selected="false" readonly="false" scrollX="0" scrollY="0" cursorPos="466" selStart="466" selSize="0" selColumnStart="-1" selColumnSize="-1">
+    "G:\Projects\Zee-010-Templates\D4_MarkingShape.bt"
+   </file>
+   <file selected="true" readonly="false" scrollX="0" scrollY="10" cursorPos="402" selStart="402" selSize="0" selColumnStart="-1" selColumnSize="-1">
+    "G:\Projects\Zee-010-Templates\D4_CustomizationGlobal.bt"
+   </file>
+   <file selected="false" readonly="false" scrollX="0" scrollY="30" cursorPos="706" selStart="706" selSize="0" selColumnStart="-1" selColumnSize="-1">
+    "G:\Projects\Zee-010-Templates\Lib\Color.bt"
+   </file>
+  </tabgroup>
+ </window>
+ <window layoutHorizontal="false" x="3605" y="320" width="500" height="300" visible="false">
+  <tabgroup size="498">
+  </tabgroup>
+ </window>
+</_010editor_workspace>

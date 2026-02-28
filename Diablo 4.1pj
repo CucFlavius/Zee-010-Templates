@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<_010editor_project version="1.0">
+ <include_workspace>true</include_workspace>
+ <relative_paths>true</relative_paths>
+ <auto_save>true</auto_save>
+ <folder name="Lib" open="false" dir="Lib" filter="" subdirs="true">
+ </folder>
+ <file>D4_Actor.bt</file>
+ <file>D4_Anim.bt</file>
+ <file>D4_Anim_Data.bt</file>
+ <file>D4_AnimSet.bt</file>
+ <file>D4_App.bt</file>
+ <file>D4_App_Data.bt</file>
+ <file>D4_Clt.bt</file>
+ <file>D4_CoreToc.bt</file>
+ <file>D4_CustomizationGlobal.bt</file>
+ <file>D4_Item.bt</file>
+ <file>D4_MarkingShape.bt</file>
+ <file>D4_Mat.bt</file>
+ <file>D4_Particle.bt</file>
+ <file>D4_PlayerClass.bt</file>
+ <file>D4_Shm.bt</file>
+ <file>D4_Tex.bt</file>
+</_010editor_project>

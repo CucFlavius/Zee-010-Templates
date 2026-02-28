@@ -1,0 +1,230 @@
+//------------------------------------------------
+//--- 010 Editor v13.0beta1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+#include "Lib/Common.bt"
+
+local int usesShortTime = false; // frameCount > 255
+
+typedef struct (int size)
+{
+    byte gap[size]<bgcolor=cBlack, hidden=true>;
+}Gap<hidden=true>;
+
+
+void Align(int alignment)
+{
+    local int loc = FTell();
+    local int pad = (alignment - (loc % alignment));
+    if (pad != 0 && pad < alignment)
+    {
+        FSkip(pad);
+    }
+};
+
+typedef struct
+{
+    int snoID;
+    int unk0;
+    int unk1;
+    int fileSize;
+    int padding[4];
+    OFFSET4 boneNameOffs;
+    OFFSET4 offsA;
+    OFFSET4 offsB;  // size 4, same offset as offsA, only 2 files have it and it's all 0's
+    OFFSET4 offsC;
+    OFFSET4 offsD;
+    OFFSET4 offsE;
+    OFFSET4 offsF;
+    OFFSET4 offsG;
+    OFFSET4 offsH;
+    OFFSET4 offsI;
+    OFFSET4 translationCurveOffs;
+    OFFSET4 rotationCurveOffs;
+    OFFSET4 scaleCurveOffs;
+}Header<bgcolor=cLtBlue>;
+
+struct TranslationCurve
+{
+    OFFSET4 curveOffs;
+
+    // First value[0] is baseValue, and the remaining [count-1] are offsets of the base value (value + baseValue)
+    // This only applies to translation
+    local long save = FTell();
+
+    if (curveOffs.size != 0)
+    {
+        FSeek(curveOffs.offset);
+
+        if (!usesShortTime)
+            unsigned byte count<bgcolor=cWhite>;
+        else
+            unsigned short count<bgcolor=cWhite>;
+
+        byte unk0<bgcolor=cWhite>;
+
+        Align(4);
+        VECTOR3 baseValue<bgcolor=cLtGreen>;
+        if (count > 1)
+        {
+            if (!usesShortTime)
+                unsigned byte timestamps[count]<bgcolor=cGreen>;
+            else
+                unsigned short timestamps[count]<bgcolor=cGreen>;
+            Gap g(12);
+            Align(4);
+            VECTOR3 positions[count - 1]<bgcolor=cLtGreen>;
+        }
+    }
+
+    FSeek(save);
+};
+
+struct RotationCurve
+{
+    OFFSET4 curveOffs;
+
+    local long save = FTell();
+
+    if (curveOffs.size != 0)
+    {
+        FSeek(curveOffs.offset);
+        
+        if (!usesShortTime)
+        {
+            unsigned byte count<bgcolor=cWhite>;
+            unsigned byte timestamps[count]<bgcolor=cGreen>;
+        }
+        else
+        {
+            unsigned short count<bgcolor=cWhite>;
+            unsigned short timestamps[count]<bgcolor=cGreen>;
+        }
+        Align(2);
+        QUATERNIONSHORT2 hf[count]<bgcolor=cLtGreen>;
+    }
+
+    FSeek(save);
+};
+
+struct ScaleCurve
+{
+    OFFSET4 curveOffs;
+
+    local long save = FTell();
+
+    if (curveOffs.size != 0)
+    {
+        FSeek(curveOffs.offset);
+
+        if (!usesShortTime)
+        {
+            unsigned byte count<bgcolor=cWhite>;
+            byte unk<bgcolor=cWhite>;
+            unsigned byte timestamps[count]<bgcolor=cGreen>;
+            Align(4);
+        }
+        else
+        {
+            unsigned short count<bgcolor=cWhite>;
+            byte unk<bgcolor=cWhite>;
+            unsigned short timestamps[count]<bgcolor=cGreen>;
+            Align(4);
+        }
+        VECTOR3 scales[count]<bgcolor=cLtGreen>;
+    }
+
+    FSeek(save);
+};
+
+// READ //
+
+Header h;
+
+if (h.boneNameOffs.size > 0)
+{
+    FSeek(h.boneNameOffs.offset);
+    uint boneNameHashes[h.boneNameOffs.size / 4]<bgcolor=cLtGray>;
+}
+
+if (h.offsA.size > 0)
+{
+    FSeek(h.offsA.offset);
+    uint unkA[h.offsA.size / 4]<bgcolor=cLtRed>; // All 0's ?
+}
+
+if (h.offsB.size > 0)
+{
+    FSeek(h.offsB.offset);
+    uint unkB[h.offsB.size / 4]<bgcolor=cLtRed>; // All 0's
+}
+
+if (h.offsC.size > 0)
+{
+    FSeek(h.offsC.offset);
+    VECTOR3 unkC[h.offsC.size / 12]<bgcolor=cYellow>;
+}
+
+if (h.offsD.size > 0)
+{
+    FSeek(h.offsD.offset);
+    VECTOR3 unkD[h.offsD.size / 12]<bgcolor=cPurple>; // All 0's ?
+}
+
+if (h.offsE.size > 0)
+{
+    FSeek(h.offsE.offset);
+    VECTOR3 unkE[h.offsE.size / 12]<bgcolor=cLtPurple>;
+}
+
+if (h.offsF.size > 0)
+{
+    FSeek(h.offsF.offset);
+    float unkF[h.offsF.size / 4]<bgcolor=cBlue>;
+}
+
+if (h.offsG.size > 0)
+{
+    FSeek(h.offsG.offset);
+    float unkG[h.offsG.size / 4]<bgcolor=cLtYellow>;
+}
+
+if (h.offsH.size > 0)
+{
+    // Seems to be used on cameras
+    FSeek(h.offsH.offset);
+    float unkH[h.offsH.size / 4]<bgcolor=cLtYellow>;
+}
+
+if (h.offsI.size > 0)
+{
+    // Seems to be used on cameras
+    FSeek(h.offsI.offset);
+    VECTOR2 unkI[h.offsI.size / 8]<bgcolor=cLtYellow>;
+}
+
+if (h.translationCurveOffs.size != 0)
+{
+    FSeek(h.translationCurveOffs.offset);
+    TranslationCurve transCurve[h.translationCurveOffs.size / 16]<optimize=false>;
+}
+
+if (h.rotationCurveOffs.size > 0)
+{
+    FSeek(h.rotationCurveOffs.offset);
+    RotationCurve rotCurve[h.rotationCurveOffs.size / 16]<optimize=false>;
+}
+
+if (h.scaleCurveOffs.size != 0)
+{
+    FSeek(h.scaleCurveOffs.offset);
+    ScaleCurve scaleCurve[h.scaleCurveOffs.size / 16]<optimize=false>;
+}

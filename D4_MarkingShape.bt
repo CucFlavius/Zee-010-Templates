@@ -1,0 +1,27 @@
+//------------------------------------------------
+//      File: msh
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the marking shape file from Diablo IV
+//  Category: DiabloIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct DeadBeef
+{
+    int magic;      // -559038737
+    int magic2;     // 454043394 - app
+    Gap g(4);
+    int hash;       // name hash ?
+};
+
+
+DeadBeef beef;
+int snoID;
+Gap g(4);
+int unk0;
+int unk1;
+int nameHash;
+int headMaskTexture;
+int bodyMaskTexture;

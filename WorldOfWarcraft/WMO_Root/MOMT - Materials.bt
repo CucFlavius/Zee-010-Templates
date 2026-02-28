@@ -81,9 +81,12 @@ struct MATERIAL
                                 // environment textures don't need flags
     uint32 ground_type;         // foreign_keyⁱ< uint32_t, &TerrainTypeRec::m_ID > ground_type; // according to CMapObjDef::GetGroundType; Used for footstep print and sound
     uint32 texture2;            // offset into MOTX
-    BGRA32 color_2;
-    FLAGS flags2;
-    byte runtimeData[16];
+    uint32 texture3;
+    uint32 texture4;
+    uint32 texture5;
+    uint32 texture6;
+    uint32 texture7;
+    uint32 texture8;
 };
 
 struct MOMT

@@ -1,0 +1,51 @@
+//------------------------------------------------
+//--- 010 Editor v15.0.2 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+//////////////////////////////////////////
+//--------------------------------------//
+//  Utils
+//--------------------------------------//
+
+typedef int8    int8_t;  
+typedef int16   int16_t;  
+typedef int32   int32_t;  
+typedef int64   int64_t;  
+
+typedef uint8   uint8_t;  
+typedef uint16  uint16_t;  
+typedef uint32  uint32_t;  
+typedef uint64  uint64_t;  
+
+
+struct GFATHeader
+{
+    char magic[4];			// FourCC-style magic, "FATG"
+    uint32_t version;		// version, 0x1000B
+    char numAPIs;		        // number of different graphic API shaders present
+    char padding[3];		// padding, always observed as 0
+};
+
+struct GFATShader
+{
+    char gxAPI[4];
+    uint32_t startOffset;
+    uint32_t endOffset;
+    
+    local long save = FTell();
+    FSeek(startOffset);
+    byte data[endOffset - startOffset];
+    FSeek(save);
+};
+
+GFATHeader header;
+GFATShader shaders[header.numAPIs]<optimize=false>;

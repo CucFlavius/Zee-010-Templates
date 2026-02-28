@@ -15,6 +15,12 @@ struct FILE
     uint fileSize;
     char hash[32];
     byte fileData[fileSize];
+    int unk;
+    int sizeWhat;
+    if (sizeWhat != 0)
+    {
+        byte what[sizeWhat];
+    }
 };
 
 while(FTell() < FileSize())

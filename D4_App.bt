@@ -1,0 +1,467 @@
+//------------------------------------------------
+//      File: App
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the appearance file from Diablo IV
+//  Category: DiabloIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct DeadBeef
+{
+    int magic;      // -559038737
+    int magic2;     // 454043394 - app
+    Gap g(4);
+    int hash;       // name hash ?
+};
+
+struct Header
+{
+    DeadBeef beef;
+    int snoID;
+    Gap g(12);
+    int unk2a;                      // 0, 32
+    int unk2b;                      // 0, 128, 256, 384, 512 (flags)
+    OFFSET4 offsUnk0;               // Payload
+    OFFSET4 geomOffset;             // Here
+    OFFSET4 offsUnk1;               // Here
+    OFFSET4 skelOffset;             // Here
+    int unk2c;                      // 0,1,2,6,18,64,128,129,130,134,512,518,642,646
+    float unk2d;                    // 0.0, 1.0, 2.0, 3.0 ... 
+    SPHERE boundingSphere;
+    BOUNDINGBOX boundingBox;        // center + extents (not min max)
+    int unk3;                       // 0, 1, 3, 5
+    Gap g(12);
+    int flags2;
+    Gap g(4);
+    OFFSET4 offsLookNames;          // Here
+    OFFSET4 materialsOffs;          // Here
+    int markerSetSnoID;             // -1 = none
+    Gap g(4);
+    OFFSET4 offsUnk4;               // Here
+    int unk5;                       // -1, 0, 1 ... 29
+    float floats[5];                // 0, 0.0001, 0.0002, 0.0005, 0.1, 0.25, 0.5, 1, 2, 3, 5 (could be related to culling size)
+    int passThroughSoundSnoID;      // Sound file, plays when passing through the object, usually foliage
+    int walkOnSoundSnoID;           // Sound file, (plays when walking on object?), single one : Play_OBJ_IMP_Wood_Tree_Generic_Thin
+    int ambSoundSnoID;              // Ambient Sound file, eg. AmbG_SEC_FracPeaks_Trees
+    float unk9;                     // 0.0, 1.0, 5.0
+    OFFSET4 offsUnk5;               // Here
+    int unk9a;                      // 0, 1
+    Gap g(4);
+    OFFSET4 offsUnk6;
+    float unk10;                    // 0.1, 0.2, 0.25, 0.3, 0.35, 0.4 ... 1.0, 2.0
+    Gap g(4);
+};
+
+struct VertInfo // 32
+{
+    OFFSET4 boneLookupOffs;
+    int vertexCount;
+    int vertexOffset;
+    int indexCount;
+    int indexOffset;    // Needs to be multiplied by 2
+
+    // read data
+    local long save = FTell();
+    if (boneLookupOffs.size > 0)
+    {
+        // indices in bones[], used for mapping bones to vertex boneIndex
+        FSeek(boneLookupOffs.offset + 16);
+        int boneLookups[boneLookupOffs.size / 4];
+    }
+    FSeek(save);
+};
+
+struct Mesh // 240
+{
+    FLAGSUnkSh flags0;     // 0x0, 0x20
+    FLAGSUnkSh flags1;     // 0x0, 0x4, 0x10, 0x40, 0x80, 0x100
+    short unk2;     // 0, 4, 256, 260
+    short unk3;     // 0, 3515, 6660, 32767
+    OFFSET4 clothDataOffs;  // Payload
+    OFFSET4 offsB;  // Payload ?
+    Gap g(16);
+    int unk4;       // 0 .. 7
+    int unk5;       // 0, 1, 2, 4
+    int unk6;       // 0, 1, 2, 3
+    int unk7;       // 0 .. 162
+    byte unk8s[12]; // Maybe colors rgba, or name hashes
+    int unk9;       // 0, 1, 2, 3, 4
+    int unk10;      // 0, 130201
+    int unk11;      // 0, -340420065, -340420066, -340420067, -340420068
+    int matIndex;   // Material index?
+    int unk13;      // Maybe color rgba, or name hashes
+    int unk14;      // Count or offset
+    int vertInfoIndex;  // index into VertexDataInfo array
+    int unk16;      // -1, 0, 1 .. 158
+    int unk17;      // -1, 0, 1 .. 352
+    int unk18;      // -1, 0, 3, 4
+    int unk19;      // -1, 0, 5, 6
+    int conditionSnoID;     // -1, 0, 611048
+    BOUNDINGBOX meshBounds<bgcolor=cYellow>;
+    Gap g(4);
+    OFFSET4 offsC;
+    Gap g(24);
+    OFFSET4 vertInfoOffset;
+    Gap g(24);
+
+    // read data
+    local long save = FTell();
+    FSeek(vertInfoOffset.offset + 16);
+    VertInfo vInfo;
+    FSeek(save);
+};
+
+struct LOD  // 48
+{
+    OFFSET4 meshOffset; // Here
+    Gap g(8);
+    int unk2;           // 0, 3568, 4408, 5000, 6408 .. 14440, 21848
+    int unk3;           // 0, 20, 24, 40, 56, 60, 64
+    int unk4;           // some offset?
+    int unk5;           // some offset?
+    float unkf;
+    Gap g(4);
+
+    // read data
+    local long save = FTell();
+    FSeek(meshOffset.offset + 16);
+    Mesh meshes[meshOffset.size / 240]<optimize=false, bgcolor=cBlue>;
+    FSeek(save);
+};
+
+struct VertexBufferDescription
+{
+    enum<uint> DataType
+    {
+        Vector4 = 0,
+        Vector3 = 1,
+        Vector2 = 2,
+        Vector4Byte = 4,
+        Vector4ByteNorm = 5,
+        Vector2Half = 7,
+        Vector4SByteNorm = 8,
+        Vector4Half = 10,
+    };
+
+    enum<uint> DataUsage
+    {
+        Position = 0,
+        UV0 = 1,
+        UV1 = 2,
+        CustomData0 = 3,
+        CustomData1 = 4,
+        CustomData2 = 5,
+        CustomData3 = 6,
+        Color0 = 7,
+        Color1 = 8,
+        Normal = 9,
+        Tangent = 10,
+        BoneIndices = 11,
+        BoneWeights = 12,
+        CustomData4 = 13,
+    };
+
+    DataUsage usage;
+    DataType type;
+    int offset;
+};
+
+struct VertexDataInfo               // 80 bytes
+{
+    int unk0;                       // 0, 4, 6, 15, 16, .. 34, 36, 38
+    int vertexBufferSize;
+    OFFSET4 vbDescriptionOffs;
+    OFFSET4 vertDescrLookupOffs;
+    int unused0<hidden=true>;       // always -1
+    Gap g(4);
+    OFFSET4 vertexDataOffs;         // Payload
+    int unused1<hidden=true>;       // always -1
+    int unused2<hidden=true>;       // always -1
+    Gap g(8);
+
+    // read data
+    local long save = FTell();
+
+    FSeek(vbDescriptionOffs.offset + 16);
+    VertexBufferDescription vbDescription[vbDescriptionOffs.size / 12];
+
+    FSeek(vertDescrLookupOffs.offset + 16);
+    byte vertexDescriptionLookup[vertDescrLookupOffs.size];
+
+    FSeek(save);
+};
+
+struct Geometry // 96 bytes
+{
+    BOUNDINGBOX boundingBox<bgcolor=cYellow>;
+    OFFSET4 lodsOffset;                         // here
+    OFFSET4 vertInfoOffset;                     // here
+    OFFSET4 indexDataOffset;                    // payload
+    OFFSET4 offsC;                              // here
+    int unused<hidden=true>;                    // Always -1
+    Gap g(4);
+
+    // read data
+    local long save = FTell();
+
+    FSeek(lodsOffset.offset + 16);
+    local int lodCount = lodsOffset.size / 48;
+    LOD lods[lodCount]<optimize=false>;         // 1 .. 5
+
+    FSeek(vertInfoOffset.offset + 16);
+    VertexDataInfo vertexDataInfo[vertInfoOffset.size / 80]<optimize=false>;
+
+    FSeek(save);
+};
+
+struct UnkDataB
+{
+    OFFSET4 offsA;  // Payload
+    int unk0;       // -1, 0, 1
+    Gap g(4);
+    OFFSET4 offsB;  // Payload
+    OFFSET4 offsC;  // Payload
+    OFFSET4 offsD;  // Payload
+};
+
+struct HardPoint
+{
+    int nameHash;
+    int unk0;
+    int parentBone;
+    QUATERNION rotation;
+    VECTOR3 position;
+};
+
+struct Skeleton     // 400 bytes
+{
+    int hash;               // crc ?
+    int unk1;               // 0 .. 535
+    OFFSET4 bonesOffset;    // payload
+    int unk2;               // 0 .. 382
+    int unk3;               // 0, 3
+    OFFSET4 offsA;          // Here
+    OFFSET4 offsB;          // Here
+    OFFSET4 offsC;          // Here
+    OFFSET4 offsD;          // Here
+    OFFSET4 offsE;          // Here
+    OFFSET4 offsF;          // Here, single file: worldboss_wanderingdeath
+    OFFSET4 offsG;          // Here
+    OFFSET4 offsH;          // payload
+    float unkf0;            // 0, 192, 320
+    float unk4;             // 0.1745329 ...
+    OFFSET4 offsI;          // Here
+    Gap g(12);
+    int unk5;               // 0, -1928502834, 1373392553, 780682296, 80066341
+    Gap g(8);
+    float unk5a;            // 0.2, 0.5, 1, 2, 3
+    float unk5b;            // 0.2, 0.5, 1
+    OFFSET4 offsJ;          // Here
+    int unk6;               // 0, 1, 2, 4
+    Gap g(4);
+    int unk6a;              // -1, 1, 2
+    int unk6b;              // 0, 1028443341, 1031127695, 1032805417, 1036831949, 1045220557
+    Gap g(24);    
+    OFFSET4 offsK;          // Here
+    int unk6c;              // 0, 1
+    Gap g(4);
+    OFFSET4 offsL;          // Here
+    OFFSET4 offsHardPoints;  // Here
+    OFFSET4 offsN;          // Here
+    OFFSET4 offsO;          // Here, single file: Demonic_Corruption_Spire_HardPoints
+    Gap g(16);
+    OFFSET4 offsP;          // Here, character only
+    int unk9;               // -1, 0, 1, 2 .. 375
+    int unk10;              // 0, 1, 3
+
+    // read data
+    local long save = FTell();
+    if (offsA.size > 0)
+    {
+        FSeek(offsA.offset + 16);
+        float unksA[offsA.size / 4];
+    }
+    if (offsB.size > 0)
+    {
+        FSeek(offsB.offset + 16);
+        float unksB[offsB.size / 4];
+    }
+    if (offsC.size > 0)
+    {
+        FSeek(offsC.offset + 16);
+        float unksC[offsC.size / 4];
+    }
+    if (offsD.size > 0)
+    {
+        FSeek(offsD.offset + 16);
+        float unksD[offsD.size / 4];
+    }
+    if (offsE.size > 0)
+    {
+        FSeek(offsE.offset + 16);
+        float unksE[offsE.size / 4];
+    }
+    if (offsF.size > 0)
+    {
+        FSeek(offsF.offset + 16);
+        float unksF[offsF.size / 4];
+    }
+    if (offsG.size > 0)
+    {
+        FSeek(offsG.offset + 16);
+        float unksG[offsG.size / 4];
+    }
+    if (offsI.size > 0)
+    {
+        FSeek(offsI.offset + 16);
+        int unksI[offsI.size / 4];  // looks like structure
+    }
+    if (offsJ.size > 0)
+    {
+        FSeek(offsJ.offset + 16);
+        int unksJ[offsJ.size / 4];  // looks like structure
+    }
+    if (offsK.size > 0)
+    {
+        FSeek(offsK.offset + 16);
+        int unksK[offsK.size / 4];
+    }
+    if (offsL.size > 0)
+    {
+        FSeek(offsL.offset + 16);
+        int unksL[offsL.size / 4];  // looks like structure
+    }
+    if (offsHardPoints.size > 0)
+    {
+        FSeek(offsHardPoints.offset + 16);
+        HardPoint points[offsHardPoints.size / 40];
+    }
+    if (offsN.size > 0)
+    {
+        FSeek(offsN.offset + 16);
+        int unksN[offsN.size / 4];  // looks like structure
+    }
+    if (offsO.size > 0)
+    {
+        FSeek(offsO.offset + 16);
+        int unksO[offsO.size / 4];  // looks like structure
+    }
+    if (offsP.size > 0)
+    {
+        FSeek(offsP.offset + 16);
+        int unksP[offsP.size / 4];  // looks like structure
+    }
+    FSeek(save);
+};
+
+struct MaterialLook     // 56
+{
+    int unk0;           // 0, 1, 2, 3, 4, 5, 6, 7, 256, 258 .. 2113537 ..
+    int materialSnoID;
+    int unkMatSnoID;    // -1, 283149 (bandit_ranged_weapon)
+    int clothSnoID;
+    int unkClothSnoID;  // -1, 966266 (necF_H08_hair_PonyTail_sim)
+    int unk2ClothSnoID; // multiple (sim)
+    OFFSET4 offsA;      // ??
+    OFFSET4 offsB;      // ??
+};
+
+struct Material         // 32
+{
+    int hash;           // crc ?
+    int unk1;           // 0, 1
+    int unk2;           // 0, 1, 2, 3
+    Gap g(4);
+    OFFSET4 offsLooks;  // Here
+
+    // read data
+    local long save = FTell();
+    FSeek(offsLooks.offset + 16);
+    MaterialLook look[offsLooks.size / 56]<bgcolor=cYellow, optimize=false>;
+    FSeek(save); 
+};
+
+struct Materials
+{
+    Material material[header.materialsOffs.size / 32]<optimize=false>;
+};
+
+struct UnkDataE     // 24
+{
+    int unk0;
+    int unk1;
+    OFFSET4 offs;
+};
+
+struct UnkDataG     // 24
+{
+    int markerSetSnoID;
+    int unk0;
+    OFFSET4 offs;
+};
+
+////////////////////////////////////////
+// Read
+////////////////////////////////////////
+
+Header header<bgcolor=cLtGray>;
+
+if (header.geomOffset.size > 0)
+{
+    FSeek(header.geomOffset.offset + 16);
+    // Size : 96, array
+    Geometry geometry<bgcolor=cLtGreen>;
+}
+
+if (header.offsUnk1.size > 0)
+{
+    FSeek(header.offsUnk1.offset + 16);
+    UnkDataB unk1Data;
+    // Size : 72, fixed
+    // usually geometry doesn't exist when this data exists
+    // probably particle system, or lighting
+}
+
+if (header.skelOffset.size > 0)
+{
+    FSeek(header.skelOffset.offset + 16);
+    // Size : 400, fixed
+    Skeleton skeleton<bgcolor=cLtRed>;
+}
+
+if (header.offsLookNames.size > 0)
+{
+    FSeek(header.offsLookNames.offset + 16);
+    // Size : 4, array
+    int lookNameHashes[header.offsLookNames.size / 4]<bgcolor=cBlue>;
+}
+
+if (header.materialsOffs.size > 0)
+{
+    FSeek(header.materialsOffs.offset + 16);
+    // Size : 32, array
+    Materials materials<bgcolor=cYellow>;
+}
+
+if (header.offsUnk4.size > 0)
+{
+    FSeek(header.offsUnk4.offset + 16);
+    // Size : 24, array
+    UnkDataE dataE[header.offsUnk4.size / 24]<bgcolor=cGreen>;
+}
+
+if (header.offsUnk5.size > 0)
+{
+    FSeek(header.offsUnk5.offset + 16);
+    // Size : 8?, array (could be pairs of 2 floats)
+    float dataF[header.offsUnk5.size / 4]<bgcolor=cLtBlue>;
+}
+
+if (header.offsUnk6.size > 0)
+{
+    FSeek(header.offsUnk6.offset + 16);
+    // Size : 24, array
+    UnkDataG dataG[header.offsUnk6.size / 24]<bgcolor=cBlue>;
+}

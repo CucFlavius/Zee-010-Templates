@@ -47,6 +47,64 @@
 #include "WorldOfWarcraft/M2/NERF - Unknown.bt"
 #include "WorldOfWarcraft/M2/DETL - Unknown.bt"
 
+struct PCOL
+{
+    CHUNK hdr;
+    local long start = FTell();
+    
+    int vertexPosCount;
+    int vertexPosOffset;
+    int faceNormCount;
+    int faceNormOffset;
+    int indexCount;
+    int indexOffset;
+    int flagsCount;
+    int flagsOffset;
+
+    FSeek(vertexPosOffset + start);
+    VECTOR3 vertexPositions[vertexPosCount];
+    
+    FSeek(faceNormOffset + start);
+    VECTOR3 faceNormals[faceNormCount];
+    
+    FSeek(indexOffset + start);
+    short indices[indexCount];
+    
+    FSeek(flagsOffset + start);
+    short flags[flagsCount];
+    
+    FSeek(start + hdr.size);
+};
+
+struct DPIV
+{
+    CHUNK hdr;
+    local long start = FTell();
+    
+    VECTOR3 position;
+    int unk[5];
+    
+    FSeek(start + hdr.size);
+};
+
+struct TexturedLight
+{
+    float unk0;
+    float unk1;
+    int textureLookup;
+    int unk3;
+};
+
+struct TEXL
+{
+    CHUNK hdr;
+    local long start = FTell();
+    
+    TexturedLight tlight[hdr.size / 16];
+    
+    FSeek(start + hdr.size);
+};
+
 struct M2
 {
     while( ! FEof() )
@@ -76,6 +134,9 @@ struct M2
         else if( matchr( "EDGF" ) ) EDGF edgeFade;
         else if( matchr( "NERF" ) ) NERF unknown;
         else if( matchr( "DETL" ) ) DETL detailLights(header.lights.count);
+        else if( matchr( "PCOL" ) ) PCOL placementCollision;
+        else if( matchr( "DPIV" ) ) DPIV dragPivot;
+        else if( matchr( "TEXL" ) ) TEXL texturedLight;
         else SKIPCHUNK unk; 
     }
 };

@@ -1,0 +1,96 @@
+//------------------------------------------------
+//      File: Tex
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the texture file from Diablo IV
+//  Category: DiabloIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct DeadBeef
+{
+    int diabloMagic;    // 0xDEADBEEF
+    int fileTypeMagic;
+    Gap g(4);
+    int hash;           // name hash ?
+};
+
+struct Header
+{
+    enum<uint> TextureFormat
+    {
+        RGBA32_0 = 0,
+        R_0 = 7,
+        DXT1_0 = 9,
+        DXT1_1 = 10,
+        DXT5_0 = 12,
+        R_1 = 23,
+        R16G16B16A16Float = 25,
+        BC4 = 41,
+        BC5 = 42,
+        BC6S = 43,
+        BC7_SRGB_0 = 44,
+        RGBA32_1 = 45,
+        DXT1_2 = 46,
+        DXT1_3 = 47,
+        DXT3 = 48,
+        DXT5_1 = 49,
+        BC7_SRGB_1 = 50,
+        BC6H = 51,
+    };
+
+    DeadBeef beef;
+    int smoID;
+    int unk0;               // 0 or 0x8000000 (might indicate the texture is used on a model, AO/Color/Metal/Normal/Rough)
+    TextureFormat usage;
+    int isCubemap;          // 0 or 1  (cubemap only has flagsA 0x1 set)
+    FLAGSUnk flagsA;        // 0, 1, 16, 32, 128 (flags?)
+    FLAGSUnk flagsB;        // 0, 1, 2, 8, 16
+    int width;
+    int height;
+    int faces;              // For cubemap
+    FLAGSUnk flagsC;        // 1, 16, 32, 64, 128, 256
+    int unk2;               // maybe this is texture format ? 5 is dxt5, 1 is rgba
+    int nMipLevels;
+    int unk3;               // 0,1,2
+    float unkfs[12];
+    Gap g(12);
+    OFFSET4 mipInfoOffset;
+    OFFSET4 unkOffset;
+    Gap g(48);
+    FLAGSUnkSh flagsD;     // 0,1,16,32,33,256,257...16928
+    FLAGSUnkSh flagsE;     // 0,1,2,4,6,8,10,12,32,128
+    Gap g(12);
+};
+
+struct MipInfo
+{
+    int offset;
+    int size;
+};
+
+struct SpriteRange
+{
+    VECTOR2 min;
+    VECTOR2 max;
+};
+
+struct AtlasInfo
+{
+    STRINGc name(68);
+    SpriteRange rectA;
+    SpriteRange rectB;
+};
+
+// Header
+Header header<bgcolor=cGreen>;
+
+// Mip Information
+// First info is for the whole file, and following are the actual mip offsets
+FSeek(header.mipInfoOffset.offset + 16);
+MipInfo mipInfo[header.mipInfoOffset.size / 8]<bgcolor=cPurple>;
+
+// Texture Atlas
+FSeek(header.unkOffset.offset + 16);
+AtlasInfo atlas[header.unkOffset.size / 100]<optimize=false>;

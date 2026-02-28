@@ -1,0 +1,158 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.2 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+typedef int32 SNO;
+typedef int64 XPtr64;
+
+struct RequiredDefinitionHeader
+{
+  SNO snoHandle;
+  int32 nLockCount;
+  int32 dwFlags;
+};
+
+struct SerializeData
+{
+  uint32 dwOffset;
+  uint32 dwSize;
+};
+
+typedef int32 BOOL;
+typedef float Angle;
+
+
+struct LookAtData
+{
+  BOOL bEnabled;
+  uint32 dwBoneHash;
+  uint32 dwBoneHashPadding;
+  Angle aAngleLimitYaw;
+  Angle aPitchMin;
+  Angle aPitchMax;
+  Angle aPitchOffset;
+  Angle aSpeed;
+  float flRange;
+};
+
+struct GeoSet
+{
+  int32 nSubObjectCount;
+  SerializeData serSubObjects;
+  XPtr64 ptSubObjects;//SubObject
+};
+
+struct Vector3D
+{
+  float x;
+  float y;
+  float z;
+};
+
+
+struct Sphere
+{
+  Vector3D wpCenter;
+  float wdRadius;
+};
+
+struct Octree
+{
+  int32 nMaxNodes;
+  int32 nMaxLeaves;
+  int32 nMaxPrimitives;
+  int32 nNodeCount;
+  int32 nLeafCount;
+  int32 nPrimitiveCount;
+  SerializeData serNodes;
+  XPtr64 ptNodes;// OctreeNode
+  SerializeData serLeaves;
+  XPtr64 ptLeaves;// OctreeLeaf
+  SerializeData serPrimitives;
+  XPtr64 ptPrimitives;// OctreePrimitive
+};
+
+struct AABB
+{
+  Vector3D wp;
+  Vector3D wvExt;
+};
+
+struct Structure
+{
+  uint32 dwFlags;
+  int32 nBoneCount;
+  SerializeData serBoneStructure;
+  XPtr64 ptBoneStructure;// BoneStructure
+  LookAtData tLookAtData;
+  int32 nBonePulseCount;
+  XPtr64 ptBonePulses;//BonePulseData
+  SerializeData serBonePulses;
+  GeoSet tGeoSets[2];
+  Sphere wsBounds;
+  int32 nCollisionCapsuleCount;
+  SerializeData serCollisionCapsules;
+  XPtr64 ptCollisionCapsules;//CollisionCapsule
+  int32 nHardpointCount;
+  SerializeData serHardpoints;
+  XPtr64 ptHardpoints;// Hardpoint
+  Vector3D wvRigidAnimAxis;
+  Octree tOctreeVisualMesh;
+  AABB aabbBounds;
+  int32 nLoopConstraintCount;
+  SerializeData serLoopConstraints;
+  XPtr64 ptLoopConstraints;// ConstraintParameters
+  uint32 uRagdollDegrade;
+  XPtr64 ptPostprocessed;// StructurePostData
+};
+
+typedef int32 OverlayProjectionAxis;
+
+
+struct AppearanceDefinition
+{
+  RequiredDefinitionHeader tHeader;
+  Structure tStructure;
+  int32 nNumLooks;
+  int32 nNumMaterials;
+  SerializeData serAppearanceMaterials;
+  XPtr64 ptAppearanceMaterials;// AppearanceMaterial
+  SerializeData serAppearanceLooks;
+  XPtr64 ptAppearanceLooks;// AppearanceLook
+  int32 nStaticLightCount;
+  SerializeData serStaticLights;
+  XPtr64 ptStaticLights;// StaticLight
+  OverlayProjectionAxis eOverlayProjectionAxis;
+  uint32 dwFadeOutTimeCriticalHitBlood;
+  uint32 dwFadeOutTimeStoned;
+  uint32 dwFadeOutTimeChilled;
+  uint32 dwFadeOutTimeFrozen;
+  uint32 dwFadeOutTimePoisoned;
+  uint32 dwMachineTime;
+  float flUVGenQuality;
+  uint32 dwLightMapWidth;
+  uint32 dwLightMapHeight;
+  int64 tUnwrapTimeStamp;
+  float flMinZ;
+  float flMaxZ;
+  int32 nSubgridsX;
+  int32 nSubgridsY;
+  AABB tSubgridsAABB;
+  SerializeData serSubgrids;
+  XPtr64 ptSubgrids;// AppearanceSamplingSubgrid
+  SerializeData serAppearanceSubObjectsIndices;
+  SerializeData serAppearanceSubObjectsVertices;
+  uint32 dwFlags;
+};
+
+
+AppearanceDefinition def;

@@ -1,0 +1,206 @@
+//------------------------------------------------
+//      File: Mat
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the material file from Diablo IV
+//  Category: DiabloIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+typedef struct (int size)
+{
+    byte gap[size]<bgcolor=cBlack, hidden=true>;
+}Gap<hidden=true>;
+
+struct DeadBeef
+{
+    int magic;      // -559038737
+    int magic2;     // 454043394 - app
+    Gap g(4);
+    int hash;       // name hash ?
+};
+
+struct Header
+{
+    DeadBeef beef;
+    int snoID;
+    Gap g(4);
+    int otherMaterialSnoID;     // points to another material, or -1
+    int unk2;                   // 0,1,8,9,16 ... 3105 ...
+    int shaderMapSnoID;
+    int materialValueSetSnoID;
+    int unk3;                   // 0, 1, 2, -5, -6, -5000, 300, .....
+    Gap g(4);
+    OFFSET4 offsSamplers;
+    OFFSET4 offsC;              // Size : 64, fixed
+    int unk5;                   // 0 .. 11
+    int unk6;                   // 0, 1
+    OFFSET4 offsD;
+    int surfaceSnoID;
+    int biomeASnoID;
+    int biomeBSnoID;
+    int biomeCSnoID;
+    int biomeDSnoID;
+    Gap g(4);
+    int unk17;                  // 0, -1
+    Gap g(4);
+    OFFSET4 offsD1;
+    float unk23;                // 0, 1, 6, 10, 20, 24 ... 120 
+    Gap g(8);
+    float unk26;                // 0, 1
+    Gap g(8);
+    OFFSET4 offsD2;
+    int unk29;                  // 4, 8, 12
+    Gap g(4);
+    OFFSET4 offsE;
+    Gap g(4);
+    float unk32;                // Always 1
+    Gap g(8);
+    OFFSET4 offsF;
+    int unk35;                  // 0, 4
+    Gap g(4);
+    OFFSET4 offsG;
+    int unk37;                  // 0, 1, 14, 19 ..297
+    int unk38;                  // 0, 1
+    int unk39;                  // 0, 1
+    float unk40;                // 0, 0.75, 1 .. 8 .. 60
+    float unk41;                // 0, 0.1, 0.2, 0.3 .. 5, 10
+    float unk42;                // 0, 0.002, 0.008, ... 0.2
+    float unk43;                // 0, 0.11 .. 0.2 .. 1
+    float unk44;                // 0, 0.01, 0.02, .. 1
+    float unk45;                // -15, -10 .. 0, 1, 1.3, 1.8 .. 100
+    int unk46;                  // 0, 1, 2, 3
+    int unk47;                  // 0, 1, 2, 3
+    int unk48;                  // 0, 1, 2, 3
+    int unk49;                  // 0, 1, 2, 3
+    int unk50;                  // 0, 1, 2, 3
+    int unk51;                  // 0, 1, 2, 3
+    int unk52;                  // 0, 1, 2, 3
+    int unk53;                  // 0, 1
+    Gap g(4);
+};
+
+struct UnkSamplerData
+{
+    int unk0;
+    int unk1;
+    int unk2;
+    int unk3;
+    int hash;
+    int unk4;
+    float floatUnk0;
+    float floatUnk1;
+};
+
+struct Sampler
+{
+    enum<uint> TextureType
+    {
+        Color = 1,
+        Normal = 3,
+        SphereMap = 4,
+        Noise = 10,
+        ColorGradient = 11,
+        Mask = 12,
+        ColorAndHeight = 13,
+        Mask2 = 14,
+        Color2 = 15,
+        Mask3 = 16,
+        Mask4 = 17,
+        Alpha = 19,
+        Noise2 = 42,
+        Mask5 = 43,
+        Color3 = 45,
+        Mask6 = 46,
+        Normal2 = 47,
+        Normal3 = 48,
+        Normal4 = 49,
+        Normal5 = 52,
+        DyeMask = 54,
+        DyeRamp = 56,
+        Roughness = 62,
+        Metallic = 63,
+        AmbientOcclusion = 81,
+        Emissive = 86,
+        Alpha2 = 87,
+        FlowMap = 88,
+        ColorGradient2 = 89,
+        Alpha3 = 90,
+        Unk93 = 93,
+        DissolveMask = 94,
+        FurMask = 96,
+        FurHeight = 97,
+        NoiseAndMask2 = 98,
+        Noise3 = 99,
+        Noise4 = 100,
+        Unk103 = 103,
+        Translucency = 104,
+        UVDistortion = 105,
+        UVDistortion2 = 106,
+        Unk107 = 107,
+        Mask7 = 108,
+        BakedID = 109,
+        Roughness2 = 112,
+        Roughness3 = 113,
+        Roughness4 = 114,
+        Roughness5 = 115,
+        Metallic2 = 116,
+        Unk118 = 118,
+        Unk119 = 119,
+        AmbientOcclusion2 = 120,
+        Unk122 = 122,
+        SkinMask = 145,
+        Position = 149,
+        Rotation = 150,
+        Unk198 = 198,
+        Unk199 = 199,
+        Emissive2 = 201,
+        Unk202 = 202,
+        Porosity = 205,
+        Porosity2 = 206,
+        UVMask = 209,
+        Normal6 = 212,
+        Normal7 = 213,
+        Normal8 = 214,
+        AmbientOcclusion3 = 215,
+        AmbientOcclusion4 = 216,
+        AmbientOcclusion5 = 217,
+        Roughness6 = 218,
+        Roughness7 = 219,
+        Roughness8 = 220,
+        DetailMask = 221,
+        HedBodColor = 234,
+        FreckleCOlor = 235
+    };
+
+    TextureType type;
+    int unk0;
+    int textureSnoID;
+    int unk1;
+    OFFSET4 offs;
+    int unk2;
+    int unk3;
+    int unk4;
+    int unk5;
+
+    // read data
+    local long save = FTell();
+    if (offs.size > 0)
+    {
+        FSeek(offs.offset + 16);
+        UnkSamplerData unkData[offs.size / 32]<optimize=false, bgcolor=cLtYellow>;
+    }
+    FSeek(save);
+    //Printf("%i\n", unk[4]);
+};
+
+struct Samplers(int count)
+{
+    Sampler samplers[count]<optimize=false, bgcolor=cYellow>;
+};
+
+Header header<bgcolor=cGreen>;
+
+FSeek(header.offsSamplers.offset + 16);
+Samplers samplers(header.offsSamplers.size / 48);

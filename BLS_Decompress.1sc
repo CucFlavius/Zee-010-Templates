@@ -1,0 +1,197 @@
+//------------------------------------------------
+// File:     BLS_Decompress.1sc
+// Purpose:  Decompress BLS permutation blobs into a
+//           new file tab, then run BLS_Decompressed.bt
+//           for full struct tree inspection.
+//
+// Usage:    Open a .bls file, then run this script.
+//           A new "[Decompressed]" tab appears with the
+//           full decompressed permutation stream and
+//           parsed struct tree from BLS_Decompressed.bt.
+//
+// Requires: zlib1.dll (64-bit) next to this script,
+//           in the 010 Editor dir, or in system PATH.
+//------------------------------------------------
+
+#link "zlib1.dll"
+    int uncompress(uchar dest[], int &destLen, uchar source[], int sourceLen);
+#endlink
+
+//------------------------------------------------
+// Configuration
+//------------------------------------------------
+int TAFG_PLATFORM_INDEX = 0;   // Which TAFG platform (for TAFG files)
+
+//------------------------------------------------
+// Constants
+//------------------------------------------------
+uint32 MAGIC_TAFG = 0x47464154;
+uint32 MAGIC_GXSH = 0x47585348;
+uint32 MAGIC_GXSD = 0x47585344;  // DXIL variant
+uint32 BLOCK_SIZE = 0x4000;
+
+//------------------------------------------------
+// Helper: read file bytes into a local buffer
+//------------------------------------------------
+void ReadToBuffer(uchar buf[], int64 pos, int count) {
+    int i;
+    for (i = 0; i < count; i++)
+        buf[i] = ReadUByte(pos + i);
+}
+
+//------------------------------------------------
+// Main
+//------------------------------------------------
+
+int origFile = GetFileNum();
+string origName = GetFileName();
+
+Printf("=== BLS Decompress Script ===\n");
+Printf("  Source: %s\n", origName);
+
+// Parse outer container
+uint32 fileMagic = ReadUInt(0);
+uint64 gxshBase = 0;
+uint64 gxshEnd = FileSize();
+
+if (fileMagic == MAGIC_TAFG) {
+    uint32 tafgEntryCount = ReadUInt(8);
+    if (TAFG_PLATFORM_INDEX >= tafgEntryCount) {
+        Printf("ERROR: TAFG_PLATFORM_INDEX %d >= %d entries\n",
+            TAFG_PLATFORM_INDEX, tafgEntryCount);
+        return -1;
+    }
+    uint32 tafgOff = 12 + TAFG_PLATFORM_INDEX * 12;
+    gxshBase = ReadUInt(tafgOff + 4);
+    gxshEnd  = ReadUInt(tafgOff + 8);
+    Printf("  TAFG container, using platform index %d\n", TAFG_PLATFORM_INDEX);
+} else if (fileMagic == MAGIC_GXSH || fileMagic == MAGIC_GXSD) {
+    Printf("  Bare %s file\n", fileMagic == MAGIC_GXSD ? "GXSD (DXIL)" : "GXSH");
+} else {
+    Printf("ERROR: Not a BLS file (magic 0x%08X)\n", fileMagic);
+    return -1;
+}
+
+// Verify GXSH/GXSD magic
+uint32 gxshMagic = ReadUInt(gxshBase);
+if (gxshMagic != MAGIC_GXSH && gxshMagic != MAGIC_GXSD) {
+    Printf("ERROR: No GXSH/GXSD magic at 0x%LX\n", gxshBase);
+    return -1;
+}
+
+// Parse GXSH header
+uint32 ver = ReadUInt(gxshBase + 4);
+uint32 permOff = 0;
+uint32 permCount = 0;
+uint32 blkTableOff = 0;
+uint32 compDataOff = 0;
+int permEntrySize = 8;
+
+if (ver == 0x1000C) {        // v12
+    permOff     = ReadUInt(gxshBase + 8);
+    permCount   = ReadUInt(gxshBase + 12);
+    blkTableOff = ReadUInt(gxshBase + 16);
+    compDataOff = ReadUInt(gxshBase + 24);
+    Printf("  GXSH v12, ");
+} else if (ver == 0x1000D) { // v13
+    permOff     = ReadUInt(gxshBase + 12);
+    permCount   = ReadUInt(gxshBase + 16);
+    blkTableOff = ReadUInt(gxshBase + 20);
+    compDataOff = ReadUInt(gxshBase + 28);
+    Printf("  GXSH v13, ");
+} else if (ver == 0x1000E) { // v14
+    permOff     = ReadUInt(gxshBase + 12);
+    permCount   = ReadUInt(gxshBase + 16);
+    blkTableOff = ReadUInt(gxshBase + 20);
+    compDataOff = ReadUInt(gxshBase + 28);
+    permEntrySize = 24;
+    Printf("  GXSH v14, ");
+} else {
+    Printf("ERROR: Unknown GXSH version 0x%X\n", ver);
+    return -1;
+}
+
+uint32 blkEntryCount = (compDataOff - blkTableOff) / 4;
+uint32 numBlocks = blkEntryCount > 1 ? blkEntryCount - 1 : 0;
+uint64 compBase = gxshBase + compDataOff;
+
+Printf("%u perms, %u blocks\n", permCount, numBlocks);
+
+if (numBlocks == 0) {
+    Printf("ERROR: No compressed blocks found\n");
+    return -1;
+}
+
+// Read block offset table into local array
+uint32 blkOffsets[10000];  // generous max
+if (blkEntryCount > 10000) {
+    Printf("ERROR: Too many block entries (%u)\n", blkEntryCount);
+    return -1;
+}
+int bi;
+for (bi = 0; bi < blkEntryCount; bi++)
+    blkOffsets[bi] = ReadUInt(gxshBase + blkTableOff + bi * 4);
+
+// Create new file for decompressed stream
+int newFile = FileNew("Hex");
+uint64 totalDecompSize = (uint64)numBlocks * BLOCK_SIZE;
+InsertBytes(0, totalDecompSize, 0);
+
+Printf("  Created decompressed stream: %Lu bytes (%u blocks x 16KB)\n",
+    totalDecompSize, numBlocks);
+
+// Working buffers
+uchar compBuf[0x4000];
+uchar decompBuf[0x4000];
+int destLen;
+int zResult;
+int okCount = 0;
+int failCount = 0;
+uint32 cStart;
+uint32 cEnd;
+uint32 cSize;
+
+// Decompress each block
+for (bi = 0; bi < numBlocks; bi++) {
+    cStart = blkOffsets[bi];
+    cEnd   = blkOffsets[bi + 1];
+    cSize  = cEnd - cStart;
+
+    if (cSize == 0 || cSize > BLOCK_SIZE) {
+        failCount++;
+        continue;
+    }
+
+    // Read compressed data from original file
+    FileSelect(origFile);
+    ReadToBuffer(compBuf, compBase + cStart, cSize);
+
+    // Switch to new file for writing
+    FileSelect(newFile);
+
+    if (cSize == BLOCK_SIZE) {
+        // Raw block (stored uncompressed)
+        WriteBytes(compBuf, (uint64)bi * BLOCK_SIZE, cSize);
+        okCount++;
+    } else {
+        // Zlib compressed block
+        destLen = BLOCK_SIZE;
+        zResult = uncompress(decompBuf, destLen, compBuf, cSize);
+        if (zResult == 0) {
+            WriteBytes(decompBuf, (uint64)bi * BLOCK_SIZE, destLen);
+            okCount++;
+        } else {
+            Printf("  WARNING: Block %d zlib error %d\n", bi, zResult);
+            failCount++;
+        }
+    }
+}
+
+Printf("  Decompressed: %d OK, %d failed\n", okCount, failCount);
+
+// Run the decompressed-stream template on the new file
+FileSelect(newFile);
+Printf("  Running BLS_Decompressed.bt...\n");
+RunTemplate("BLS_Decompressed.bt");
+
+Printf("\n=== Done ===\n");

@@ -1,390 +1,204 @@
 //------------------------------------------------
-//--- 010 Editor v9.0.1 Binary Template
+// File:     BLS_Decompressed.bt
+// Author:   Companion to BLS.bt
+// Rev:      1.2
+// Purpose:  Parse decompressed BLS permutation stream
+// Category: Game
+//------------------------------------------------
 //
-//      File: 
-//   Authors: 
-//   Version: 
-//   Purpose: 
-//  Category: 
-// File Mask: 
-//  ID Bytes: 
-//   History: 
+// Parses a flat decompressed BLS permutation stream.
+// Scans for valid blob headers and creates PermBlob
+// struct entries in the tree.
+//
+// Blob header formats (determined by flags at +0):
+//   flags & 3 == 0: 16-byte header, code at +16
+//   flags & 1, !(flags & 2): 36-byte header, code at +36
+//   flags & 3: extended header, code offset at +8
+//
+// Two ways to use:
+//   A) Automatic (recommended):
+//      Open a .bls file, run BLS_Decompress.1sc.
+//      The script decompresses via zlib1.dll, creates
+//      a new tab, and runs this template automatically.
+//
+//   B) Manual (Python):
+//      python bls_decompress.py shader.bls --export
+//      Open shader.decompressed.bin in 010 Editor
+//      Run this template manually.
 //------------------------------------------------
 
-#include "Lib/Common.bt"
+RequiresVersion(9, 0);
+LittleEndian();
 
-struct BLSBlock
-{
-/*0x00*/	uint32 flags<format=binary>;    // seen: 0x3FE80 in pixel shaders; 0x1A0F in vertex shaders. there may be more ..
-/*0x04*/	uint32 flags2<format=binary>;   // seen: 0x200 in pixel shaders; 0x3FEC1 in vertex shaders (there may be more ..)
-/*0x08*/	uint32 unknown;
-/*0x0c*/	uint32 unknown2;
-/*0x10*/	uint32 unknown3;
-/*0x14*/	uint32 unknown4;
-/*0x18*/	uint32 len;
-};
+//------------------------------------------------
+// Struct Definitions
+//------------------------------------------------
 
-struct DXBC
-{
-    char magic[4]<bgcolor=0x0a0a0a>;    // "DXBC"
-    byte checksum[16];                  // Checksum; the HLSL compiler uses a private algorithm to compute this
-    uint one;                           // Always the number “1” 
-    uint totalSize;                     // Total size, in bytes, of the compiled shader, including the header
-    uint chunkCount;                    // Chunk count
-    uint chunkOffsets[chunkCount];
-};
+typedef struct {
+    uint32 version          <comment="Must be 3 for DX (pmDxShaderCode::Version)">;
+    uint32 field1           <comment="Unknown (not read by engine)">;
+    uint64 cbvBindMask      <format=hex, comment="CBV register bitmask (b# slots)">;
+    uint64 srvBindMask_lo   <format=hex, comment="SRV bitmask low (t# 0-63)">;
+    uint64 srvBindMask_hi   <format=hex, comment="SRV bitmask high (t# 64-127)">;
+    uint64 uavBindMask      <format=hex, comment="UAV bitmask (u# slots)">;
+    uint64 samplerBindMask  <format=hex, comment="Sampler bitmask (s# slots)">;
+    uint32 bytecodeSize     <comment="DXBC/DXIL bytecode size in bytes">;
+    uint32 bytecodeRelOffset <comment="Bytecode at (&this_field + value), typically 4">;
+} pmDxShaderCode <bgcolor=cLtAqua>;  // 56 bytes
 
-struct ISGN
-{
-    char chunkID[4];
-    uint chunkSize;
-    uint elementCount;
-    uint unk;
-    // Element data here
+typedef struct {
+    uint32 shaderFlags      <format=hex, comment="Shader compilation flags (DX12 PSO)">;
+    uint32 bindField1       <comment="Binding info field 1">;
+    uint64 bindField2       <format=hex, comment="Binding info field 2">;
+    uint64 bindField3       <format=hex, comment="Binding info field 3">;
+} BlobBindingInfo <bgcolor=cLtYellow>;  // 24 bytes
 
-};
+typedef struct {
+    local uint64 blobStart_ = FTell();
+    local uint32 bcMagic_ = 0;
+    local uint32 bcSize_ = 0;
+    local uint32 codeOff_ = 0;
+    local uint32 flags_ = 0;
+    local uint32 shaderFlags_ = 0;
 
-struct OSGN
-{
-    char chunkID[4];
-    uint chunkSize;
-    uint elementCount;
-    uint unk;
-    // Element data here
-};
+    // Blob header (first 16 bytes always present)
+    uint32 flags               <format=hex, comment="Bit0=hasBindInfo, Bit1=codeOffsetAt+8">;
+    uint32 codeSize            <format=hex, comment="Size of code region (pmDxShaderCode + bytecode)">;
+    flags_ = flags;
 
-typedef enum D3D10_SB_OPCODE_TYPE {
-    D3D10_SB_OPCODE_ADD          ,
-    D3D10_SB_OPCODE_AND          ,
-    D3D10_SB_OPCODE_BREAK        ,
-    D3D10_SB_OPCODE_BREAKC       ,
-    D3D10_SB_OPCODE_CALL         ,
-    D3D10_SB_OPCODE_CALLC        ,
-    D3D10_SB_OPCODE_CASE         ,
-    D3D10_SB_OPCODE_CONTINUE     ,
-    D3D10_SB_OPCODE_CONTINUEC    ,
-    D3D10_SB_OPCODE_CUT          ,
-    D3D10_SB_OPCODE_DEFAULT      ,
-    D3D10_SB_OPCODE_DERIV_RTX    ,
-    D3D10_SB_OPCODE_DERIV_RTY    ,
-    D3D10_SB_OPCODE_DISCARD      ,
-    D3D10_SB_OPCODE_DIV          ,
-    D3D10_SB_OPCODE_DP2          ,
-    D3D10_SB_OPCODE_DP3          ,
-    D3D10_SB_OPCODE_DP4          ,
-    D3D10_SB_OPCODE_ELSE         ,
-    D3D10_SB_OPCODE_EMIT         ,
-    D3D10_SB_OPCODE_EMITTHENCUT  ,
-    D3D10_SB_OPCODE_ENDIF        ,
-    D3D10_SB_OPCODE_ENDLOOP      ,
-    D3D10_SB_OPCODE_ENDSWITCH    ,
-    D3D10_SB_OPCODE_EQ           ,
-    D3D10_SB_OPCODE_EXP          ,
-    D3D10_SB_OPCODE_FRC          ,
-    D3D10_SB_OPCODE_FTOI         ,
-    D3D10_SB_OPCODE_FTOU         ,
-    D3D10_SB_OPCODE_GE           ,
-    D3D10_SB_OPCODE_IADD         ,
-    D3D10_SB_OPCODE_IF           ,
-    D3D10_SB_OPCODE_IEQ          ,
-    D3D10_SB_OPCODE_IGE          ,
-    D3D10_SB_OPCODE_ILT          ,
-    D3D10_SB_OPCODE_IMAD         ,
-    D3D10_SB_OPCODE_IMAX         ,
-    D3D10_SB_OPCODE_IMIN         ,
-    D3D10_SB_OPCODE_IMUL         ,
-    D3D10_SB_OPCODE_INE          ,
-    D3D10_SB_OPCODE_INEG         ,
-    D3D10_SB_OPCODE_ISHL         ,
-    D3D10_SB_OPCODE_ISHR         ,
-    D3D10_SB_OPCODE_ITOF         ,
-    D3D10_SB_OPCODE_LABEL        ,
-    D3D10_SB_OPCODE_LD           ,
-    D3D10_SB_OPCODE_LD_MS        ,
-    D3D10_SB_OPCODE_LOG          ,
-    D3D10_SB_OPCODE_LOOP         ,
-    D3D10_SB_OPCODE_LT           ,
-    D3D10_SB_OPCODE_MAD          ,
-    D3D10_SB_OPCODE_MIN          ,
-    D3D10_SB_OPCODE_MAX          ,
-    D3D10_SB_OPCODE_CUSTOMDATA   ,
-    D3D10_SB_OPCODE_MOV          ,
-    D3D10_SB_OPCODE_MOVC         ,
-    D3D10_SB_OPCODE_MUL          ,
-    D3D10_SB_OPCODE_NE           ,
-    D3D10_SB_OPCODE_NOP          ,
-    D3D10_SB_OPCODE_NOT          ,
-    D3D10_SB_OPCODE_OR           ,
-    D3D10_SB_OPCODE_RESINFO      ,
-    D3D10_SB_OPCODE_RET          ,
-    D3D10_SB_OPCODE_RETC         ,
-    D3D10_SB_OPCODE_ROUND_NE     ,
-    D3D10_SB_OPCODE_ROUND_NI     ,
-    D3D10_SB_OPCODE_ROUND_PI     ,
-    D3D10_SB_OPCODE_ROUND_Z      ,
-    D3D10_SB_OPCODE_RSQ          ,
-    D3D10_SB_OPCODE_SAMPLE       ,
-    D3D10_SB_OPCODE_SAMPLE_C     ,
-    D3D10_SB_OPCODE_SAMPLE_C_LZ  ,
-    D3D10_SB_OPCODE_SAMPLE_L     ,
-    D3D10_SB_OPCODE_SAMPLE_D     ,
-    D3D10_SB_OPCODE_SAMPLE_B     ,
-    D3D10_SB_OPCODE_SQRT         ,
-    D3D10_SB_OPCODE_SWITCH       ,
-    D3D10_SB_OPCODE_SINCOS       ,
-    D3D10_SB_OPCODE_UDIV         ,
-    D3D10_SB_OPCODE_ULT          ,
-    D3D10_SB_OPCODE_UGE          ,
-    D3D10_SB_OPCODE_UMUL         ,
-    D3D10_SB_OPCODE_UMAD         ,
-    D3D10_SB_OPCODE_UMAX         ,
-    D3D10_SB_OPCODE_UMIN         ,
-    D3D10_SB_OPCODE_USHR         ,
-    D3D10_SB_OPCODE_UTOF         ,
-    D3D10_SB_OPCODE_XOR          ,
-    D3D10_SB_OPCODE_DCL_RESOURCE                     , // DCL* opcodes have
-    D3D10_SB_OPCODE_DCL_CONSTANT_BUFFER              , // custom operand formats.
-    D3D10_SB_OPCODE_DCL_SAMPLER                      ,
-    D3D10_SB_OPCODE_DCL_INDEX_RANGE                  ,
-    D3D10_SB_OPCODE_DCL_GS_OUTPUT_PRIMITIVE_TOPOLOGY ,
-    D3D10_SB_OPCODE_DCL_GS_INPUT_PRIMITIVE           ,
-    D3D10_SB_OPCODE_DCL_MAX_OUTPUT_VERTEX_COUNT      ,
-    D3D10_SB_OPCODE_DCL_INPUT                        ,
-    D3D10_SB_OPCODE_DCL_INPUT_SGV                    ,
-    D3D10_SB_OPCODE_DCL_INPUT_SIV                    ,
-    D3D10_SB_OPCODE_DCL_INPUT_PS                     ,
-    D3D10_SB_OPCODE_DCL_INPUT_PS_SGV                 ,
-    D3D10_SB_OPCODE_DCL_INPUT_PS_SIV                 ,
-    D3D10_SB_OPCODE_DCL_OUTPUT                       ,
-    D3D10_SB_OPCODE_DCL_OUTPUT_SGV                   ,
-    D3D10_SB_OPCODE_DCL_OUTPUT_SIV                   ,
-    D3D10_SB_OPCODE_DCL_TEMPS                        ,
-    D3D10_SB_OPCODE_DCL_INDEXABLE_TEMP               ,
-    D3D10_SB_OPCODE_DCL_GLOBAL_FLAGS                 ,
-
-// -----------------------------------------------
-
-    // This marks the end of D3D10.0 opcodes
-    D3D10_SB_OPCODE_RESERVED0,
-    
-// ---------- DX 10.1 op codes---------------------
-
-    D3D10_1_SB_OPCODE_LOD,
-    D3D10_1_SB_OPCODE_GATHER4,
-    D3D10_1_SB_OPCODE_SAMPLE_POS,
-    D3D10_1_SB_OPCODE_SAMPLE_INFO,
-
-// -----------------------------------------------
-
-    // This marks the end of D3D10.1 opcodes
-    D3D10_1_SB_OPCODE_RESERVED1,
-
-// ---------- DX 11 op codes---------------------
-    D3D11_SB_OPCODE_HS_DECLS                         , // token marks beginning of HS sub-shader
-    D3D11_SB_OPCODE_HS_CONTROL_POINT_PHASE           , // token marks beginning of HS sub-shader
-    D3D11_SB_OPCODE_HS_FORK_PHASE                    , // token marks beginning of HS sub-shader
-    D3D11_SB_OPCODE_HS_JOIN_PHASE                    , // token marks beginning of HS sub-shader
-
-    D3D11_SB_OPCODE_EMIT_STREAM                      ,
-    D3D11_SB_OPCODE_CUT_STREAM                       ,
-    D3D11_SB_OPCODE_EMITTHENCUT_STREAM               ,
-    D3D11_SB_OPCODE_INTERFACE_CALL                   ,
-
-    D3D11_SB_OPCODE_BUFINFO                          ,
-    D3D11_SB_OPCODE_DERIV_RTX_COARSE                 ,
-    D3D11_SB_OPCODE_DERIV_RTX_FINE                   ,
-    D3D11_SB_OPCODE_DERIV_RTY_COARSE                 ,
-    D3D11_SB_OPCODE_DERIV_RTY_FINE                   ,
-    D3D11_SB_OPCODE_GATHER4_C                        ,
-    D3D11_SB_OPCODE_GATHER4_PO                       ,
-    D3D11_SB_OPCODE_GATHER4_PO_C                     ,
-    D3D11_SB_OPCODE_RCP                              ,
-    D3D11_SB_OPCODE_F32TOF16                         ,
-    D3D11_SB_OPCODE_F16TOF32                         ,
-    D3D11_SB_OPCODE_UADDC                            ,
-    D3D11_SB_OPCODE_USUBB                            ,
-    D3D11_SB_OPCODE_COUNTBITS                        ,
-    D3D11_SB_OPCODE_FIRSTBIT_HI                      ,
-    D3D11_SB_OPCODE_FIRSTBIT_LO                      ,
-    D3D11_SB_OPCODE_FIRSTBIT_SHI                     ,
-    D3D11_SB_OPCODE_UBFE                             ,
-    D3D11_SB_OPCODE_IBFE                             ,
-    D3D11_SB_OPCODE_BFI                              ,
-    D3D11_SB_OPCODE_BFREV                            ,
-    D3D11_SB_OPCODE_SWAPC                            ,
-
-    D3D11_SB_OPCODE_DCL_STREAM                       ,
-    D3D11_SB_OPCODE_DCL_FUNCTION_BODY                ,
-    D3D11_SB_OPCODE_DCL_FUNCTION_TABLE               ,
-    D3D11_SB_OPCODE_DCL_INTERFACE                    ,
-    
-    D3D11_SB_OPCODE_DCL_INPUT_CONTROL_POINT_COUNT    ,
-    D3D11_SB_OPCODE_DCL_OUTPUT_CONTROL_POINT_COUNT   ,
-    D3D11_SB_OPCODE_DCL_TESS_DOMAIN                  ,
-    D3D11_SB_OPCODE_DCL_TESS_PARTITIONING            ,
-    D3D11_SB_OPCODE_DCL_TESS_OUTPUT_PRIMITIVE        ,
-    D3D11_SB_OPCODE_DCL_HS_MAX_TESSFACTOR            ,
-    D3D11_SB_OPCODE_DCL_HS_FORK_PHASE_INSTANCE_COUNT ,
-    D3D11_SB_OPCODE_DCL_HS_JOIN_PHASE_INSTANCE_COUNT ,
-
-    D3D11_SB_OPCODE_DCL_THREAD_GROUP                 ,
-    D3D11_SB_OPCODE_DCL_UNORDERED_ACCESS_VIEW_TYPED  ,
-    D3D11_SB_OPCODE_DCL_UNORDERED_ACCESS_VIEW_RAW    ,
-    D3D11_SB_OPCODE_DCL_UNORDERED_ACCESS_VIEW_STRUCTURED,
-    D3D11_SB_OPCODE_DCL_THREAD_GROUP_SHARED_MEMORY_RAW,
-    D3D11_SB_OPCODE_DCL_THREAD_GROUP_SHARED_MEMORY_STRUCTURED,
-    D3D11_SB_OPCODE_DCL_RESOURCE_RAW                 ,
-    D3D11_SB_OPCODE_DCL_RESOURCE_STRUCTURED          ,
-    D3D11_SB_OPCODE_LD_UAV_TYPED                     ,
-    D3D11_SB_OPCODE_STORE_UAV_TYPED                  ,
-    D3D11_SB_OPCODE_LD_RAW                           ,
-    D3D11_SB_OPCODE_STORE_RAW                        ,
-    D3D11_SB_OPCODE_LD_STRUCTURED                    ,
-    D3D11_SB_OPCODE_STORE_STRUCTURED                 ,
-    D3D11_SB_OPCODE_ATOMIC_AND                       ,
-    D3D11_SB_OPCODE_ATOMIC_OR                        ,
-    D3D11_SB_OPCODE_ATOMIC_XOR                       ,
-    D3D11_SB_OPCODE_ATOMIC_CMP_STORE                 ,
-    D3D11_SB_OPCODE_ATOMIC_IADD                      ,
-    D3D11_SB_OPCODE_ATOMIC_IMAX                      ,
-    D3D11_SB_OPCODE_ATOMIC_IMIN                      ,
-    D3D11_SB_OPCODE_ATOMIC_UMAX                      ,
-    D3D11_SB_OPCODE_ATOMIC_UMIN                      ,
-    D3D11_SB_OPCODE_IMM_ATOMIC_ALLOC                 ,
-    D3D11_SB_OPCODE_IMM_ATOMIC_CONSUME               ,
-    D3D11_SB_OPCODE_IMM_ATOMIC_IADD                  ,
-    D3D11_SB_OPCODE_IMM_ATOMIC_AND                   ,
-    D3D11_SB_OPCODE_IMM_ATOMIC_OR                    ,
-    D3D11_SB_OPCODE_IMM_ATOMIC_XOR                   ,
-    D3D11_SB_OPCODE_IMM_ATOMIC_EXCH                  ,
-    D3D11_SB_OPCODE_IMM_ATOMIC_CMP_EXCH              ,
-    D3D11_SB_OPCODE_IMM_ATOMIC_IMAX                  ,
-    D3D11_SB_OPCODE_IMM_ATOMIC_IMIN                  ,
-    D3D11_SB_OPCODE_IMM_ATOMIC_UMAX                  ,
-    D3D11_SB_OPCODE_IMM_ATOMIC_UMIN                  ,   
-    D3D11_SB_OPCODE_SYNC                             ,
-    
-    D3D11_SB_OPCODE_DADD                             ,
-    D3D11_SB_OPCODE_DMAX                             ,
-    D3D11_SB_OPCODE_DMIN                             ,
-    D3D11_SB_OPCODE_DMUL                             ,
-    D3D11_SB_OPCODE_DEQ                              ,
-    D3D11_SB_OPCODE_DGE                              ,
-    D3D11_SB_OPCODE_DLT                              ,
-    D3D11_SB_OPCODE_DNE                              ,
-    D3D11_SB_OPCODE_DMOV                             ,
-    D3D11_SB_OPCODE_DMOVC                            ,
-    D3D11_SB_OPCODE_DTOF                             ,
-    D3D11_SB_OPCODE_FTOD                             ,
-
-    D3D11_SB_OPCODE_EVAL_SNAPPED                     ,
-    D3D11_SB_OPCODE_EVAL_SAMPLE_INDEX                ,
-    D3D11_SB_OPCODE_EVAL_CENTROID                    ,
-    
-    D3D11_SB_OPCODE_DCL_GS_INSTANCE_COUNT            ,
-
-    D3D11_SB_OPCODE_ABORT                            ,
-    D3D11_SB_OPCODE_DEBUG_BREAK                      ,
-
-// -----------------------------------------------
-
-    // This marks the end of D3D11.0 opcodes
-    D3D11_SB_OPCODE_RESERVED0,
-
-    D3D11_1_SB_OPCODE_DDIV,
-    D3D11_1_SB_OPCODE_DFMA,
-    D3D11_1_SB_OPCODE_DRCP,
-
-    D3D11_1_SB_OPCODE_MSAD,
-
-    D3D11_1_SB_OPCODE_DTOI,
-    D3D11_1_SB_OPCODE_DTOU,
-    D3D11_1_SB_OPCODE_ITOD,
-    D3D11_1_SB_OPCODE_UTOD,
-
-// -----------------------------------------------
-
-    // This marks the end of D3D11.1 opcodes
-    D3D11_1_SB_OPCODE_RESERVED0,
-
-    D3DWDDM1_3_SB_OPCODE_GATHER4_FEEDBACK,
-    D3DWDDM1_3_SB_OPCODE_GATHER4_C_FEEDBACK,
-    D3DWDDM1_3_SB_OPCODE_GATHER4_PO_FEEDBACK,
-    D3DWDDM1_3_SB_OPCODE_GATHER4_PO_C_FEEDBACK,
-    D3DWDDM1_3_SB_OPCODE_LD_FEEDBACK,
-    D3DWDDM1_3_SB_OPCODE_LD_MS_FEEDBACK,
-    D3DWDDM1_3_SB_OPCODE_LD_UAV_TYPED_FEEDBACK,
-    D3DWDDM1_3_SB_OPCODE_LD_RAW_FEEDBACK,
-    D3DWDDM1_3_SB_OPCODE_LD_STRUCTURED_FEEDBACK,
-    D3DWDDM1_3_SB_OPCODE_SAMPLE_L_FEEDBACK,
-    D3DWDDM1_3_SB_OPCODE_SAMPLE_C_LZ_FEEDBACK,
-
-    D3DWDDM1_3_SB_OPCODE_SAMPLE_CLAMP_FEEDBACK,
-    D3DWDDM1_3_SB_OPCODE_SAMPLE_B_CLAMP_FEEDBACK,
-    D3DWDDM1_3_SB_OPCODE_SAMPLE_D_CLAMP_FEEDBACK,
-    D3DWDDM1_3_SB_OPCODE_SAMPLE_C_CLAMP_FEEDBACK,
-
-    D3DWDDM1_3_SB_OPCODE_CHECK_ACCESS_FULLY_MAPPED,
-
-// -----------------------------------------------
-
-    // This marks the end of WDDM 1.3 opcodes
-    D3DWDDM1_3_SB_OPCODE_RESERVED0,
-
-    D3D10_SB_NUM_OPCODES                                     // Should be the last entry
-} D3D10_SB_OPCODE_TYPE;
-
-typedef enum <ushort> {
-  D3D12_SHVER_PIXEL_SHADER,
-  D3D12_SHVER_VERTEX_SHADER,
-  D3D12_SHVER_GEOMETRY_SHADER,
-  D3D12_SHVER_HULL_SHADER,
-  D3D12_SHVER_DOMAIN_SHADER,
-  D3D12_SHVER_COMPUTE_SHADER,
-  D3D12_SHVER_RESERVED0
-} D3D12_SHADER_VERSION_TYPE;
-
-struct OpCode
-{
-    BitfieldDisablePadding();
-    D3D10_SB_OPCODE_TYPE type : 10;
-    uint unk : 14;
-    uint length : 6;
-    uint extended : 1;
-    BitfieldEnablePadding();
-};
-
-struct SHEX
-{
-    char chunkID[4];            // Indicates that this is a SHEX (shader) chunk
-    uint chunkSize;             // Length of the chunk, in bytes
-
-    BitfieldDisablePadding();
-    byte versionMinor : 4;      // Minor version number
-    byte versionMajor : 4;      // Major version number
-    BitfieldEnablePadding();
-    byte skip;
-    D3D12_SHADER_VERSION_TYPE programType;         // Program type. “1” means vertex shader.
-    uint dWordCount;            // Number of DWORDs in the chunk
-
-    // Dwords here
-    OpCode dwords[dWordCount - 1];
-};
-
-BLSBlock block;
-
-uint unks[9];
-uint size;
-uint unk2;
-
-DXBC dxbc;
-
-while( !FEof() )
-    {
-        if     ( matchr( "ISGN" ) ) ISGN input;      // Input signature
-        else if( matchr( "OSGN" ) ) OSGN output;     // Output signature (SM5)
-        else if( matchr( "SHEX" ) ) SHEX output;     // Shader (SM5) ///< Shader byte-code definition chunk. Mandatory. SHDR or SHEX chunk.
-        else SKIP_CHUNK unk;
-
-        if (FileSize() == FTell() + 4) break;
+    if ((flags & 2) != 0) {
+        uint32 codeOffset      <format=hex, comment="Offset from blob start to pmDxShaderCode">;
+        codeOff_ = codeOffset;
+    } else {
+        uint32 shaderFlags     <format=hex, comment="Shader compilation flags (DX12 PSO)">;
+        shaderFlags_ = shaderFlags;
+        if ((flags & 1) != 0)
+            codeOff_ = 36;
+        else
+            codeOff_ = 16;
     }
+
+    uint32 field3              <comment="Always 0">;
+
+    if (codeSize != 0) {
+        // Extended binding info between header and pmDxShaderCode
+        if ((flags & 1) != 0) {
+            if ((flags & 2) != 0) {
+                // New format: 24-byte binding info at +16
+                BlobBindingInfo bindInfo;
+                shaderFlags_ = bindInfo.shaderFlags;
+            } else {
+                // Old extended format: 20 bytes of binding data at +16
+                uchar bindingData[20] <bgcolor=cLtYellow, comment="Inline binding info (old format)">;
+            }
+        }
+
+        // pmDxShaderCode at computed offset
+        pmDxShaderCode code;
+        bcSize_ = code.bytecodeSize;
+
+        // Bytecode after relOffset displacement
+        if (code.bytecodeSize > 0 && code.bytecodeRelOffset >= 4) {
+            local int blobCodeGap_ = code.bytecodeRelOffset - 4;
+            if (blobCodeGap_ > 0)
+                uchar codeGap[blobCodeGap_] <bgcolor=cGray, comment="Gap before bytecode">;
+
+            if (code.bytecodeSize >= 4)
+                bcMagic_ = ReadUInt(FTell());
+            uchar bytecode[code.bytecodeSize] <comment="DXBC/DXIL shader bytecode">;
+        }
+    }
+} PermBlob <read=ReadPermBlob, optimize=false, bgcolor=cLtGreen>;
+
+string ReadPermBlob(PermBlob &b) {
+    string s;
+    if (b.codeSize == 0) {
+        s = "empty";
+    } else {
+        local string bcType = "";
+        if (b.bcMagic_ == 0x43425844) bcType = "DXBC";
+        else if (b.bcMagic_ != 0)
+            SPrintf(bcType, "0x%08X", b.bcMagic_);
+        SPrintf(s, "%s flags=0x%X bc=%u bytes (hdr=%u)",
+            bcType, b.shaderFlags_, b.bcSize_, b.codeOff_);
+    }
+    return s;
+}
+
+//------------------------------------------------
+// Scanning
+//
+// Determines code offset from flags, then validates
+// pmDxShaderCode.version == 3 at that offset.
+//------------------------------------------------
+
+Printf("=== BLS Decompressed Stream (%Lu bytes) ===\n", FileSize());
+
+local uint64 pos = 0;
+local uint64 fileEnd = FileSize();
+local uint32 blobCount = 0;
+local uint32 testFlags;
+local uint32 testCodeSz;
+local uint32 testCodeOff;
+local uint32 testCodeVer;
+local uint32 testBcSz;
+local uint32 testBcRel;
+local uint64 expectedEnd;
+
+while (pos + 16 <= fileEnd) {
+    testFlags  = ReadUInt(pos);
+    testCodeSz = ReadUInt(pos + 4);
+
+    if (testCodeSz == 0) {
+        pos += 4;
+        continue;
+    }
+
+    // Determine code offset from flags (matches engine logic)
+    if ((testFlags & 2) != 0) {
+        testCodeOff = ReadUInt(pos + 8);
+    } else if ((testFlags & 1) != 0) {
+        testCodeOff = 36;
+    } else {
+        testCodeOff = 16;
+    }
+
+    // Validate code offset is reasonable
+    if (testCodeOff < 16 || testCodeOff > 256) {
+        pos += 4;
+        continue;
+    }
+
+    // Check pmDxShaderCode.version at computed offset
+    if (pos + testCodeOff + 56 > fileEnd) {
+        pos += 4;
+        continue;
+    }
+
+    testCodeVer = ReadUInt(pos + testCodeOff);
+    if (testCodeVer != 3) {
+        pos += 4;
+        continue;
+    }
+
+    // Validate bytecode fields
+    testBcSz  = ReadUInt(pos + testCodeOff + 48);
+    testBcRel = ReadUInt(pos + testCodeOff + 52);
+    expectedEnd = testCodeOff + 52 + testBcRel + testBcSz;
+
+    if (testBcRel >= 4 && expectedEnd <= fileEnd - pos &&
+        expectedEnd < 0x200000) {
+        FSeek(pos);
+        PermBlob blob;
+        Printf("  Blob #%u at 0x%LX: codeOff=%u codeSize=0x%X bc=%u bytes\n",
+            blobCount, pos, testCodeOff, testCodeSz, testBcSz);
+        pos = FTell();
+        blobCount++;
+        continue;
+    }
+
+    pos += 4;
+}
+
+Printf("\nFound %u permutation blobs\n", blobCount);
+Printf("\n=== Done ===\n");

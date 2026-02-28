@@ -1,0 +1,41 @@
+//------------------------------------------------
+//      File: Clt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the cloth sim file from Diablo IV
+//  Category: DiabloIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+typedef struct (int size)
+{
+    byte gap[size]<bgcolor=cBlack, hidden=true>;
+}Gap<hidden=true>;
+
+struct DeadBeef
+{
+    int magic;      // -559038737
+    int magic2;     // 454043394 - app
+    Gap g(4);
+    int hash;       // name hash ?
+};
+
+
+DeadBeef beef;
+int snoID;
+int unk0;
+int unk1;
+int unk2;
+int unk3;
+int unk4;
+int unk5;
+float unk6;
+int unks0[8];
+float unk7;
+short unk8;
+short unk9;
+int unk10;
+float unkfs0[23];
+int unks1[9];
+float unkfs1[5];

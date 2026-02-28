@@ -1,0 +1,83 @@
+//------------------------------------------------
+//      File: Itm
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the item file from Diablo IV
+//  Category: DiabloIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct DeadBeef
+{
+    int magic;      // -559038737
+    int magic2;     // 454043394 - app
+    Gap g(4);
+    int hash;       // name hash ?
+};
+
+
+struct Header
+{
+    DeadBeef beef;
+    int snoID;
+    Gap g(4);
+    int actorSnoID;     // For ground drop (or not in case of weapons?)
+    int itemTypeSnoID;
+    int unk0;           // 0, 1, 2, 3
+    int unk1;           // Hash ? or 2x shorts
+    OFFSET4 dyesOffs;   // Points to dye snoIDs
+    int unk2;           // 0, 1, 2
+    int unk3;           // 0,1,2,3,4 .. 161
+    int loreSnoID;
+    int unk4;           // -1, 0, 1, 2, .. 10, 20 .. 250, 999, 1000
+    int unk5;           // 0, 1, 3 .. 60, 63, 100 .. 300000, 400000
+    int unk6;           // -1, 0, 1, 2 .. 24
+    int unk7;           // 0, 1, 3, 5 .. 40, 45, 50 .. 100  Percent?
+    int unk8;           // 0, 1, 13, 15 .. 100              Percent?
+    int unk9;           // 0, 1, 3, 6 .. 100                Percent?
+    int unk10;          // 0, 1, 13, 15 .. 100              Percent?
+    int unk11;          // 0, 1, 5, 7 .. 100                Percent?
+    int unk12;          // -1, 0, 1, 2, 3, 4
+    int altItemSnoID;   // SNO ID of a different item (generic?)
+    int treasureClassSnoIDs[4];
+    int unusedSnoIDs[3];
+    int stringListSnoIDs[2];    // Or not ?
+    int setItemBonusSnoID;
+    int powerSnoID;
+    Gap g(4);
+    int unk13;          // 0, 1, 16, 40 .. 750
+    int unk14;          // 0, 1, 2
+    Gap g(4);
+    OFFSET4 offsA;
+    OFFSET4 affixOffs;
+    OFFSET4 offsC;
+    int unk15;          // 0, 1
+    int unk16;          // 0, 1
+    int unk17;          // 0, 1
+    int unk18;          // 0, 1
+    int unk19;          // 0, 1
+    Gap g(4);
+    OFFSET4 offsD;
+    int unusedSnoID0;   // -1
+    int recipeSnoID;
+    int unusedSnoID1;   // -1
+    int mountActorSnoID;
+    int paragonGlyphSnoID;
+    Gap g(20);
+    OFFSET4 offsE;
+    int unk20;          // -1, 0, 1, 2, 3, 4, 5, 6
+    int unk21;          // 0, 10
+    int unusedSnoID2;   // -1
+    int unk22;          // 0, 1, 2, 3, 4, 5, 6, 7
+    int powerSnoID1;
+    Gap g(4);
+};
+
+Header header<bgcolor=cLtGreen>;
+
+if (header.affixOffs.size > 0)
+{
+    FSeek(header.affixOffs.offset + 16);
+    int affixSnoIDs[header.affixOffs.size / 4]<bgcolor=cPurple>;
+}

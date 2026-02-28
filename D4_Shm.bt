@@ -1,0 +1,65 @@
+//------------------------------------------------
+//      File: Shm
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the shader map file from Diablo IV
+//  Category: DiabloIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+typedef struct (int size)
+{
+    byte gap[size]<bgcolor=cBlack, hidden=true>;
+}Gap<hidden=true>;
+
+struct DeadBeef
+{
+    int magic;      // -559038737
+    int magic2;     // 454043394 - app
+    Gap g(4);
+    int hash;       // name hash ?
+};
+
+struct Header
+{
+    DeadBeef beef;
+    int snoID;
+    int unk0;
+    int unk1;
+    int unk2;
+    int unk3;
+    int unk4;
+    OFFSET4 offsA;
+    OFFSET4 offsB;
+};
+
+struct ShaderInfo
+{
+    int count;
+    int hashes[2 * count];
+    int shaderSnoIDs[count];
+    int unk;
+};
+
+struct UnkShaderStuff
+{
+    int ID;
+    int snoIDs[16];
+};
+
+// READ
+
+Header header;
+
+if (header.offsA.size > 0)
+{
+    FSeek(16 + header.offsA.offset);
+    UnkShaderStuff stuff[header.offsA.size / 68];
+}
+
+if (header.offsB.size > 0)
+{
+    FSeek(16 + header.offsB.offset);
+    ShaderInfo shaders;
+}

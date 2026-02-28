@@ -1,37 +1,1011 @@
 //------------------------------------------------
-//--- 010 Editor v9.0.1 Binary Template
+// File:     BLS.bt
+// Author:   Zee
+// Rev:      1.5
+// Purpose:  Parse BLS (Blizzard Shader) files
+// Category: Game
+// File Mask: *.bls
+// ID Bytes: 54 41 46 47, 48 53 58 47, 44 53 58 47
+//------------------------------------------------
 //
-//      File: 
-//   Authors: 
-//   Version: 
-//   Purpose: 
-//  Category: 
-// File Mask: 
-//  ID Bytes: 
-//   History: 
+// BLS files contain compiled GPU shader bytecode.
+//
+// Two-layer format:
+//   Layer 1: TAFG container (optional outer wrapper)
+//            Multi-platform bundle with FourCC platform tags.
+//   Layer 2: GXSH blob (inner BLS format)
+//            Shader permutation table + zlib-compressed bytecode.
+//
+// The engine loads BLS files, unwraps TAFG if present,
+// then decompresses individual shader permutations on demand.
+//
+// Platform families:
+//   0 = DX40 = DirectX SM4.0 (tag 0x44583430)
+//   1 = DX50 = DirectX SM5.0 (tag 0x44583530)
+//   2 = DX60 = DirectX SM6.0 (tag 0x44583630)
+//   3 = MT11 = Metal 1.1     (tag 0x4D543131)
+//   4 = Count (sentinel)
+//
+// Shader type enum:
+//   0 = Vertex
+//   1 = Hull
+//   2 = Domain
+//   3 = Pixel
+//   6 = Geometry
+//   7 = Compute
+//
+// GXSH versions:
+//   v03 (0x00003) - 3.x
+//   v04 (0x00004) - 4.x
+//   v05 (0x00005) - 8.x
+//   v06 (0x00006) - 8.x
+//   v07 (0x00007) - 8.x
+//   v08 (0x10008) - 8.x
+//   v09 (0x10009) - 9.x
+//   v10 (0x1000A) - 9.x
+//   v11 (0x1000B) - 9.0.1.34365
+//   v12 (0x1000C) - 28-byte header, no platform tag
+//   v13 (0x1000D) - 32-byte header, extra field2
+//   v14 (0x1000E) - 40-byte header, embedded platform
+//                   tag, 24-byte perm entries with content hashes
+//
+// v12 field5 = blockCount (redundant, derivable from offsets)
+// v13 field2/field6 are not read by the extraction code
+//
+// Decompression (v1.4+):
+//   Set DECOMPRESS_PERMS=1 to decompress zlib blocks via
+//   zlib1.dll and print parsed permutation data to Output.
+//   Requires a 64-bit zlib1.dll next to this .bt file,
+//   in the 010 Editor directory, or in system PATH.
+//   For TAFG files, TAFG_PLATFORM_INDEX selects which platform.
+//
+// See also: bls_decompress.py (Python standalone decompressor)
+//           BLS_Decompressed.bt (template for .decompressed.bin)
 //------------------------------------------------
 
-struct BLSHeader
-{
-/*0x00*/	char magic[4];			    // FourCC-style magic, "GXVS", "GXPS", etc. Character order reversed in-file. "GXSH" in all new WoD shaders.
-/*0x04*/	uint32 version<format=hex>;	// version, 0x10003 in WotLK, 0x10004 in Cata/MoP/WoD, 0x10005 in BfA (25902), 0x10006 in BfA (25976)
-/*0x08*/	uint32 permutationCount;	// (from old definition)
-/*0x0c*/	uint32 nShaders;		    // the expected number of shaders in this file (this is the number
-						                // of distinct shaders that will be found if you inspect the file after decompression)
-/*0x10*/	uint32 ofsCompressedChunks;	// offset to array of offsets to compressed chunks
-/*0x14*/	uint32 nCompressedChunks;	// number of compressed chunks
-/*0x18*/	uint32 ofsCompressedData;	// offset to the start of the compressed (zlib) data 
-						                // bytes (all offsets from the array above are offset by this much)
-};
+RequiresVersion(9, 0);
+LittleEndian();
 
-BLSHeader header;
-uint32 offsets[header.nShaders];        // Offsets to the start of each shader block in the decompressed data
+//------------------------------------------------
+// Constants
+//------------------------------------------------
 
-// Go to compressed chunk offsets
-FSeek(header.ofsCompressedChunks + 4);
-uint32 compressedChunksOffsets[header.nCompressedChunks];
+local uint32 MAGIC_TAFG = 0x47464154;  // 'TAFG'
+local uint32 MAGIC_GXSH = 0x47585348;  // 'GXSH'
+local uint32 MAGIC_GXSD = 0x47585344;  // 'GXSD' (DXIL variant, same layout as GXSH)
+local uint32 GXSH_VERSION_V12 = 0x1000C;  // 65548
+local uint32 GXSH_VERSION_V13 = 0x1000D;  // 65549
+local uint32 GXSH_VERSION_V14 = 0x1000E;  // 65550
+local uint32 TAFG_VERSION = 0x1000B;
+local uint32 BLOCK_DECOMP_SIZE = 0x4000;   // 16KB max decompressed block
 
-// Go to compressed data
-FSeek(header.ofsCompressedData);
+//------------------------------------------------
+// Decompression toggles
+//------------------------------------------------
+local int DECOMPRESS_PERMS = 1;       // 1=decompress+parse, 0=skip
+local int TAFG_PLATFORM_INDEX = 0;    // Which TAFG platform to decompress
+local int MAX_PERMS_TO_PARSE = 0;     // 0=all permutations
 
-uint test;
+// Import zlib uncompress from DLL.
+// Place zlib1.dll (matching 010 Editor bitness) next to
+// this .bt file, in the 010 Editor dir, or in PATH.
+// The DLL is only loaded when DECOMPRESS_PERMS=1.
+#link "zlib1.dll"
+    int uncompress(uchar dest[], int &destLen, uchar source[], int sourceLen);
+#endlink
+
+//------------------------------------------------
+// FourCC helper
+//------------------------------------------------
+
+typedef uint32 FourCC <read=ReadFourCC, format=hex>;
+
+string ReadFourCC(FourCC &f) {
+    string s;
+    SPrintf(s, "'%c%c%c%c' (0x%08X)",
+        f & 0xFF, (f >> 8) & 0xFF,
+        (f >> 16) & 0xFF, (f >> 24) & 0xFF, f);
+    return s;
+}
+
+//------------------------------------------------
+// Local buffer read helpers (for decompression)
+//------------------------------------------------
+
+uint32 BufU32(uchar buf[], int64 off) {
+    return (uint32)buf[off] | ((uint32)buf[off+1] << 8) |
+           ((uint32)buf[off+2] << 16) | ((uint32)buf[off+3] << 24);
+}
+
+uint64 BufU64(uchar buf[], int64 off) {
+    return (uint64)buf[off] | ((uint64)buf[off+1] << 8) |
+           ((uint64)buf[off+2] << 16) | ((uint64)buf[off+3] << 24) |
+           ((uint64)buf[off+4] << 32) | ((uint64)buf[off+5] << 40) |
+           ((uint64)buf[off+6] << 48) | ((uint64)buf[off+7] << 56);
+}
+
+//================================================
+// TAFG Container Structures
+//================================================
+
+typedef struct {
+    FourCC   platformTag <comment="DX40=SM4.0, DX50=SM5.0, DX60=SM6.0, MT11=Metal">;
+    uint32   dataStart   <format=hex, comment="Byte offset to GXSH blob start">;
+    uint32   dataEnd     <format=hex, comment="Byte offset past GXSH blob end">;
+} TAFG_Entry <read=ReadTAFGEntry, bgcolor=cLtGreen>;
+
+string ReadTAFGEntry(TAFG_Entry &e) {
+    string s;
+    string tag;
+    SPrintf(tag, "%c%c%c%c",
+        e.platformTag & 0xFF, (e.platformTag >> 8) & 0xFF,
+        (e.platformTag >> 16) & 0xFF, (e.platformTag >> 24) & 0xFF);
+    SPrintf(s, "%s  [0x%X .. 0x%X]  %u bytes",
+        tag, e.dataStart, e.dataEnd, e.dataEnd - e.dataStart);
+    return s;
+}
+
+typedef struct {
+    FourCC   magic      <comment="Must be 'TAFG' (0x47464154)">;
+    uint32   version    <format=hex, comment="Expected 0x1000B">;
+    uint32   entryCount <comment="Platform entries (max 128)">;
+
+    Assert(magic == MAGIC_TAFG, "Bad TAFG magic");
+    Assert(entryCount <= 128, "TAFG entryCount > 128");
+
+    if (entryCount > 0)
+        TAFG_Entry entries[entryCount] <optimize=false>;
+} TAFG_Header <bgcolor=cGreen>;
+
+//================================================
+// GXSH Permutation Table Entry (8 bytes)
+//
+// Each entry addresses a permutation within the
+// compressed block storage:
+//   bits[0:13]  = byte offset within the first block
+//   bits[14:31] = starting block index
+// decompressedSize = 0 means deleted/empty permutation
+//================================================
+
+typedef struct {
+    uint32 packedOffset     <format=hex, comment="[13:0]=blockOffset, [31:14]=blockIndex">;
+    uint32 decompressedSize <comment="Decompressed blob size (0=deleted)">;
+} GXSH_PermEntry <read=ReadPermEntry, optimize=true>;
+
+string ReadPermEntry(GXSH_PermEntry &e) {
+    string s;
+    if (e.decompressedSize == 0) {
+        s = "(empty/deleted)";
+    } else {
+        local uint32 blkIdx = (e.packedOffset >> 14) & 0x3FFFF;
+        local uint32 blkOff = e.packedOffset & 0x3FFF;
+        SPrintf(s, "block[%u] + 0x%X, size=%u",
+            blkIdx, blkOff, e.decompressedSize);
+    }
+    return s;
+}
+
+//================================================
+// GXSH Block Offset Table Entry
+//
+// Each uint32 is an offset into the compressed data
+// section. Block i's compressed data spans:
+//   compressedData + blockOffsets[i]
+//   to compressedData + blockOffsets[i+1]
+//
+// Compressed size = blockOffsets[i+1] - blockOffsets[i]
+// If compressed size == 0x4000, block is stored raw.
+// Otherwise it is zlib 1.2.13 compressed.
+// Each block decompresses to at most 0x4000 (16KB).
+//================================================
+
+typedef uint32 GXSH_BlockOffset <format=hex, read=ReadBlockOff>;
+
+string ReadBlockOff(GXSH_BlockOffset &o) {
+    string s;
+    SPrintf(s, "0x%X", o);
+    return s;
+}
+
+//================================================
+// GXSH Header v12 (version 0x1000C, 28 bytes)
+//
+// Layout (as uint32 array indices):
+//   [0] magic
+//   [1] version
+//   [2] permutationTableOff
+//   [3] permutationCount
+//   [4] blockTableOff
+//   [5] blockCount (not used by extraction, derivable from offsets)
+//   [6] compressedDataOff
+//================================================
+
+typedef struct {
+    FourCC magic              <comment="Must be 'GXSH'">;
+    uint32 version            <format=hex, comment="0x1000C">;
+    uint32 permutationTableOff <format=hex, comment="Offset to permutation table (from GXSH start)">;
+    uint32 permutationCount   <comment="Number of shader permutations">;
+    uint32 blockTableOff      <format=hex, comment="Offset to block offset table">;
+    uint32 blockCount         <comment="Number of compressed data blocks (derivable from offsets)">;
+    uint32 compressedDataOff  <format=hex, comment="Offset to compressed data section">;
+} GXSH_Header_v12 <bgcolor=cLtRed>;
+
+//================================================
+// GXSH Header v13 (version 0x1000D, 32 bytes)
+//
+// Layout (as uint32 array indices):
+//   [0] magic
+//   [1] version
+//   [2] field2 (extra field, not used by extraction)
+//   [3] permutationTableOff
+//   [4] permutationCount
+//   [5] blockTableOff
+//   [6] field6 (unknown, not used by extraction)
+//   [7] compressedDataOff
+//================================================
+
+typedef struct {
+    FourCC magic              <comment="Must be 'GXSH'">;
+    uint32 version            <format=hex, comment="0x1000D">;
+    uint32 field2             <comment="Unknown extra field (v13 only)">;
+    uint32 permutationTableOff <format=hex, comment="Offset to permutation table (from GXSH start)">;
+    uint32 permutationCount   <comment="Number of shader permutations">;
+    uint32 blockTableOff      <format=hex, comment="Offset to block offset table">;
+    uint32 field6             <comment="Unknown (not read by extraction code)">;
+    uint32 compressedDataOff  <format=hex, comment="Offset to compressed data section">;
+} GXSH_Header_v13 <bgcolor=cLtRed>;
+
+//================================================
+// GXSH Permutation Table Entry v14 (24 bytes)
+//
+// Same packed blockIndex:blockOffset as v12/v13,
+// with an added 16-byte content hash per entry.
+// The extraction code indexes entries as
+// v5[8 * (3 * permIdx)] because
+// 3 * 8 = 24 bytes per entry.
+//
+// The packed offset is mathematically equivalent to
+// a flat byte offset when blocks are 0x4000 bytes:
+//   blockIndex = offset >> 14 = offset / 16384
+//   blockOffset = offset & 0x3FFF = offset % 16384
+//================================================
+
+typedef struct {
+    uint32 packedOffset       <format=hex, comment="[13:0]=blockOffset, [31:14]=blockIndex (same as v12)">;
+    uint32 decompressedSize   <comment="Decompressed blob size (0=deleted)">;
+    uchar  contentHash[16]    <format=hex, comment="Content hash (not read by extraction code)">;
+} GXSH_PermEntry_v14 <read=ReadPermEntry_v14, optimize=true>;
+
+string ReadPermEntry_v14(GXSH_PermEntry_v14 &e) {
+    string s;
+    if (e.decompressedSize == 0) {
+        s = "(empty/deleted)";
+    } else {
+        local uint32 blkIdx = (e.packedOffset >> 14) & 0x3FFFF;
+        local uint32 blkOff = e.packedOffset & 0x3FFF;
+        string hash;
+        SPrintf(hash, "%02X%02X%02X%02X",
+            e.contentHash[0], e.contentHash[1],
+            e.contentHash[2], e.contentHash[3]);
+        SPrintf(s, "block[%u]+0x%X, size=%u, %s...",
+            blkIdx, blkOff, e.decompressedSize, hash);
+    }
+    return s;
+}
+
+//================================================
+// GXSH Header v14 (version 0x1000E, 40 bytes)
+//
+// New in v14. Embeds the platform FourCC tag
+// directly in the header, eliminating the need for
+// a TAFG wrapper. Perm entries are 24 bytes with
+// content hashes.
+//
+// Layout (as uint32 array indices):
+//   [0] magic
+//   [1] version
+//   [2] platformTag (FourCC: DX50, DX60, MT11, etc.)
+//   [3] permutationTableOff
+//   [4] permutationCount
+//   [5] blockTableOff
+//   [6] blockCount
+//   [7] compressedDataOff
+//   [8] bytecodeFormat (low word=1, high word: 0=DXBC, 1=DXIL, 3=Metal AIR)
+//   [9] reserved (always 0)
+//================================================
+
+typedef struct {
+    FourCC magic              <comment="Must be 'GXSH'">;
+    uint32 version            <format=hex, comment="0x1000E">;
+    FourCC platformTag        <comment="DX50=SM5.0, DX60=SM6.0, MT11=Metal">;
+    uint32 permutationTableOff <format=hex, comment="Offset to permutation table (= 0x28)">;
+    uint32 permutationCount   <comment="Number of shader permutations">;
+    uint32 blockTableOff      <format=hex, comment="Offset to block offset table">;
+    uint32 blockCount         <comment="Number of compressed data blocks">;
+    uint32 compressedDataOff  <format=hex, comment="Offset to compressed data section">;
+    uint32 bytecodeFormat     <format=hex, comment="Low=1, High: 0=DXBC 1=DXIL 3=MetalAIR">;
+    uint32 reserved           <comment="Always 0">;
+} GXSH_Header_v14 <bgcolor=cLtRed>;
+
+//================================================
+// Compressed Block
+// Shown with computed size and raw/zlib status
+//================================================
+
+typedef struct (uint32 compSize) {
+    local uint32 cSize = compSize;
+    local int isRaw = (compSize == BLOCK_DECOMP_SIZE);
+    uchar data[compSize];
+} CompressedBlock <read=ReadCompBlock, optimize=false, bgcolor=cSilver>;
+
+string ReadCompBlock(CompressedBlock &b) {
+    string s;
+    if (b.isRaw)
+        SPrintf(s, "RAW %u bytes (uncompressed)", b.cSize);
+    else
+        SPrintf(s, "ZLIB %u bytes -> up to %u", b.cSize, BLOCK_DECOMP_SIZE);
+    return s;
+}
+
+//================================================
+// Decompressed Permutation Blob Structures
+//
+// These structures exist AFTER decompression of the zlib
+// blocks. They describe a single shader permutation's
+// compiled bytecode and resource binding metadata.
+//
+// To manually inspect: extract a permutation using the
+// packedOffset/decompressedSize from the permutation table,
+// decompress the relevant blocks, then apply these structs.
+//
+// DX12 extracts binding info (32 bytes) from the
+// pmDxShaderCode bitmask fields for root signature setup.
+//================================================
+
+typedef struct {
+    uint32 version          <comment="Must be 3 for DX (pmDxShaderCode::Version)">;
+    uint32 field1           <comment="Unknown (not read by the game)">;
+    uint64 cbvBindMask      <format=hex, comment="CBV register bitmask (b# slots)">;
+    uint64 srvBindMask_lo   <format=hex, comment="SRV bitmask low (t# 0-63)">;
+    uint64 srvBindMask_hi   <format=hex, comment="SRV bitmask high (t# 64-127)">;
+    uint64 uavBindMask      <format=hex, comment="UAV bitmask (u# slots)">;
+    uint64 samplerBindMask  <format=hex, comment="Sampler bitmask (s# slots)">;
+    uint32 bytecodeSize     <comment="DXBC/DXIL bytecode size in bytes">;
+    uint32 bytecodeRelOffset <comment="Bytecode at (&this_field + value), typically 4">;
+} pmDxShaderCode <bgcolor=cLtAqua>;  // 56 bytes
+
+typedef struct (uint32 totalSize, uint32 permIdx) {
+    local uint64 blobStart_ = FTell();
+    local uint32 blobTotalSize_ = totalSize;
+    local uint32 permIndex_ = permIdx;
+    local uint32 bcMagic_ = 0;
+    local uint32 bcSize_ = 0;
+    local uint32 codeOff_ = 0;
+    local uint32 shaderFlags_ = 0;
+
+    // Blob header (first 16 bytes)
+    uint32 flags               <format=hex, comment="Bit0=hasBindInfo, Bit1=codeOffsetAt+8">;
+    uint32 codeSize            <format=hex, comment="Size of code region (pmDxShaderCode + bytecode)">;
+
+    if ((flags & 2) != 0) {
+        uint32 codeOffset      <format=hex, comment="Offset from blob start to pmDxShaderCode">;
+        codeOff_ = codeOffset;
+    } else {
+        uint32 shaderFlags     <format=hex, comment="Shader compilation flags (DX12 PSO)">;
+        shaderFlags_ = shaderFlags;
+        if ((flags & 1) != 0)
+            codeOff_ = 36;
+        else
+            codeOff_ = 16;
+    }
+
+    uint32 field3              <comment="Always 0">;
+
+    if (codeSize != 0 && totalSize >= codeOff_ + 56) {
+        // Extended binding info between header and pmDxShaderCode
+        if ((flags & 1) != 0) {
+            if ((flags & 2) != 0) {
+                // v14 format: 24-byte binding info at +16
+                uint32 bindShaderFlags <format=hex, comment="Shader compilation flags (DX12 PSO)">;
+                uint32 bindField1      <comment="Binding info field 1">;
+                uint64 bindField2      <format=hex, comment="Binding info field 2">;
+                uint64 bindField3      <format=hex, comment="Binding info field 3">;
+                shaderFlags_ = bindShaderFlags;
+            } else {
+                // Old extended format: 20 bytes of binding data at +16
+                uchar bindingData[20] <bgcolor=cLtYellow, comment="Inline binding info (old format)">;
+            }
+        }
+
+        // pmDxShaderCode at computed offset
+        pmDxShaderCode code;
+        bcSize_ = code.bytecodeSize;
+
+        // Bytecode after relOffset displacement
+        if (code.bytecodeSize > 0 && code.bytecodeRelOffset >= 4) {
+            local int blobCodeGap_ = code.bytecodeRelOffset - 4;
+            if (blobCodeGap_ > 0)
+                uchar codeGap[blobCodeGap_] <bgcolor=cGray, comment="Gap before bytecode">;
+
+            // Capture bytecode magic before declaring the array
+            if (code.bytecodeSize >= 4)
+                bcMagic_ = ReadUInt(FTell());
+            uchar bytecode[code.bytecodeSize] <comment="DXBC/DXIL shader bytecode">;
+        }
+    }
+    else if (codeSize != 0 && totalSize > 16) {
+        // Small blob without full pmDxShaderCode
+        uchar codeData[totalSize - 16] <comment="Shader code data (small blob)">;
+    }
+
+    // Consume any remaining bytes in this permutation's range
+    local uint64 blobConsumed_ = FTell() - blobStart_;
+    if (blobConsumed_ < totalSize)
+        uchar blobPadding[totalSize - blobConsumed_] <bgcolor=cGray>;
+
+    FSeek(blobStart_ + totalSize);
+} DecompPermBlob <read=ReadDecompPermBlob, optimize=false>;
+
+string ReadDecompPermBlob(DecompPermBlob &b) {
+    string s;
+    if (b.codeSize == 0) {
+        SPrintf(s, "perm[%u]: empty", b.permIndex_);
+    } else {
+        local string bcType = "";
+        if (b.bcMagic_ == 0x43425844) bcType = "DXBC";
+        else if (b.bcMagic_ != 0)
+            SPrintf(bcType, "magic=0x%08X", b.bcMagic_);
+        SPrintf(s, "perm[%u]: %s flags=0x%X bc=%u bytes (hdr=%u)",
+            b.permIndex_, bcType, b.shaderFlags_, b.bcSize_, b.codeOff_);
+    }
+    return s;
+}
+
+//================================================
+// GXSH Blob Parser (parameterized struct)
+//
+// Parses one complete GXSH blob given its byte size.
+// Call with FSeek positioned at GXSH start.
+//================================================
+
+typedef struct (uint64 blobSize) {
+    local uint64 gxshBase = FTell();
+    local uint64 gxshEnd  = gxshBase + blobSize;
+
+    // Detect version
+    local uint32 ver = ReadUInt(gxshBase + 4);
+
+    // --- Header ---
+    local uint32 permTableOff, permCount, blkTableOff, compDataOff;
+    local int isV14 = 0;
+
+    if (ver == GXSH_VERSION_V12) {
+        GXSH_Header_v12 header;
+        permTableOff = header.permutationTableOff;
+        permCount    = header.permutationCount;
+        blkTableOff  = header.blockTableOff;
+        compDataOff  = header.compressedDataOff;
+    }
+    else if (ver == GXSH_VERSION_V13) {
+        GXSH_Header_v13 header;
+        permTableOff = header.permutationTableOff;
+        permCount    = header.permutationCount;
+        blkTableOff  = header.blockTableOff;
+        compDataOff  = header.compressedDataOff;
+    }
+    else if (ver == GXSH_VERSION_V14) {
+        GXSH_Header_v14 header;
+        permTableOff = header.permutationTableOff;
+        permCount    = header.permutationCount;
+        blkTableOff  = header.blockTableOff;
+        compDataOff  = header.compressedDataOff;
+        isV14 = 1;
+
+        // Print platform tag
+        local uint32 ptag14 = header.platformTag;
+        Printf("  Platform: '%c%c%c%c'\n",
+            ptag14 & 0xFF, (ptag14 >> 8) & 0xFF,
+            (ptag14 >> 16) & 0xFF, (ptag14 >> 24) & 0xFF);
+    }
+    else {
+        Warning("Unknown GXSH version 0x%X at 0x%LX", ver, gxshBase);
+        local uint32 remaining = blobSize > 8 ? blobSize - 8 : 0;
+        if (remaining > 0) {
+            FSeek(gxshBase + 8);
+            uchar unknownData[remaining] <bgcolor=cRed, comment="Unknown GXSH version">;
+        }
+        // Skip further parsing for this blob
+        permCount = 0;
+        blkTableOff = 0;
+        compDataOff = 0;
+    }
+
+    // --- Permutation Table ---
+    if (permCount > 0 && permTableOff > 0) {
+        FSeek(gxshBase + permTableOff);
+
+        if (isV14) {
+            // v14: 24-byte entries with content hashes
+            struct {
+                GXSH_PermEntry_v14 entry[permCount] <bgcolor=cLtBlue>;
+            } permutationTable;
+
+            // Print summary
+            local uint32 validPerms = 0;
+            local uint32 pi;
+            for (pi = 0; pi < permCount; pi++) {
+                if (permutationTable.entry[pi].decompressedSize > 0)
+                    validPerms++;
+            }
+            Printf("  Permutations: %u total, %u valid, %u empty (24-byte entries with hash)\n",
+                permCount, validPerms, permCount - validPerms);
+        }
+        else {
+            // v12/v13: 8-byte entries with packed offset
+            struct {
+                GXSH_PermEntry entry[permCount] <bgcolor=cLtBlue>;
+            } permutationTable;
+
+            // Print summary
+            local uint32 validPerms = 0;
+            local uint32 pi;
+            for (pi = 0; pi < permCount; pi++) {
+                if (permutationTable.entry[pi].decompressedSize > 0)
+                    validPerms++;
+            }
+            Printf("  Permutations: %u total, %u valid, %u empty\n",
+                permCount, validPerms, permCount - validPerms);
+        }
+
+        // All versions: sentinel uint32 between perm table and block table
+        // Equals total decompressed stream size (last perm's offset + size)
+        if (blkTableOff > 0 && FTell() < gxshBase + blkTableOff) {
+            uint32 totalDecompSize <format=hex, bgcolor=cLtPurple,
+                comment="Total decompressed stream size (sentinel)">;
+            Printf("  Total decompressed stream: %u bytes (0x%X)\n",
+                totalDecompSize, totalDecompSize);
+        }
+    }
+
+    // --- Block Offset Table ---
+    // The table spans from blockTableOff to compressedDataOff.
+    // Each entry is 4 bytes. Last entry is a sentinel used to
+    // compute the final block's compressed size.
+    local uint32 blockEntryCount = 0;
+    if (compDataOff > blkTableOff && blkTableOff > 0) {
+        blockEntryCount = (compDataOff - blkTableOff) / 4;
+    }
+
+    if (blockEntryCount > 0) {
+        FSeek(gxshBase + blkTableOff);
+        struct {
+            GXSH_BlockOffset offset[blockEntryCount] <bgcolor=cLtYellow>;
+        } blockTable;
+
+        Printf("  Block table: %u entries (%u data blocks + sentinel)\n",
+            blockEntryCount, blockEntryCount > 0 ? blockEntryCount - 1 : 0);
+    }
+
+    // --- Compressed Data Blocks ---
+    // Parse individual compressed blocks using the offset table.
+    // Block i spans: compData + offsets[i] .. compData + offsets[i+1]
+    // The sentinel (last entry) marks the end of the last block.
+    local uint32 numBlocks = blockEntryCount > 1 ? blockEntryCount - 1 : 0;
+    local uint64 compDataStart = gxshBase + compDataOff;
+
+    if (numBlocks > 0 && compDataOff > 0) {
+        FSeek(compDataStart);
+        struct {
+            local uint32 bi;
+            local uint32 blkStart;
+            local uint32 blkEnd;
+            local uint32 blkSize;
+            for (bi = 0; bi < numBlocks; bi++) {
+                blkStart = blockTable.offset[bi];
+                blkEnd   = blockTable.offset[bi + 1];
+                blkSize  = blkEnd - blkStart;
+
+                if (blkSize > 0 && blkSize <= BLOCK_DECOMP_SIZE) {
+                    FSeek(compDataStart + blkStart);
+                    CompressedBlock block(blkSize);
+                }
+            }
+        } compressedBlocks <comment="Zlib-compressed shader bytecode blocks">;
+
+        Printf("  Compressed blocks: %u (each decompresses to up to 16KB)\n", numBlocks);
+    }
+
+    // --- Trailing Data ---
+    // Any data between the last block and the blob end
+    local uint64 currentPos = FTell();
+    if (currentPos < gxshEnd) {
+        local uint32 trailSize = gxshEnd - currentPos;
+        if (trailSize > 0) {
+            uchar trailingData[trailSize] <bgcolor=cLtGray, comment="Trailing data">;
+        }
+    }
+
+    // Seek to blob end for proper struct sizing
+    FSeek(gxshEnd);
+
+} GXSH_Blob <read=ReadGXSHBlob>;
+
+string ReadGXSHBlob(GXSH_Blob &b) {
+    string s;
+    local uint32 ver = ReadUInt(b.gxshBase + 4);
+    if (ver == GXSH_VERSION_V12)
+        SPrintf(s, "GXSH v12 (0x1000C)");
+    else if (ver == GXSH_VERSION_V13)
+        SPrintf(s, "GXSH v13 (0x1000D)");
+    else if (ver == GXSH_VERSION_V14) {
+        local uint32 pt = ReadUInt(b.gxshBase + 8);
+        local uint32 bcf = ReadUInt(b.gxshBase + 32);
+        local string bcfName;
+        local uint32 bcfHi = bcf >> 16;
+        if (bcfHi == 0)      bcfName = "DXBC";
+        else if (bcfHi == 1) bcfName = "DXIL";
+        else if (bcfHi == 3) bcfName = "MetalAIR";
+        else SPrintf(bcfName, "0x%X", bcf);
+        SPrintf(s, "GXSH v14 (0x1000E) [%c%c%c%c] %s",
+            pt & 0xFF, (pt >> 8) & 0xFF,
+            (pt >> 16) & 0xFF, (pt >> 24) & 0xFF, bcfName);
+    }
+    else
+        SPrintf(s, "GXSH v? (0x%X)", ver);
+    return s;
+}
+
+//================================================
+// Main Parsing Logic
+//================================================
+
+local uint32 fileMagic = ReadUInt(0);
+
+if (fileMagic == MAGIC_TAFG) {
+    //--------------------------------------------
+    // TAFG Container File
+    //--------------------------------------------
+    Printf("=== BLS File: TAFG Container ===\n");
+
+    TAFG_Header tafgHeader <open=true>;
+
+    Printf("TAFG version: 0x%X, platforms: %u\n",
+        tafgHeader.version, tafgHeader.entryCount);
+
+    local int ei;
+    local uint64 entryStart;
+    local uint64 entryEnd;
+    local uint64 entrySize;
+    local uint32 ptag;
+    local uint32 innerMagic;
+    for (ei = 0; ei < tafgHeader.entryCount; ei++) {
+        entryStart = tafgHeader.entries[ei].dataStart;
+        entryEnd   = tafgHeader.entries[ei].dataEnd;
+        entrySize  = entryEnd - entryStart;
+
+        // Print platform tag
+        ptag = tafgHeader.entries[ei].platformTag;
+        Printf("\n--- Platform '%c%c%c%c' at [0x%X..0x%X] (%u bytes) ---\n",
+            ptag & 0xFF, (ptag >> 8) & 0xFF,
+            (ptag >> 16) & 0xFF, (ptag >> 24) & 0xFF,
+            entryStart, entryEnd, entrySize);
+
+        if (entrySize > 8) {
+            innerMagic = ReadUInt(entryStart);
+            if (innerMagic == MAGIC_GXSH || innerMagic == MAGIC_GXSD) {
+                FSeek(entryStart);
+                GXSH_Blob gxshBlob(entrySize) <open=false>;
+            } else {
+                Printf("  WARNING: Expected GXSH magic, got 0x%08X\n", innerMagic);
+                FSeek(entryStart);
+                uchar rawPlatformData[entrySize] <bgcolor=cRed, comment="Non-GXSH platform data">;
+            }
+        } else if (entrySize > 0) {
+            Printf("  WARNING: Platform blob too small (%u bytes)\n", entrySize);
+            FSeek(entryStart);
+            uchar tinyPlatformData[entrySize] <bgcolor=cRed>;
+        }
+    }
+}
+else if (fileMagic == MAGIC_GXSH || fileMagic == MAGIC_GXSD) {
+    //--------------------------------------------
+    // Bare GXSH/GXSD File (no TAFG wrapper)
+    //--------------------------------------------
+    Printf("=== BLS File: Bare %s ===\n",
+        fileMagic == MAGIC_GXSD ? "GXSD (DXIL)" : "GXSH");
+
+    GXSH_Blob gxshBlob(FileSize()) <open=true>;
+}
+else {
+    //--------------------------------------------
+    // Unknown format
+    //--------------------------------------------
+    Warning("Unknown BLS file magic: 0x%08X '%c%c%c%c'",
+        fileMagic,
+        fileMagic & 0xFF, (fileMagic >> 8) & 0xFF,
+        (fileMagic >> 16) & 0xFF, (fileMagic >> 24) & 0xFF);
+    Printf("ERROR: Not a BLS file (magic: 0x%08X)\n", fileMagic);
+}
+
+//================================================
+// Zlib Decompression + Permutation Parsing
+//
+// Decompresses zlib blocks via zlib1.dll and prints
+// parsed permutation blobs to the Output pane.
+//================================================
+
+if (DECOMPRESS_PERMS) {
+    // Determine which GXSH blob to decompress
+    local uint64 dcGxshBase = 0;
+    local uint64 dcGxshSize = FileSize();
+
+    if (fileMagic == MAGIC_TAFG) {
+        local uint32 dcTafgCount = ReadUInt(8);
+        if (TAFG_PLATFORM_INDEX < dcTafgCount) {
+            local uint32 dcTafgOff = 12 + TAFG_PLATFORM_INDEX * 12;
+            dcGxshBase = ReadUInt(dcTafgOff + 4);
+            dcGxshSize = ReadUInt(dcTafgOff + 8) - dcGxshBase;
+        } else {
+            Printf("\nERROR: TAFG_PLATFORM_INDEX %d >= entry count %d\n",
+                TAFG_PLATFORM_INDEX, dcTafgCount);
+        }
+    }
+
+    // Read GXSH header fields
+    local uint32 dcVer = ReadUInt(dcGxshBase + 4);
+    local uint32 dcPermOff = 0;
+    local uint32 dcPermCount = 0;
+    local uint32 dcBlkTableOff = 0;
+    local uint32 dcCompDataOff = 0;
+    local int dcPermEntrySize = 8;
+
+    if (dcVer == GXSH_VERSION_V12) {
+        dcPermOff     = ReadUInt(dcGxshBase + 8);
+        dcPermCount   = ReadUInt(dcGxshBase + 12);
+        dcBlkTableOff = ReadUInt(dcGxshBase + 16);
+        dcCompDataOff = ReadUInt(dcGxshBase + 24);
+    } else if (dcVer == GXSH_VERSION_V13) {
+        dcPermOff     = ReadUInt(dcGxshBase + 12);
+        dcPermCount   = ReadUInt(dcGxshBase + 16);
+        dcBlkTableOff = ReadUInt(dcGxshBase + 20);
+        dcCompDataOff = ReadUInt(dcGxshBase + 28);
+    } else if (dcVer == GXSH_VERSION_V14) {
+        dcPermOff     = ReadUInt(dcGxshBase + 12);
+        dcPermCount   = ReadUInt(dcGxshBase + 16);
+        dcBlkTableOff = ReadUInt(dcGxshBase + 20);
+        dcCompDataOff = ReadUInt(dcGxshBase + 28);
+        dcPermEntrySize = 24;
+    } else {
+        Printf("\nERROR: Cannot decompress GXSH version 0x%X\n", dcVer);
+        dcPermCount = 0;
+    }
+
+    if (dcPermCount > 0) {
+        local uint32 dcBlkEntryCount = (dcCompDataOff - dcBlkTableOff) / 4;
+        local uint32 dcNumBlocks = dcBlkEntryCount > 1 ? dcBlkEntryCount - 1 : 0;
+        local uint64 dcCompBase = dcGxshBase + dcCompDataOff;
+
+        Printf("\n=== Decompressing Permutations (zlib1.dll) ===\n");
+        Printf("  GXSH at 0x%LX, version 0x%X, %u perms, %u blocks\n",
+            dcGxshBase, dcVer, dcPermCount, dcNumBlocks);
+
+        // Working buffers (16KB each for blocks, 64KB for perm assembly)
+        local uchar dcBlock1[0x4000];
+        local uchar dcBlock2[0x4000];
+        local uchar dcCompBuf[0x4000];
+        local uchar dcPermBuf[0x10000];
+
+        // Block cache: avoid re-decompressing the same block
+        local int dcCachedBlock = -1;
+        local int dcDestLen;
+        local int dcZResult;
+
+        // Loop variables (must be declared outside the for loop)
+        local uint32 dcParsed = 0;
+        local uint32 dcPI;
+        local uint64 dcPermEntryPos;
+        local uint32 dcPacked;
+        local uint32 dcDecompSz;
+        local uint32 dcBlkIdx;
+        local uint32 dcInBlkOff;
+        local uint64 dcStreamOff;
+        local uint32 dcCompStart;
+        local uint32 dcCompEnd;
+        local uint32 dcCompSz;
+        local uint32 dcFirstPart;
+        local uint32 dcSecondPart;
+        local uint32 dcBlkIdx2;
+        local uint32 dcComp2Start;
+        local uint32 dcComp2End;
+        local uint32 dcComp2Sz;
+        local int dcReadIdx;
+
+        // Parsed perm fields
+        local uint32 dcF0;
+        local uint32 dcBlobSz;
+        local uint32 dcSFlags;
+        local uint32 dcF3;
+        local uint32 dcCodeVer;
+        local uint64 dcCbv;
+        local uint64 dcSrvLo;
+        local uint64 dcSrvHi;
+        local uint64 dcUav;
+        local uint64 dcSampler;
+        local uint32 dcBcSize;
+        local uint32 dcBcRel;
+        local uint32 dcBcMagic;
+        local uint32 dcBcOff;
+        local string dcBcType;
+        local uint32 dcCodeOffCalc;
+
+        for (dcPI = 0; dcPI < dcPermCount; dcPI++) {
+            if (MAX_PERMS_TO_PARSE > 0 && dcParsed >= MAX_PERMS_TO_PARSE)
+                break;
+
+            // Read permutation entry
+            dcPermEntryPos = dcGxshBase + dcPermOff + (uint64)dcPI * dcPermEntrySize;
+            dcPacked   = ReadUInt(dcPermEntryPos);
+            dcDecompSz = ReadUInt(dcPermEntryPos + 4);
+
+            if (dcDecompSz == 0)
+                continue;
+
+            dcBlkIdx   = (dcPacked >> 14) & 0x3FFFF;
+            dcInBlkOff = dcPacked & 0x3FFF;
+            dcStreamOff = (uint64)dcBlkIdx * BLOCK_DECOMP_SIZE + dcInBlkOff;
+
+            Printf("\n  perm[%u] (%u bytes at stream 0x%LX):\n",
+                dcPI, dcDecompSz, dcStreamOff);
+
+            if (dcBlkIdx >= dcNumBlocks) {
+                Printf("    ERROR: block %u >= numBlocks %u\n", dcBlkIdx, dcNumBlocks);
+                continue;
+            }
+
+            // Decompress first block (cached)
+            if (dcCachedBlock != dcBlkIdx) {
+                dcCompStart = ReadUInt(dcGxshBase + dcBlkTableOff + dcBlkIdx * 4);
+                dcCompEnd   = ReadUInt(dcGxshBase + dcBlkTableOff + (dcBlkIdx + 1) * 4);
+                dcCompSz    = dcCompEnd - dcCompStart;
+
+                if (dcCompSz == 0 || dcCompSz > BLOCK_DECOMP_SIZE) {
+                    Printf("    ERROR: block %u bad compressed size %u\n", dcBlkIdx, dcCompSz);
+                    continue;
+                }
+
+                // Read compressed bytes into local buffer
+                for (dcReadIdx = 0; dcReadIdx < dcCompSz; dcReadIdx++)
+                    dcCompBuf[dcReadIdx] = ReadUByte(dcCompBase + dcCompStart + dcReadIdx);
+
+                if (dcCompSz == BLOCK_DECOMP_SIZE) {
+                    Memcpy(dcBlock1, dcCompBuf, dcCompSz);
+                } else {
+                    dcDestLen = BLOCK_DECOMP_SIZE;
+                    dcZResult = uncompress(dcBlock1, dcDestLen, dcCompBuf, dcCompSz);
+                    if (dcZResult != 0) {
+                        Printf("    ERROR: zlib block %u failed (code %d)\n", dcBlkIdx, dcZResult);
+                        continue;
+                    }
+                }
+                dcCachedBlock = dcBlkIdx;
+            }
+
+            // Extract perm data (handle cross-block boundary)
+            if (dcInBlkOff + dcDecompSz <= BLOCK_DECOMP_SIZE) {
+                // Single block
+                Memcpy(dcPermBuf, dcBlock1, dcDecompSz, 0, dcInBlkOff);
+            } else {
+                // Cross-block: spans block N and N+1
+                dcFirstPart  = BLOCK_DECOMP_SIZE - dcInBlkOff;
+                dcSecondPart = dcDecompSz - dcFirstPart;
+                Memcpy(dcPermBuf, dcBlock1, dcFirstPart, 0, dcInBlkOff);
+
+                dcBlkIdx2 = dcBlkIdx + 1;
+                if (dcBlkIdx2 >= dcNumBlocks) {
+                    Printf("    ERROR: cross-block, block %u out of range\n", dcBlkIdx2);
+                    continue;
+                }
+
+                dcComp2Start = ReadUInt(dcGxshBase + dcBlkTableOff + dcBlkIdx2 * 4);
+                dcComp2End   = ReadUInt(dcGxshBase + dcBlkTableOff + (dcBlkIdx2 + 1) * 4);
+                dcComp2Sz    = dcComp2End - dcComp2Start;
+
+                if (dcComp2Sz == 0 || dcComp2Sz > BLOCK_DECOMP_SIZE) {
+                    Printf("    ERROR: block %u bad compressed size %u\n", dcBlkIdx2, dcComp2Sz);
+                    continue;
+                }
+
+                for (dcReadIdx = 0; dcReadIdx < dcComp2Sz; dcReadIdx++)
+                    dcCompBuf[dcReadIdx] = ReadUByte(dcCompBase + dcComp2Start + dcReadIdx);
+
+                if (dcComp2Sz == BLOCK_DECOMP_SIZE) {
+                    Memcpy(dcBlock2, dcCompBuf, dcComp2Sz);
+                } else {
+                    dcDestLen = BLOCK_DECOMP_SIZE;
+                    dcZResult = uncompress(dcBlock2, dcDestLen, dcCompBuf, dcComp2Sz);
+                    if (dcZResult != 0) {
+                        Printf("    ERROR: zlib block %u failed (code %d)\n", dcBlkIdx2, dcZResult);
+                        continue;
+                    }
+                }
+
+                Memcpy(dcPermBuf, dcBlock2, dcSecondPart, dcFirstPart, 0);
+                Printf("    (cross-block: %u from blk %u + %u from blk %u)\n",
+                    dcFirstPart, dcBlkIdx, dcSecondPart, dcBlkIdx2);
+            }
+
+            // Parse blob header
+            if (dcDecompSz < 16) {
+                Printf("    (too small: %u bytes)\n", dcDecompSz);
+                dcParsed++;
+                continue;
+            }
+
+            dcF0     = BufU32(dcPermBuf, 0);   // flags
+            dcBlobSz = BufU32(dcPermBuf, 4);   // codeSize
+            dcSFlags = BufU32(dcPermBuf, 8);   // codeOffset or shaderFlags
+            dcF3     = BufU32(dcPermBuf, 12);
+
+            // Determine code offset from flags
+            if ((dcF0 & 2) != 0) {
+                dcCodeOffCalc = dcSFlags;  // +8 is codeOffset
+                Printf("    header: flags=0x%X codeSize=0x%X codeOff=%u field3=0x%X\n",
+                    dcF0, dcBlobSz, dcCodeOffCalc, dcF3);
+            } else {
+                if ((dcF0 & 1) != 0)
+                    dcCodeOffCalc = 36;
+                else
+                    dcCodeOffCalc = 16;
+                Printf("    header: flags=0x%X codeSize=0x%X shaderFlags=0x%X field3=0x%X (codeOff=%u)\n",
+                    dcF0, dcBlobSz, dcSFlags, dcF3, dcCodeOffCalc);
+            }
+
+            if (dcBlobSz == 0) {
+                Printf("    (empty blob)\n");
+                dcParsed++;
+                continue;
+            }
+
+            // Parse pmDxShaderCode (56 bytes at computed offset)
+            if (dcDecompSz >= dcCodeOffCalc + 56) {
+                dcCodeVer = BufU32(dcPermBuf, dcCodeOffCalc);
+                dcCbv     = BufU64(dcPermBuf, dcCodeOffCalc + 8);
+                dcSrvLo   = BufU64(dcPermBuf, dcCodeOffCalc + 16);
+                dcSrvHi   = BufU64(dcPermBuf, dcCodeOffCalc + 24);
+                dcUav     = BufU64(dcPermBuf, dcCodeOffCalc + 32);
+                dcSampler = BufU64(dcPermBuf, dcCodeOffCalc + 40);
+                dcBcSize  = BufU32(dcPermBuf, dcCodeOffCalc + 48);
+                dcBcRel   = BufU32(dcPermBuf, dcCodeOffCalc + 52);
+
+                Printf("    pmDxShaderCode (v%u) at +%u:\n", dcCodeVer, dcCodeOffCalc);
+                Printf("      CBV:     0x%016LX\n", dcCbv);
+                Printf("      SRV lo:  0x%016LX\n", dcSrvLo);
+                Printf("      SRV hi:  0x%016LX\n", dcSrvHi);
+                Printf("      UAV:     0x%016LX\n", dcUav);
+                Printf("      Sampler: 0x%016LX\n", dcSampler);
+
+                // Bytecode type detection
+                dcBcOff = dcCodeOffCalc + 52 + dcBcRel;
+                if (dcBcSize >= 4 && dcBcOff + 4 <= dcDecompSz) {
+                    dcBcMagic = BufU32(dcPermBuf, dcBcOff);
+                    if (dcBcMagic == 0x43425844)
+                        dcBcType = "DXBC";
+                    else
+                        SPrintf(dcBcType, "0x%08X", dcBcMagic);
+                    Printf("      Bytecode: %u bytes (%s), relOffset=%u\n",
+                        dcBcSize, dcBcType, dcBcRel);
+                } else {
+                    Printf("      Bytecode: %u bytes, relOffset=%u\n", dcBcSize, dcBcRel);
+                }
+            } else {
+                Printf("    (small blob, %u code bytes)\n", dcDecompSz - 16);
+            }
+
+            dcParsed++;
+        }
+
+        Printf("\n  Parsed %u / %u permutation blobs\n", dcParsed, dcPermCount);
+    }
+}
+
+Printf("\n=== Done ===\n");

@@ -1,0 +1,136 @@
+//------------------------------------------------
+//      File: Anim
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the animation file from Diablo IV
+//  Category: DiabloIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+typedef struct (int size)
+{
+    byte gap[size]<bgcolor=cBlack, hidden=true>;
+}Gap<hidden=true>;
+
+struct DeadBeef
+{
+    int magic;      // -559038737
+    int magic2;     // 454043394 - app
+    Gap g(4);
+    int hash;       // name hash ?
+};
+
+typedef struct
+{
+    typedef struct
+    {
+        uint Unk0x1 : 1;
+        uint Unk0x2 : 1;
+        uint Unk0x4 : 1;
+        uint Unk0x8 : 1;
+    } AnimFlags <size = 1>;
+        
+    DeadBeef beef;
+    int snoID;
+    Gap g(4);
+    int permutationCount;
+    byte unk2a;         // 0, 2
+    AnimFlags flags;
+    Gap g(2);
+    int unk3;           // 0, 2
+    int unk4;           // 0, 1, 2
+    int unk5;           // 0, 1, 2
+    int unk6;           // 0, 1
+    int unk7;           // 0, 1
+    int appearanceSnoID;    // snoID of the first model that uses this anim
+    OFFSET4 pernumationOffs;    // Here
+    OFFSET4 offsB;              // Here
+    int unk8;           // 0, 1
+}Header<bgcolor=cYellow>;
+
+typedef struct
+{
+    int keyframe;
+    VECTOR3 contactOffset;
+}ContactKeyframe<bgcolor=cLtYellow>;
+
+typedef struct
+{
+    int permutationID;
+    int flags;
+    float framerate;
+    float compression;      // 0, 1, 2, 2.94, 2.98, 3, 4, 5
+    float unk0;             // 0.0 .. 1.0
+    float unk1;             // -1.0 .. 1.0, 20.0
+    int unk2;               // 0, 1
+    int weight;             // 0 .. 100
+    float unk3;             // 0.2 .. 3.7, 5.5, 8.0
+    float unk4;             // 0.0 .. 1.0
+    int trackCount;
+    Gap g(4);
+    OFFSET4 animDataOffs;   // Payload
+    int permutationNameHash;
+    int unk5;               // 0, 2
+    ContactKeyframe contactKeyframes[4];
+    OFFSET4 offsA;          // Here
+    OFFSET4 offsB;          // Here
+    float unk7;             // 0.8, 1.0, 3.0, 10.0
+    int unks2[8];
+    float unks3[6];
+    int unk7a;
+    int unk7b;
+    int unk7c;
+    int unk7d;
+    int frameCount;
+    int unk7e;
+    int effectGroupSnoID;
+    int unk8;               // 0, 1
+    int unk9;               // 0, 1
+    float one0;             // Always 1.0
+    int unk11;              // 0 .. 752
+    OFFSET4 offsC;          // size 24
+    float unk12;
+    float unk13;
+    int unkStringHash0;
+    int unkStringHash1;
+    float unk14;
+    float unk15;
+    float unk16;
+    float unk17;
+    float unk18;
+    float unk19;
+    float unk20;
+    Gap g(4);
+    float one1;             // Always 1.0
+    Gap g(12);
+
+    // read data
+    local long save = FTell();
+    if (offsA.size > 0)
+    {
+        // indices in bones[], used for mapping bones to vertex boneIndex
+        FSeek(offsA.offset + 16);
+        int unkA[offsA.size / 4];
+    }
+    FSeek(save);
+
+}AnimPermutation<bgcolor=cLtPurple>;
+
+// READ //
+
+Header header;
+
+if (header.pernumationOffs.size > 0)
+{
+    FSeek(header.pernumationOffs.offset + 16);
+    AnimPermutation permutation[header.pernumationOffs.size / 352]<optimize=false>;
+}
+
+if (header.offsB.size > 0)
+{
+    // Permutation lookup ?
+    // Same count as permutations
+    FSeek(header.offsB.offset + 16);
+    byte permutationLookup[header.offsB.size];
+}

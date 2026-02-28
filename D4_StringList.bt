@@ -1,0 +1,59 @@
+//------------------------------------------------
+//      File: Stl
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the string list file from Diablo IV
+//  Category: DiabloIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct DeadBeef
+{
+    int magic;      // -559038737
+    int magic2;     // 454043394 - app
+    Gap g(4);
+    int hash;       // name hash ?
+};
+
+struct Header
+{
+    DeadBeef beef;
+    int snoID;
+    Gap g(4);
+    OFFSET4 dataOffs;
+    int unk0;
+    int unk1;
+    //int unks[20];
+};
+
+struct Offsets
+{
+    OFFSET4 offsA;
+    OFFSET4 offsB;
+    int hashUnk;
+    int unk2;
+
+    local long save = FTell();
+    if (offsA.size > 0)
+    {
+        FSeek(offsA.offset + 16);
+        STRINGc str(offsA.size);
+    }
+
+    if (offsB.size > 0)
+    {
+        FSeek(offsB.offset + 16);
+        STRINGc str(offsB.size);
+    }
+
+    FSeek(save);
+};
+
+Header header<bgcolor=cLtGreen>;
+
+if (header.dataOffs.size > 0)
+{
+    FSeek(header.dataOffs.offset + 16);
+    Offsets offsets[header.dataOffs.size / 40]<optimize=false>;
+}

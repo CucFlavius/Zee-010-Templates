@@ -1,0 +1,198 @@
+//------------------------------------------------
+//      File: Actor
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the actor file from Diablo IV
+//  Category: DiabloIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct DeadBeef
+{
+    int magic;      // -559038737
+    int magic2;     // 454043394 - app
+    Gap g(4);
+    int hash;       // name hash ?
+};
+
+enum<uint> ActorType
+{
+	Invalid = 0,
+	Monster = 1,
+	Gizmo = 2,
+	ClientEffect = 3,
+	ServerProp = 4,
+	Environment = 5,
+	Critter = 6,
+	Player = 7,
+	Item = 8,
+	AxeSymbol = 9,
+	Projectile = 10,
+	CustomBrain = 11,
+    Foliage = 12,
+    Volume = 13,
+    Mount = 14,
+};
+
+struct UnkDataC
+{
+    int unk0;
+    int unk1;
+    int unk2;
+    float unkf0;
+    float unkf1;
+    float unkf2;
+    float unkf3;
+};
+
+typedef struct
+{
+    DeadBeef beef;
+    int snoID;
+    Gap g(4);
+    ActorType actorType;
+    int flags;
+    int appearanceSnoID;
+    Gap g(4);
+    OFFSET4 appearanceOffs;
+    OFFSET4 animSetOffs;
+    int animTreeSnoID;
+    Gap g(4);
+    OFFSET4 offsA;
+    OFFSET4 offsB;
+    int unk5;                   // 0, 1, 2, 3 .. 14
+    int hashUnk0;
+    int unk7;                   // -1, 0, 1, 2, 4, 5, 6 .. 43
+    float unk8;                 // 0.2 .. 100.0
+    float unk9;
+    int unk10;                  // 0, 1
+    int unk11;                  // 0, 1
+    float unkfs[11];
+    SPHERE boundingSphere;
+    BOUNDINGBOX boundingBox;    // center + extents (not min max)
+    float unkfs1[6];
+    int unks1a[4];              // 0, 1
+    Gap g(4);
+    int unks1b[4];              // 0, 1
+    int unk12;                  // 0, 2 ,3
+    int unks1c[8];              // 0, 1
+    float unkfs2[7];
+    int unk13;                  // 0, 1
+    int unk14;                  // 0, 1, 2 .. 12
+    Gap g(12);
+    int unk15;                  // 0, 744, 736, .. 2688
+    int unk16;                  // 0, 32, 64, .. 864
+    OFFSET4 offsC;
+    OFFSET4 offsD;
+    int unk17;                  // 1, 2, 4, 7, .. 105
+    int unk18;                  // 0, 1, 2
+    OFFSET4 offsE;
+    int unk19;                  // 0, 1
+    Gap g(4);
+    OFFSET4 offsF;
+    Gap g(16);
+    OFFSET4 offsG;
+    OFFSET4 offsH;             // size 0, 680
+    OFFSET4 offsI;
+    OFFSET4 effectGroupOffs;
+    OFFSET4 offsJ;             // size 0, 116
+    OFFSET4 offsK;             // size 0, 132
+    OFFSET4 offsL;             // size 0, 20
+    OFFSET4 offsM;
+    OFFSET4 offsN;
+    OFFSET4 offsO;
+    OFFSET4 offsP;
+    OFFSET4 offsQ;
+    OFFSET4 offsR;
+    OFFSET4 offsS;
+    OFFSET4 offsT;
+    OFFSET4 offsU;              // size 0, 4
+    Gap g(8);
+    int markerSetSnoID;
+    int hashUnk1;
+    int unused<hidden=true>;    // -1
+}Header<bgcolor=cYellow>;
+
+Header header;
+
+if (header.appearanceOffs.size > 0)
+{
+    // Armor appearances for character (possibly just for grabbing extra meshes)
+    FSeek(header.appearanceOffs.offset + 16);
+    int appearanceSnoIDs[header.appearanceOffs.size / 4]<bgcolor=cGreen>;   
+}
+
+if (header.animSetOffs.size > 0)
+{
+    FSeek(header.animSetOffs.offset + 16);
+    int animSetSnoIDs[header.animSetOffs.size / 4]<bgcolor=cRed>;
+}
+
+if (header.offsA.size > 0)
+{
+    // Some struct
+    FSeek(header.offsA.offset + 16);
+    int unkA[header.offsA.size / 4]<bgcolor=cPurple>;
+}
+
+if (header.offsC.size > 0)
+{
+    // Some struct
+    FSeek(header.offsC.offset + 16);
+    UnkDataC unkC[header.offsC.size / 28]<bgcolor=cYellow>;
+}
+
+if (header.offsD.size > 0)
+{
+    // Some struct
+    FSeek(header.offsD.offset + 16);
+    int unkD[header.offsD.size / 4]<bgcolor=cLtGreen>;
+}
+
+// Seems to be monster data
+if (header.offsF.size > 0)
+{
+    // Some struct
+    // unkF[23] =  monsterTypeSnoID
+    // unkF[39] = unkSnoID
+    // unkF[112] = powerSnoID
+    // unkF[124] = also powerSnoID
+    // unkF[134] = observerSnoID;
+    FSeek(header.offsF.offset + 16);
+    int unkF[header.offsF.size / 4]<bgcolor=cLtBlue>;
+}
+
+if (header.effectGroupOffs.size > 0)
+{
+    FSeek(header.effectGroupOffs.offset + 16);
+    int effectGroupSnoIDs[header.effectGroupOffs.size / 4]<bgcolor=cLtPurple>;
+}
+
+if (header.offsG.size > 0)
+{
+    // Some struct
+    FSeek(header.offsG.offset + 16);
+    int unkG[header.offsG.size / 4]<bgcolor=cBlue>;
+}
+
+if (header.offsI.size > 0)
+{
+    // Some struct
+    // unkI[0] = soundTableSnoID;
+    FSeek(header.offsI.offset + 16);
+    int unkI[header.offsI.size / 4]<bgcolor=cYellow>;
+}
+
+if (header.offsM.size > 0)
+{
+    FSeek(header.offsM.offset + 16);
+    int unkM[header.offsM.size / 4]<bgcolor=cLtRed>;
+}
+
+if (header.offsN.size > 0)
+{
+    // Some struct
+    FSeek(header.offsN.offset + 16);
+    int unkN[header.offsN.size / 4]<bgcolor=cLtYellow>;
+}

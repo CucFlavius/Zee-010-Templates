@@ -1,0 +1,452 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+#include "Lib/Common.bt"
+
+// ambient_camel.app
+
+struct Header
+{
+    int snoID;
+    int unk0;
+    int unk1;
+    int fileSize;
+    Gap g(16);
+};
+
+typedef struct // Variable size, most often 44
+{
+    VECTOR3 position;
+    VECTOR4SMALL normal;    // signed, n / 127.0
+    VECTOR4SMALL tangent;   // signed, t / 127.0
+    BGRA32 color0;
+    BGRA32 color1;
+    VECTOR2H UV0;            // half floats
+    VECTOR2H UV1;            // half floats
+    unsigned byte boneIndices[4];
+    unsigned byte boneWeights[4];  
+}VERTEX <bgcolor=cLtPurple>;
+
+typedef struct {
+    QUATERNION rotation;
+    VECTOR3 position;
+    VECTOR3 scale;
+} BONETRANSFORM <optimize=true>;
+
+struct BONE // 232
+{
+    OFFSET4 offsA;
+    OFFSET4 offsB;
+    int nameHash;
+    int unk0;           // 0, 1, 2, 4
+    short parentID;
+    short unk1;         // -1, 0, 1, 3
+    int unk2;           // 0, 65536, 131072, 327680
+    int particleSnoID;
+    BOUNDINGSPHERE bounds;
+    BONETRANSFORM transforms[4];
+    int unk3;
+
+    // read data
+    local long save = FTell();
+    if (offsA.size > 0)
+    {
+        FSeek(offsA.offset);
+        int unksA[offsA.size / 4]<bgcolor=cGreen>;
+    }
+    if (offsB.size > 0)
+    {
+        FSeek(offsB.offset);
+        int unksB[offsB.size / 4]<bgcolor=cYellow>;
+    }
+    FSeek(save);
+};
+
+struct BONES(int count)
+{
+    BONE bones[count]<bgcolor=cRed,optimize=false>; 
+};
+
+//////////////////////////////////////////////////
+//  Read Data
+//////////////////////////////////////////////////
+
+Header header;
+
+/// IGC_lilith.app ///
+/*
+// Vertices
+FSeek(32);
+VERTEX verts[9593804 / 44];
+
+// Indices
+FSeek(9593840);
+short indices[1987752 / 2]<bgcolor=cYellow>;
+
+// Bones
+local int bonesOffset = 11581592;
+local int bonesSize = 139896;
+FSeek(bonesOffset);
+BONES bones(bonesSize / 232);
+*/
+
+/// ambient_cat.app ///
+/*
+// Vertices
+FSeek(32);
+VERTEX verts[120340 / 44];
+
+// Indices
+FSeek(120376);
+short indices[20772 / 2]<bgcolor=cYellow>;
+
+// Bones
+local int bonesOffset = 141152;
+local int bonesSize = 9976;
+FSeek(bonesOffset);
+BONES bones(bonesSize / 232);
+*/
+
+/// astaroth.app ///
+/*
+// Vertices
+//FSeek(32);
+//VERTEX verts[120340 / 44];
+
+// Indices
+//FSeek(120376);
+//short indices[20772 / 2]<bgcolor=cYellow>;
+
+// Bones
+local int bonesOffset = 2156640;
+local int bonesSize = 53592;
+FSeek(bonesOffset);
+BONES bones(bonesSize / 232);
+*/
+
+/// mnt_base00_horse17.app ///
+
+typedef struct // Variable size, most often 44
+{
+    VECTOR3 position;
+    VECTOR4SMALL normal;    // signed, n / 127.0
+    BGRA32 color0;
+    BGRA32 color1;
+    VECTOR2H UV0;            // half floats
+    VECTOR2H UV1;            // half floats
+    VECTOR4SMALL tangent;   // signed, t / 127.0
+}VERTEXA <bgcolor=cLtPurple>;
+
+// Vertices
+FSeek(36096);
+VERTEXA verts1[5256 / 36];
+
+FSeek(41352);
+VERTEX verts2[1061016 / 44];
+
+// Indices
+FSeek(1102368);
+short indices[158316 / 2]<bgcolor=cYellow>;
+
+// Bones
+local int bonesOffset = 1260688;
+local int bonesSize = 26912;
+FSeek(bonesOffset);
+BONES bones(bonesSize / 232);
+
+typedef struct
+{
+    float unk0;
+    float unk1;
+    float unk2;
+    int unk3;
+    int unk4;
+    int unk5;
+    float unk6;
+    int unk7;
+    int unk8;
+    int unk9;
+    float unk10;
+    int unk11;
+    float unk12;
+    int unk13;
+    int unk14;
+    int unk15;
+}UNKH<bgcolor=cLtPurple>;
+
+// OffsH
+FSeek(1293056);
+UNKH unkH[192 / 64];
+
+typedef struct              // 720
+{
+    byte padding[216];
+    STRINGc name(32);
+    Gap g(3);
+    ubyte unk0;             // 64
+    ushort vertexCount;
+    ushort vertexDataCount;
+    ushort unks[10];         // Other Counts
+    int unk1;
+    int unk2;
+    int unk3;
+    OFFSET4 vertPosOffs;
+    OFFSET4 vertOffsetsOffs;
+    OFFSET4 vertUnkOffs;
+    OFFSET4 vertConstraintsOffs;
+    OFFSET4 offsE;
+    OFFSET4 vertMatricesOffs;
+    OFFSET4 offsG;
+    OFFSET4 offsH;
+    OFFSET4 offsI;
+    OFFSET4 offsJ;
+    OFFSET4 offsK;
+    OFFSET4 offsL;
+    OFFSET4 offsM;
+    OFFSET4 boneLookupOffs;
+    OFFSET4 offsO;
+    OFFSET4 offsP;
+    OFFSET4 offsQ;
+    OFFSET4 offsR;
+    OFFSET4 offsS;
+    OFFSET4 offsT;
+    OFFSET4 offsU;
+    OFFSET4 offsV;
+    OFFSET4 offsW;
+    OFFSET4 offsX;
+    OFFSET4 offsY;
+    OFFSET4 offsZ;
+    OFFSET4 offsA1;
+
+    local long save = FTell();
+
+    if (vertPosOffs.size > 0)
+    {
+        FSeek(vertPosOffs.offset);
+        VECTOR4 vertexPositions[vertPosOffs.size / 16]<bgcolor=cLtBlue>;
+    }
+
+    if (vertOffsetsOffs.size > 0)
+    {
+        // Could be offsets (vertexPositions[x] + vertOffsets[x])
+        // Thinking for frame 0 of simulation to remove the colision at start
+        FSeek(vertOffsetsOffs.offset);
+        VECTOR4 vertOffsets[vertOffsetsOffs.size / 16]<bgcolor=cLtPurple>;
+    }
+
+    if (vertUnkOffs.size > 0)
+    {
+        // Something like weights
+        FSeek(vertUnkOffs.offset);
+        float vertexUnk0[vertUnkOffs.size / 4]<bgcolor=cLtYellow>;
+    }
+
+    if (vertConstraintsOffs.size > 0)
+    {
+        // 0f = constrained(fixed) / 1f = unconstrained(simulated)
+        FSeek(vertConstraintsOffs.offset);
+        float vertexConstraints[vertConstraintsOffs.size / 4]<bgcolor=cLtRed>;
+    }
+
+    if (offsE.size > 0)
+    {
+        // all 0 so far
+        FSeek(offsE.offset);
+        float vertexUnk1[offsE.size / 4]<bgcolor=cLtYellow>;
+    }
+
+    if (vertMatricesOffs.size > 0)
+    {
+        FSeek(vertMatricesOffs.offset);
+        MATRIX4x4 vertexMatrices[vertMatricesOffs.size / 64]<bgcolor=cLtBlue>;
+    }
+
+    if (offsG.size > 0)
+    {
+        // 0, 1, 2, 3
+        FSeek(offsG.offset);
+        short vertexUnk2[offsG.size / 2]<bgcolor=cWhite>;
+    }
+
+    if (offsH.size > 0)
+    {
+        // 0.0 .. 1.0
+        FSeek(offsH.offset);
+        float vertexUnk3[offsH.size / 4]<bgcolor=cYellow>;
+    }
+
+    if (offsI.size > 0)
+    {
+        // Some lookup
+        // -1, 0, 1 .. 71 ..?
+        FSeek(offsI.offset);
+        short vertexUnk4[offsI.size / 2]<bgcolor=cRed>;
+    }
+
+    if (offsJ.size > 0)
+    {
+        // Some lookup
+        // -1, 0, 1 .. 34
+        FSeek(offsJ.offset);
+        short vertexUnk5[offsJ.size / 2]<bgcolor=cGreen>;
+    }
+
+    if (offsK.size > 0)
+    {
+        // Some lookup
+        // 0, 1 .. 89 ..
+        FSeek(offsK.offset);
+        short vertexUnk6[offsK.size / 2]<bgcolor=cLtRed>;
+    }
+
+    if (offsL.size > 0)
+    {
+        // Weights, x+y+z+w = 1
+        FSeek(offsL.offset);
+        VECTOR4 vertexWeights[offsL.size / 16]<bgcolor=cLtGreen>;
+    }
+
+    if (offsM.size > 0)
+    {
+        // Indices
+        struct Indices
+        {
+            short a;
+            short b;
+            short c;
+            short d;
+        };
+
+        FSeek(offsM.offset);
+        Indices vertexIndices[offsM.size / 8]<bgcolor=cPurple>;
+    }
+
+    if (boneLookupOffs.size > 0)
+    {
+        // Bone lookup
+        FSeek(boneLookupOffs.offset);
+        short boneLookup[boneLookupOffs.size / 2]<bgcolor=cLtYellow>;
+    }
+
+    if (offsO.size > 0)
+    {
+        struct PairsO
+        {
+            short a;
+            short b;
+            short c;
+            short d;
+        };
+
+        FSeek(offsO.offset);
+        PairsO vertexUnk7[offsO.size / 8]<bgcolor=cRed>;
+    }
+
+    if (offsP.size > 0)
+    {
+        struct PairsP
+        {
+            short a;
+            short b;
+        };
+
+        FSeek(offsP.offset);
+        PairsP unkPairsP[offsP.size / 4]<bgcolor=cLtGreen>;
+    }
+
+    if (offsQ.size > 0)
+    {
+        FSeek(offsQ.offset);
+        float unkDataQ[offsQ.size / 4]<bgcolor=cLtBlue>;
+    }
+
+    if (offsR.size > 0)
+    {
+        struct PairsR
+        {
+            short a;
+            short b;
+            short c;
+        };
+
+        FSeek(offsR.offset);
+        PairsR unkPairsR[offsR.size / 6]<bgcolor=cLtGreen>;
+    }
+
+    if (offsS.size > 0)
+    {
+        FSeek(offsS.offset);
+        VECTOR2 unkDataS[offsS.size / 8]<bgcolor=cLtRed>;
+    }
+
+    // offsT - no data yet
+
+    if (offsU.size > 0)
+    {
+        FSeek(offsU.offset);
+        short unkDataU[offsU.size / 2]<bgcolor=cLtYellow>;
+    }
+
+    if (offsV.size > 0)
+    {
+        FSeek(offsV.offset);
+        short unkDataV[offsV.size / 2]<bgcolor=cWhite>;
+    }
+
+    if (offsW.size > 0)
+    {
+        FSeek(offsW.offset);
+        short unkDataW[offsW.size / 2]<bgcolor=cGreen>;
+    }
+
+    // offsX - no data yet
+    // offsY - no data yet
+
+    if (offsZ.size > 0)
+    {
+        FSeek(offsZ.offset);
+        struct Transform
+        {
+            VECTOR4 position;
+            VECTOR4 rotation;
+            VECTOR4 scale;
+        };
+        Transform unkTransforms[offsZ.size / 60]<bgcolor=cBlue, optimize=false>;
+    }
+
+    if (offsA1.size > 0)
+    {
+        FSeek(offsA1.offset);
+        short unkDataA1[offsA1.size / 2]<bgcolor=cPurple>;
+    }
+
+    FSeek(save);
+
+}ClothData<bgcolor=0x00AAFF>;
+
+// Cloth physics stuff
+
+// Mesh0 offsA
+FSeek(32);
+ClothData cloth0;
+
+// Mesh1 offsA
+FSeek(20088);
+ClothData cloth1;
+
+// Mesh2 offsA
+FSeek(22280);
+ClothData cloth2;
+
+// Mesh3 offsA
+FSeek(29248);
+ClothData cloth3;

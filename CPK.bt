@@ -1,0 +1,169 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.2 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct Header
+{
+  uint32 dwMagicNumber;
+  uint32 dwPackageVersion;
+  int64 nDecompressedFileSize;
+  uint32 dwFlags;
+  int32 nFileCount;
+  int32 nLocationCount;
+  int32 nHeaderSector;
+  int32 nFileSizeBitCount;
+  int32 nFileLocationCountBitCount;
+  int32 nFileLocationIndexBitCount;
+  int32 nLocationBitCount;
+  int32 nCompSectorToDecompOffsetBitCount;
+  int32 nDecompSectorToCompSectorBitCount;
+  uint32 dwCRC;
+  int32 nReadSectorSize;
+  int32 nCompSectorSize;
+};
+
+struct Block1
+{
+    local uint64 size = 0x40;
+    size += header.nFileSizeBitCount;
+    size += header.nFileLocationCountBitCount;
+    size += header.nFileLocationIndexBitCount;
+    size *= header.nFileCount;
+    size += 7;
+    size = size >> 3;
+    byte data[size]<bgcolor=cGreen>;
+};
+
+struct Block2
+{
+    local uint size = header.nLocationBitCount * header.nLocationCount;
+    size += 7;
+    size = size >> 3;
+    byte data[size]<bgcolor=cYellow>;
+};
+
+struct Block3
+{
+    local uint64 a = 0x10000;
+    local uint64 b = a * header.nHeaderSector;
+    b = FileSize() - b;
+    b += 0x3FFF;
+    local uint64 c = b >> 0xD;
+    c = c >> 50;
+    b += c;
+    b = b >> 0xE;
+    local uint64 size = b * header.nLocationBitCount;
+    size += 7;
+    size = size >> 3;
+    byte data[size]<bgcolor=cPurple>;
+};
+
+int get_highest_bit(int u)
+{
+    local int result = 0;
+    while (u != 0)
+    {
+        u = u >> 1;
+        result += 1;
+    }
+    return result;
+}
+
+struct Block4
+{
+    local uint64 a = 0x10000;
+    local uint64 b = a * header.nHeaderSector;
+    b = FileSize() - b;
+    b += 0x3FFF;
+    local uint64 c = b >> 0xD;
+    c = c >> 50;
+    b += c;
+    b = b >> 0xE;
+    local uint64 d = header.nDecompressedFileSize + 0x3FFF;
+    local uint64 e = d >> 0xD;
+    e = e >> 50;
+    d += e;
+    local uint64 f = d >> 0xE;
+    local uint64 g = get_highest_bit(b);
+    local uint64 size = f * g;
+    size += 7;
+    size = size >> 3;
+    byte data[size]<bgcolor = cRed>;
+};
+
+struct Block5
+{
+    FSkip(4);
+    FSkip(4);
+    int data[header.nFileCount]<bgcolor = cLtRed>;
+};
+
+struct FileNames
+{
+    local int i = 0;
+    local long pos = FTell();
+    local int count = 0;
+    for (i = 0; i < header.nFileCount; i++)
+    {
+        FSeek(pos + block5.data[i]);
+        STRINGn file("file");
+        count ++;
+    }
+};
+
+struct FileData(int size)
+{
+    byte data[size];
+};
+
+struct Files
+{
+    local long pos = FTell() & 0xFFFF0000;
+    if (FTell() % 0x10000 != 0)
+    {
+        pos += 0x10000;
+    }
+
+    FSeek(pos);
+
+    local int i = 0;
+    for (i = 0; i < header.FileCount_0; i++)
+    {
+        int test<hidden=true>;
+        FSkip(-4);
+        if (test == 0)
+        {
+            pos = FTell() & 0xFFFF0000;
+            pos += 0x10000;
+            FSeek(pos);
+        }
+
+        ushort sizeDecompressed;
+        ushort unk;
+        ushort size;
+        if (size == 0)
+            break;
+        FileData fileData(size);    // 78 DA - Zlib Best Compression
+    }
+};
+
+
+Header header;
+Block1 block1;
+Block2 block2;
+Block3 block3;
+Block4 block4;
+Block5 block5;
+FileNames fileNames;
+//Files files;

@@ -1,0 +1,141 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.2 Binary Template
+//
+//      File: Mtl3lib.bt
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the new M3 material format from World of Warcraft
+//  Category: WoW
+// File Mask: 0x3253336D m3S2
+//------------------------------------------------
+
+#include "M3Common.h"
+#include "Mtl3libOldChunks.h";
+
+struct ResourceBinding
+{
+    uint8_t registerId; // eg. register(s0); // s0, s1.. t0, t1.. b0, b1..
+    uint8_t location;
+};
+
+struct BindingsData(long offset) // 68
+{
+    uint32_t cbufferBindingsCount;
+    uint32_t unkBindingsOffset;
+    uint32_t cbufferBindingsVSOffset;
+    uint32_t cbufferBindingsPSOffset;
+    uint16_t unk4;
+    uint16_t unk5;
+    uint32_t textureBindingCount;
+    uint32_t textureBindingHashesOffset;
+    uint32_t pad0;
+    uint32_t textureBindingsVSOffset;
+    uint32_t textureBindingsPSOffset;
+    uint16_t unsigned___int1628;
+    uint16_t unsigned___int162A;
+    uint32_t samplerBindingCount;
+    uint32_t samplerBindingHashesOffset;
+    uint32_t pad1;
+    uint32_t samplerBindingsVSOffset;
+    uint32_t samplerBindingsPSOffset;
+    uint16_t unsigned___int1640;
+    uint16_t unsigned___int1642;
+
+    local long save = FTell();
+
+    FSeek(offset + unkBindingsOffset * 4);
+    ResourceBinding unkBindings[cbufferBindingsCount]<bgcolor=cRed>;    // Maybe buffer size? idk
+    FSeek(offset + cbufferBindingsVSOffset * 4);
+    ResourceBinding cbufferBindingsVS[cbufferBindingsCount]<bgcolor=cRed>;
+    FSeek(offset + cbufferBindingsPSOffset * 4);
+    ResourceBinding cbufferBindingsPS[cbufferBindingsCount]<bgcolor=cRed>;
+
+    FSeek(offset + textureBindingHashesOffset * 4);
+    unsigned int64 textureBindingHashes[textureBindingCount]<bgcolor=cRed, format=hex>;
+    FSeek(offset + textureBindingsVSOffset * 4);
+    ResourceBinding textureBindingsVS[textureBindingCount]<bgcolor=cRed>;
+    FSeek(offset + textureBindingsPSOffset * 4);
+    ResourceBinding textureBindingsPS[textureBindingCount]<bgcolor=cRed>;
+
+    FSeek(offset + samplerBindingHashesOffset * 4);
+    unsigned int64 samplerBindingHashes[samplerBindingCount]<bgcolor=cRed, format=hex>;
+    FSeek(offset + samplerBindingsVSOffset * 4);
+    ResourceBinding samplerBindingsVS[samplerBindingCount]<bgcolor=cRed>;
+    FSeek(offset + samplerBindingsPSOffset * 4);
+    ResourceBinding samplerBindingsPS[samplerBindingCount]<bgcolor=cRed>;
+    FSeek(save);
+};
+
+struct UniformData(long offset, int version)
+{
+    int64_t qword0;    // Opaque/Transparent (source Deamon said so)
+    int64_t qword8;
+    
+    ShaderData data(offset, version);
+};
+
+struct Instance(long offset, int version)
+{
+    GUID materialGUID;
+    int shaderID;       // Likely index into m_shader[]
+    int unk1;
+    int unk2;
+    int unk3;
+    int unk4;
+    int unk5;
+    int unk6;
+    int unk7;
+    ShaderData data(offset, version);
+};
+
+struct MaterialLibraryV2Chunk()
+{
+    local int chunkOffset=FTell();
+    ChunkHeader header;
+    uint32_t count;
+    int32_t offset;
+    
+	FSeek(chunkOffset + 4 * offset);
+	Instance instance(chunkOffset, header.version)[count]<optimize=false, bgcolor=cGreen>;
+    FSeek(chunkOffset + 4 * header.endOffset);
+};
+
+struct Shader(long offset, int version) // 168
+{
+    int32_t index;
+    int64_t unk0;
+    int32_t unk1;
+    int32_t vertexShaderFDID;
+    int32_t pixelShaderFDID;
+    int64_t qword18;
+    BindingsData bindings(offset);
+    int32_t padding;
+    UniformData uniforms(offset, version);
+};
+
+struct ShaderLibraryV2Chunk
+{
+    local int chunkOffset=FTell();
+    ChunkHeader header;
+    uint32_t count;
+    int32_t offset;
+    
+    FSeek(chunkOffset + 4 * offset);
+    Shader m_shader(chunkOffset, header.version)[count]<optimize=false, bgcolor=cYellow>;
+    FSeek(chunkOffset + 4 * header.endOffset);
+};
+
+struct Mtl3lib
+{
+    while( ! FEof() )
+    {
+        if      ( matchr( "m3SL" ) ) ShaderLibraryChunk shaderLibrary;
+        else if ( matchr( "m3ML" ) ) MaterialLibraryChunk materialLibrary;
+        else if ( matchr( "m3S2" ) ) ShaderLibraryV2Chunk shaderLibraryV2;
+        else if ( matchr( "m3M2" ) ) MaterialLibraryV2Chunk materialLibraryV2;
+        // m3DB StringTableChunk
+        else SKIPCHUNKM3 unk;
+    }
+};
+
+Mtl3lib data;

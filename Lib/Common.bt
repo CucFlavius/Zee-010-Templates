@@ -28,6 +28,11 @@ typedef struct (int size) {
     byte data[size];
 } SKIP;
 
+typedef struct (int size)
+{
+    byte gap[size]<bgcolor=cBlack, hidden=true>;
+}Gap<hidden=true>;
+
 typedef struct {
     VECTOR3 normal;
     float distance;

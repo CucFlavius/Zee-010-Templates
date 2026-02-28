@@ -1,0 +1,231 @@
+//------------------------------------------------
+//      File: glo
+//   Authors: Zee
+//   Version: 1.0
+//   Purpose: Reading the global file from Diablo IV
+//  Category: DiabloIV
+//------------------------------------------------
+
+#include "Lib/Common.bt"
+
+struct DeadBeef
+{
+    int magic;      // -559038737
+    int magic2;     // 454043394 - app
+    Gap g(4);
+    int hash;       // name hash ?
+};
+
+struct Header
+{
+    DeadBeef beef;
+    int snoID;
+    Gap g(4);
+    int unk0;       // 42
+    int unk1;       // 0
+    OFFSET4 offsA;
+    int unk2;       // 1
+    int unk3;       // 0
+};
+
+struct UnkOffsets
+{
+    int unk0;                       // 0
+    int unk1;                       // 0
+    int unk2;                       // 0
+    int unk3;                       // 0
+    int hashUnk;
+    int unk4;                       // 0
+    OFFSET4 dyeOffs;
+    OFFSET4 offsB;
+    OFFSET4 offsC;
+    OFFSET4 bodyMarkingOffs;
+    OFFSET4 offsE;
+    OFFSET4 jewelryOffs;
+    OFFSET4 unusedOffs;
+    OFFSET4 custSorcererOffs;
+    OFFSET4 custDruidOffs;
+    OFFSET4 custBarbarianOffs;
+    OFFSET4 custRogueOffs;
+    OFFSET4 custNecromancerOffs;
+};
+
+struct UnkB
+{
+    int index;
+    int unk0;       // 1
+    int unk1;       // 1
+    int unk2;       // 1
+    int unk3;       // 1
+    int unk4;       // 1
+    RGBA32 colorA; 
+    RGBA32 colorB; 
+    RGBA32 colorC; 
+    float unk5;
+};
+
+struct UnkC
+{
+    int index;
+    RGBA32 colorA; 
+    RGBA32 colorB; 
+    float unk0;
+    float unk1;
+    float unk2;
+    float unk3;
+    float unk4;
+    float unk5;
+    float unk6;
+    float unk7;
+    float unk8;
+    float unk9;
+    float unk10;
+    float unk11;
+    float unk12;
+    Gap g(4);
+    int maskSnoID;  // -1, base_eyes_Emissive_irisMask
+Printf("%i\n", maskSnoID);
+};
+
+struct UnkE
+{
+    int ID;
+    Gap g(4);
+    RGBA colorA;
+    RGBA colorB;
+    RGBA colorC;
+    float unk0;
+    float unk1;
+};
+
+struct ItemSet
+{
+    int helmItemSnoID;
+    int chestItemSnoID;     // Chest_054_TestLook
+    int bootsItemSnoID;     // Boots_054_TestLook
+    int glovesItemSnoID;    // Gloves_054_TestLook
+    int pantsItemSnoID;     // Pants_054_TestLook
+    int staffItemSnoID;     // 2HStaff_Magic_Generic_002
+    int shieldItemSnoID;    // 1HShield_Legendary_Generic_003
+    int maceItemSnoID;      // 2HMace_Rare_Barb_Crafted_11
+    int swordItemSnoID;     // 2HSword_Rare_Barb_Crafted_33
+    int bowItemSnoID;       // 2HBow_Rare_Rogue_Crafted_13
+    int daggerItemSnoID;    // 1HDagger_Rare_Generic_004
+    int axeItemSnoID;       // 1HAxe_Rare_Generic_005
+
+};
+
+struct Customization
+{
+    ItemSet defaultItemSet;
+    int dyeSnoID;
+    int nameHash;
+    int unk1;               // 0, 1
+    int unk2;               // 0, 1, 2, 3
+    int unk3;               // -1, 0, 1, 4
+    int markingShapeSnoID;  // Barbarian_bodyMarking_01
+    int unk4;               // 0, 1, 6
+    int unk5;               // 0, 3, 5, 6, 7, 8, 16
+    int unk6;               // 0, 4, 16, 26 (flags ?)
+    int unk7;               // -1, 3, 4, 8, 9
+    int unk8;               // 0, 1, 8, 9, 23
+    int unk9;               // 0, 4, 8
+    int jewelrySnoID;
+    Gap g(4);
+};
+
+Header header<bgcolor=cLtGreen>;
+
+if (header.offsA.size > 0)
+{
+    FSeek(header.offsA.offset + 16);
+    UnkOffsets offsets<bgcolor=cYellow>;
+
+    if (offsets.dyeOffs.size > 0)
+    {
+        // Dyes
+        FSeek(offsets.dyeOffs.offset + 16);
+        int dyeSnoIDs[offsets.dyeOffs.size / 4]<bgcolor=cPurple>;
+    }
+
+    if (offsets.offsB.size > 0)
+    {
+        FSeek(offsets.offsB.offset + 16);
+        UnkB unkB[offsets.offsB.size / 40]<optimize=false,bgcolor=cLtRed>;
+    }
+
+    if (offsets.offsC.size > 0)
+    {
+        // Eyes related ?
+        FSeek(offsets.offsC.offset + 16);
+        UnkC unkC[offsets.offsC.size / 72]<optimize=false,bgcolor=cLtYellow>;
+    }
+
+    if (offsets.bodyMarkingOffs.size > 0)
+    {
+        // Marking Shapes
+        FSeek(offsets.bodyMarkingOffs.offset + 16);
+        int markingShapeSnoIDs[offsets.bodyMarkingOffs.size / 4]<bgcolor=cGreen>;
+    }
+
+    if (offsets.offsE.size > 0)
+    {
+        FSeek(offsets.offsE.offset + 16);
+        UnkE unkE[offsets.offsE.size / 64]<optimize=false,bgcolor=cBlack>;
+    }
+
+    if (offsets.jewelryOffs.size > 0)
+    {
+        // Jewelry
+        FSeek(offsets.jewelryOffs.offset + 16);
+        int jewelrySnoIDs[offsets.jewelryOffs.size / 4]<bgcolor=cPurple>;
+    }
+
+    if (offsets.unusedOffs.size > 0)
+    {
+        // Unused
+        FSeek(offsets.unusedOffs.offset + 16);
+        int unusedData[offsets.unusedOffs.size / 4]<bgcolor=cBlue>;
+    }
+
+    if (offsets.custSorcererOffs.size > 0)
+    {
+        // Sorcerer
+        FSeek(offsets.custSorcererOffs.offset + 16);
+        Customization custSorcererM<bgcolor=cYellow>;
+        Customization custSorcererF<bgcolor=cYellow>;
+    }
+
+    if (offsets.custDruidOffs.size > 0)
+    {
+        // Druid
+        FSeek(offsets.custDruidOffs.offset + 16);
+        Customization custDruidM<bgcolor=cBlue>;
+        Customization custDruidF<bgcolor=cBlue>;
+    }
+
+    if (offsets.custBarbarianOffs.size > 0)
+    {
+        // Barbarian
+        FSeek(offsets.custBarbarianOffs.offset + 16);
+        Customization custBarbarianM<bgcolor=cLtGreen>;
+        Customization custBarbarianF<bgcolor=cLtGreen>;
+    }
+
+    if (offsets.custRogueOffs.size > 0)
+    {
+        // Rogue
+        FSeek(offsets.custRogueOffs.offset + 16);
+        Customization custRogueM<bgcolor=cLtRed>;
+        Customization custRogueF<bgcolor=cLtRed>;
+    }
+
+    if (offsets.custNecromancerOffs.size > 0)
+    {
+        // Necromancer
+        FSeek(offsets.custNecromancerOffs.offset + 16);
+        Customization custNecromancerM<bgcolor=cLtPurple>;
+        Customization custNecromancerF<bgcolor=cLtPurple>;
+    }
+};
+
